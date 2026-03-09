@@ -1,75 +1,100 @@
 # figma-sync
 
-Small CLI helpers to sync Figma file metadata and export URLs to disk.
+Copilot-driven bidirectional sync between a React codebase and Figma.  
+**Code is the single source of truth for UI — even for designers.**
 
-## Figma MCP (VS Code)
+## How It Works
 
-This repo includes a workspace MCP configuration at .vscode/mcp.json with two servers:
+There is **no CLI**. Everything runs through **GitHub Copilot Agent Mode** in VS Code, powered by the **Figma MCP server**.
 
-- figma: Remote Figma MCP server (recommended)
-- figma-desktop: Desktop MCP server (runs from the Figma desktop app)
+| Action | Copilot Prompt |
+|---|---|
+| Push UI to Figma | *"Capture my React app at localhost:5173 and push to Figma"* |
+| Pull design context | *"Get the design context for node 1:5 in Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
+| Explore Figma file | *"Get metadata for Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
+| Get design tokens | *"Get variable definitions from Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
 
-### Remote server (recommended)
+## Quick Start
 
-1. In VS Code, open the Command Palette (⌘⇧P)
-2. Run: MCP: Open Workspace Folder MCP Configuration
-3. Ensure there is a server named figma pointing at https://mcp.figma.com/mcp
-4. Click Start above the server name, then complete the Allow Access OAuth flow
-
-### Desktop server (Figma desktop app)
-
-1. Open the Figma desktop app
-2. Open any Figma Design file, switch to Dev Mode, and enable the Desktop MCP server
-3. Confirm it’s running at http://127.0.0.1:3845/mcp
-4. In VS Code MCP configuration, click Start for figma-desktop
-
-Tip: In Copilot Chat (Agent mode), type #get_design_context to verify tools are available.
-
-Note: MCP authentication is handled via an OAuth browser flow (remote) or the desktop app (local). It’s separate from the `FIGMA_TOKEN` used by the CLI commands below.
-
-## Prereqs
-
-- Node.js 18+ (uses built-in `fetch`)
-
-## Setup
+### 1. Clone & install
 
 ```bash
+git clone https://github.com/patja60/figma-sync.git
 cd figma-sync
 npm install
-cp .env.example .env
 ```
 
-Fill in:
+### 2. Figma MCP server
 
-- `FIGMA_TOKEN` (Figma Personal Access Token)
-- `FIGMA_FILE_KEY` (from the Figma file URL)
+The repo ships with `.vscode/mcp.json` which connects Copilot to Figma:
 
-## Usage
+```json
+{
+  "servers": {
+    "Figma": {
+      "type": "http",
+      "url": "https://mcp.figma.com/mcp"
+    }
+  }
+}
+```
 
-Fetch file JSON:
+When you first use a Figma tool, a browser window opens for OAuth.
+
+### 3. Run the React POC
 
 ```bash
-npm run dev -- file --out out/figma-file.json
-# or
-npm run build && npm start -- file --out out/figma-file.json
+cd poc-react
+npm install
+./node_modules/.bin/vite --port 5173
 ```
 
-Get export image URLs:
+Open [http://localhost:5173](http://localhost:5173).
+
+### 4. Try it
+
+Open Copilot Agent Mode (⌘⇧I) and type:
+
+> "Capture my running React app at localhost:5173 and push it to Figma"
+
+## Project Structure
+
+```
+figma-sync/
+  poc-react/              ← Sample React app (Vite + React 18)
+    src/components/       ← HeaderCard, CounterCard, ToggleSwitch
+  docs/                   ← Documentation site (Docusaurus)
+  src/                    ← Shared types & mapping utilities
+    types.ts              ← FigmaSyncMap, ComponentMapping types
+    map.ts                ← Read/write figma-sync.map.json
+    nodes.ts              ← Figma node tree helpers
+  figma-sync.map.json     ← Component ↔ Figma node mappings
+  userstories/            ← Epic & user story tracking
+  .vscode/mcp.json        ← MCP server configuration
+```
+
+## Component Mappings
+
+Mappings live in `figma-sync.map.json`. Current mappings:
+
+| Component | File | Figma Node |
+|---|---|---|
+| HeaderCard | `poc-react/src/components/HeaderCard.tsx` | `1:5` |
+| CounterCard | `poc-react/src/components/CounterCard.tsx` | `1:17` |
+| ToggleSwitch | `poc-react/src/components/ToggleSwitch.tsx` | `1:42` |
+
+To add a mapping, edit the file directly or prompt Copilot:
+
+> "Add a mapping for MyComponent at poc-react/src/components/MyComponent.tsx with Figma node 1:99"
+
+## Documentation Site
 
 ```bash
-npm run dev -- images --ids "1:2,3:4" --format png --out out/figma-images.json
+npm run docs:dev     # Dev server on http://localhost:4000/figma-sync/
+npm run docs:build   # Production build
+npm run docs:serve   # Serve the build locally
 ```
 
-Notes:
+## License
 
-- This tool currently writes Figma API responses to JSON files. If you tell me what you want to sync (variables, components, icons, etc.), I can extend the commands accordingly.
-
-## React POC
-
-Folder: poc-react
-
-Run:
-
-- cd poc-react
-- npm install
-- npm run dev
+MIT
