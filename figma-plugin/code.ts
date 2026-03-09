@@ -65,6 +65,14 @@ figma.ui.onmessage = async (msg: {
         );
         break;
 
+      case 'list-layers':
+        data = await handleListLayers(payload as { maxDepth?: number });
+        break;
+
+      case 'list-components':
+        data = await handleListComponents();
+        break;
+
       default:
         throw new Error(`Unknown command: ${command}`);
     }
@@ -283,6 +291,94 @@ async function handleUpdateVariable(p: {
   variable.setValueForMode(modeId, p.value as VariableValue);
 
   return { variableId: p.variableId, updated: true };
+}
+
+// ── Layer & Component discovery ─────────────────────────────────────────
+
+async function handleListLayers(_p: { maxDepth?: number }) {
+  var maxDepth = (_p.maxDepth !== undefined && _p.maxDepth !== null) ? _p.maxDepth : 100;
+  var page = figma.currentPage;
+  var result: Array<Record<string, unknown>> = [];
+
+  function walk(node: BaseNode, depth: number) {
+    var childCount = 0;
+    if ('children' in node) {
+      childCount = (node as ChildrenMixin).children.length;
+    }
+
+    result.push({
+      id: node.id,
+      name: node.name,
+      type: node.type,
+      depth: depth,
+      isComponent: node.type === 'COMPONENT' || node.type === 'COMPONENT_SET',
+      childCount: childCount,
+      width: 'width' in node ? (node as any).width : 0,
+      height: 'height' in node ? (node as any).height : 0,
+      visible: 'visible' in node ? (node as SceneNode).visible : true,
+      canConvert: node.type === 'FRAME' || node.type === 'GROUP' || node.type === 'RECTANGLE',
+    });
+
+    if ('children' in node && depth < maxDepth) {
+      var children = (node as ChildrenMixin).children;
+      for (var i = 0; i < children.length; i++) {
+        walk(children[i], depth + 1);
+      }
+    }
+  }
+
+  // Walk all children of the page (skip the page node itself)
+  var pageChildren = page.children;
+  for (var i = 0; i < pageChildren.length; i++) {
+    walk(pageChildren[i], 0);
+  }
+
+  return {
+    pageName: page.name,
+    pageId: page.id,
+    totalLayers: result.length,
+    layers: result,
+  };
+}
+
+async function handleListComponents() {
+  var page = figma.currentPage;
+  var components: Array<Record<string, unknown>> = [];
+
+  function walk(node: BaseNode) {
+    if (node.type === 'COMPONENT') {
+      var comp = node as ComponentNode;
+      components.push({
+        id: comp.id,
+        name: comp.name,
+        type: 'COMPONENT',
+        description: comp.description,
+        width: comp.width,
+        height: comp.height,
+        childCount: comp.children.length,
+        x: comp.x,
+        y: comp.y,
+      });
+    }
+    if ('children' in node) {
+      var children = (node as ChildrenMixin).children;
+      for (var i = 0; i < children.length; i++) {
+        walk(children[i]);
+      }
+    }
+  }
+
+  var pageChildren = page.children;
+  for (var i = 0; i < pageChildren.length; i++) {
+    walk(pageChildren[i]);
+  }
+
+  return {
+    pageName: page.name,
+    pageId: page.id,
+    totalComponents: components.length,
+    components: components,
+  };
 }
 
 // ── Serialization ──────────────────────────────────────────────────────

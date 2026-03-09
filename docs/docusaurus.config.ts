@@ -60,6 +60,16 @@ const config: Config = {
           position: 'left',
         },
         {
+          to: '/discover',
+          label: 'Discover',
+          position: 'left',
+        },
+        {
+          to: '/components',
+          label: 'Components',
+          position: 'left',
+        },
+        {
           href: 'https://github.com/patja60/figma-sync',
           label: 'GitHub',
           position: 'right',

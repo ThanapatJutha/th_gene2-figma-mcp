@@ -1,34 +1,9 @@
 import React from 'react';
 import styles from './ComponentMapTable.module.css';
 
-// Hardcoded from figma-sync.map.json (Docusaurus builds statically, so we inline the data)
-const mapData = {
-  version: 1,
-  figmaFileKey: 'ghwHnqX2WZXFtfmsrbRLTg',
-  components: [
-    {
-      name: 'HeaderCard',
-      file: 'poc-react/src/components/HeaderCard.tsx',
-      figmaNodeId: '1:5',
-      figmaFileKey: 'ghwHnqX2WZXFtfmsrbRLTg',
-      selector: '.card:first-child',
-    },
-    {
-      name: 'CounterCard',
-      file: 'poc-react/src/components/CounterCard.tsx',
-      figmaNodeId: '1:17',
-      figmaFileKey: 'ghwHnqX2WZXFtfmsrbRLTg',
-      selector: '.card:has(.pill)',
-    },
-    {
-      name: 'ToggleSwitch',
-      file: 'poc-react/src/components/ToggleSwitch.tsx',
-      figmaNodeId: '1:42',
-      figmaFileKey: 'ghwHnqX2WZXFtfmsrbRLTg',
-      selector: '.toggle',
-    },
-  ],
-};
+// Import directly from the source-of-truth map file
+// Webpack resolves JSON imports at build time — no need to hardcode
+import mapData from '../../../figma-sync.map.json';
 
 function figmaNodeUrl(fileKey: string, nodeId: string): string {
   return `https://www.figma.com/design/${fileKey}?node-id=${nodeId.replace(':', '-')}`;

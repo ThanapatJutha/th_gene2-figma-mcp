@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
       label: 'Usecases',
       items: [
         'usecases/convert-layer-to-component',
+        'usecases/discover-components',
       ],
     },
     {

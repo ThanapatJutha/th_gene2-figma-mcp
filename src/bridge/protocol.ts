@@ -32,7 +32,9 @@ export type BridgeCommand =
   | 'create-component'
   | 'read-variables'
   | 'update-variable'
-  | 'create-variable';
+  | 'create-variable'
+  | 'list-layers'
+  | 'list-components';
 
 // ── Payload types per command ──────────────────────────────────────────
 
