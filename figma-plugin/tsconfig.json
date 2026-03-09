@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "None",
+    "strict": true,
+    "skipLibCheck": true,
+    "typeRoots": [
+      "../node_modules/@figma/plugin-typings",
+      "../node_modules/@types"
+    ],
+    "types": [],
+    "outDir": ".",
+    "rootDir": "."
+  },
+  "files": ["../node_modules/@figma/plugin-typings/index.d.ts", "code.ts"],
+  "exclude": ["node_modules"]
+}

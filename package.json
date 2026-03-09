@@ -5,6 +5,9 @@
   "description": "Copilot-driven bidirectional sync between React code and Figma.",
   "type": "module",
   "scripts": {
+    "bridge": "tsx src/bridge/server.ts",
+    "bridge:mcp": "tsx src/bridge/mcp-server.ts",
+    "plugin:build": "tsc -p figma-plugin/tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "fmt": "prettier -w .",
     "lint": "eslint .",
@@ -14,9 +17,17 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@figma/plugin-typings": "^1.123.0",
     "@types/node": "^22.10.2",
+    "@types/ws": "^8.18.1",
     "eslint": "^9.17.0",
     "prettier": "^3.4.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "ws": "^8.19.0",
+    "zod": "^4.3.6"
   }
 }
