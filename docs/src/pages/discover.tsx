@@ -68,7 +68,7 @@ export default function DiscoverPage(): React.JSX.Element {
   const [loading, setLoading] = useState(false);
   const [converting, setConverting] = useState(false);
   const [results, setResults] = useState<Array<{ id: string; success: boolean; message: string }>>([]);
-  const [filter, setFilter] = useState<'all' | 'suggested' | 'frames' | 'components'>('suggested');
+  const [filter, setFilter] = useState<'all' | 'suggested' | 'frames' | 'components'>('all');
   const [error, setError] = useState<string | null>(null);
 
   const fetchLayers = useCallback(async () => {
@@ -254,7 +254,7 @@ export default function DiscoverPage(): React.JSX.Element {
                     <th>Size</th>
                     <th>Children</th>
                     <th>Node ID</th>
-                    {filter !== 'components' && <th>Component Name</th>}
+                    <th>Name</th>
                   </tr>
                 </thead>
                 <tbody>
