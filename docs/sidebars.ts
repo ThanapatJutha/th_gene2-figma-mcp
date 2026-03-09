@@ -4,6 +4,7 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     'getting-started',
     'architecture',
+    'setup-plugin',
     {
       type: 'category',
       label: 'Approach',
