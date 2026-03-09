@@ -72,3 +72,20 @@ You can trigger MCP tools conversationally in VS Code Agent Mode:
 | Org/Enterprise | Higher limits | Unlimited + Code Connect |
 
 > **Current account:** Pro plan (PALO IT Thailand) — 200 calls/day.
+
+## Plugin Bridge MCP Tools
+
+In addition to the official Figma MCP server, we run a **custom MCP server** (`figma-bridge`) that connects to a Figma plugin via WebSocket. This enables write operations that the official tools cannot do.
+
+| Tool | What it does | Rate Limit |
+|---|---|---|
+| `bridge_ping` | Check plugin connection | None |
+| `bridge_read_node` | Read any node's properties | None |
+| `bridge_read_tree` | Get the page node tree | None |
+| `bridge_create_component` | Convert frame → Figma Component | None |
+| `bridge_update_node` | Update text, fills, dimensions | None |
+| `bridge_read_variables` | Read design tokens (any plan) | None |
+| `bridge_create_variable` | Create a design token | None |
+| `bridge_update_variable` | Update a token value | None |
+
+> See the [Plugin Bridge](/docs/approach/plugin-bridge) page for setup instructions.

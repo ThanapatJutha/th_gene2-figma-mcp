@@ -25,8 +25,8 @@ Make the **code repo the single source of truth** for UI. Designers and develope
 │ design           │    │ get_variable_defs             │
 │ (UNLIMITED)      │    │ get_metadata                  │
 │                  │    ├──────────────────────────────┤
-│ Local mapping    │    │ Figma Plugin bridge           │
-│ file + Copilot   │    │ (stretch goal)                │
+│ Local mapping    │    │ Plugin Bridge (MCP)           │
+│ file + Copilot   │    │ create_component · read/write │
 └────────┬─────────┘    └──────────────┬───────────────┘
          │                             │
          ▼                             ▼
@@ -59,7 +59,7 @@ Make the **code repo the single source of truth** for UI. Designers and develope
 | 1 | Component Mapping | ✅ Done (local) | 🔴 High |
 | 2 | Push Sync (Code → Figma) | 🔲 Planned | 🔴 High |
 | 3 | Pull Sync (Figma → Code) | 🔲 Planned | 🔴 High |
-| 4 | Figma Plugin Bridge | 🔲 Stretch | 🟡 Medium |
+| 4 | Figma Plugin Bridge | ✅ Done | 🟡 Medium |
 | 5 | End-to-End Demo | 🔲 Planned | 🔴 High |
 | 6 | Documentation & UI | 🔄 In Progress | 🟢 Low |
 
@@ -81,5 +81,5 @@ Make the **code repo the single source of truth** for UI. Designers and develope
 ```
 Epic 1 (Mapping) ✅ → Epic 2 (Push) → Epic 3 (Pull) → Epic 5 (Demo)
                                                       ↗
-                      Epic 4 (Plugin, stretch) ───────┘
+                      Epic 4 (Plugin Bridge) ✅ ──────┘
 ```

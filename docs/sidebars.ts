@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'approach/mcp-overview',
         'approach/local-mapping',
+        'approach/plugin-bridge',
       ],
     },
   ],
