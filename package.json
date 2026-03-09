@@ -1,0 +1,30 @@
+{
+  "name": "figma-sync",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CLI utilities to sync Figma file metadata/assets into a repo.",
+  "type": "module",
+  "bin": {
+    "figma-sync": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "node --loader ts-node/esm src/cli.ts",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "fmt": "prettier -w .",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
