@@ -24,9 +24,9 @@ function HomepageHeader() {
           </Link>
           <Link
             className="button button--secondary button--lg"
-            to="/component-map"
+            to="/dashboard"
             style={{marginLeft: '1rem'}}>
-            🗺️ Component Map
+            ⚡ Dashboard
           </Link>
         </div>
       </div>

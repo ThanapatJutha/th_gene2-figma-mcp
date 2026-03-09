@@ -1,0 +1,17 @@
+{
+  "codeConnect": {
+    "parser": "react",
+    "include": [
+      "poc-react/src/components/**/*.tsx"
+    ],
+    "exclude": [
+      "**/*.test.*",
+      "**/*.stories.*",
+      "**/*.figma.*"
+    ],
+    "label": "React",
+    "language": "tsx"
+  },
+  "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
+  "rootDir": "."
+}

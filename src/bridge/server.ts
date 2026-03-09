@@ -8,6 +8,14 @@
 
 import { WebSocketServer, WebSocket } from 'ws';
 import type { BridgeRequest, BridgeResponse, BridgeMessage } from './protocol.js';
+import {
+  readConfig,
+  saveConfig,
+  readConnections,
+  saveConnections,
+  listProjectComponents,
+  listDirectories,
+} from './local-handlers.js';
 
 const PORT = Number(process.env.BRIDGE_PORT ?? 9001);
 
@@ -76,11 +84,69 @@ wss.on('connection', (ws, req) => {
 
 // ── Request handling ───────────────────────────────────────────────────
 
+/** Commands handled locally on the server (no plugin round-trip). */
+const LOCAL_COMMANDS = new Set([
+  'ping',
+  'read-config',
+  'save-config',
+  'list-project-components',
+  'list-directories',
+  'read-connections',
+  'save-connections',
+]);
+
+async function handleLocalCommand(req: BridgeRequest): Promise<BridgeResponse> {
+  try {
+    switch (req.command) {
+      case 'ping':
+        return { id: req.id, type: 'response', success: true, data: 'pong' };
+
+      case 'read-config': {
+        const config = await readConfig();
+        return { id: req.id, type: 'response', success: true, data: config };
+      }
+
+      case 'save-config': {
+        await saveConfig(req.payload.config as Parameters<typeof saveConfig>[0]);
+        return { id: req.id, type: 'response', success: true, data: { saved: true } };
+      }
+
+      case 'list-project-components': {
+        const components = await listProjectComponents();
+        return { id: req.id, type: 'response', success: true, data: { components } };
+      }
+
+      case 'list-directories': {
+        const directories = await listDirectories();
+        return { id: req.id, type: 'response', success: true, data: { directories } };
+      }
+
+      case 'read-connections': {
+        const store = await readConnections();
+        return { id: req.id, type: 'response', success: true, data: store };
+      }
+
+      case 'save-connections': {
+        await saveConnections(req.payload.connections as Parameters<typeof saveConnections>[0]);
+        return { id: req.id, type: 'response', success: true, data: { saved: true } };
+      }
+
+      default:
+        return { id: req.id, type: 'response', success: false, error: `Unknown local command: ${req.command}` };
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return { id: req.id, type: 'response', success: false, error: message };
+  }
+}
+
 function handleRequest(req: BridgeRequest, sender: WebSocket) {
-  // Handle ping locally
-  if (req.command === 'ping') {
-    const res: BridgeResponse = { id: req.id, type: 'response', success: true, data: 'pong' };
-    sender.send(JSON.stringify(res));
+  // Handle server-side commands locally
+  if (LOCAL_COMMANDS.has(req.command)) {
+    console.log(`[bridge] local: ${req.command} (${req.id})`);
+    handleLocalCommand(req).then((res) => {
+      sender.send(JSON.stringify(res));
+    });
     return;
   }
 
@@ -134,6 +200,11 @@ function handleResponse(res: BridgeResponse) {
  * Used by the MCP server running in the same process.
  */
 export function sendToPlugin(req: BridgeRequest): Promise<BridgeResponse> {
+  // Handle server-side commands locally (no plugin needed)
+  if (LOCAL_COMMANDS.has(req.command)) {
+    return handleLocalCommand(req);
+  }
+
   return new Promise((resolve) => {
     if (!pluginSocket || pluginSocket.readyState !== WebSocket.OPEN) {
       commandQueue.push(req);

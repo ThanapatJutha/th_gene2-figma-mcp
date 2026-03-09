@@ -55,18 +55,13 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          to: '/component-map',
-          label: 'Component Map',
+          to: '/dashboard',
+          label: 'Dashboard',
           position: 'left',
         },
         {
-          to: '/discover',
-          label: 'Discover',
-          position: 'left',
-        },
-        {
-          to: '/components',
-          label: 'Components',
+          to: '/settings',
+          label: 'Settings',
           position: 'left',
         },
         {

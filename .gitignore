@@ -3,5 +3,8 @@ dist/
 .env
 .DS_Store
 
+# Local Figma Sync DB
+.figma-sync/
+
 # Compiled Figma plugin
 figma-plugin/code.js

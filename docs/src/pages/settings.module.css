@@ -1,0 +1,335 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.hero {
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.hero p {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 1.1rem;
+}
+
+.hero a {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+/* ── Connection bar ── */
+
+.connectionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--ifm-color-emphasis-100);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.connectionStatus {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.connectionActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Sections ── */
+
+.section {
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 10px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  background: var(--ifm-color-emphasis-50);
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.sectionIcon {
+  font-size: 20px;
+}
+
+.sectionTitle {
+  flex: 1;
+}
+
+.sectionBadge {
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: #7c3aed;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sectionBody {
+  padding: 20px;
+}
+
+/* ── Form elements ── */
+
+.formGroup {
+  margin-bottom: 16px;
+}
+
+.formGroup:last-child {
+  margin-bottom: 0;
+}
+
+.formLabel {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: var(--ifm-font-color-base);
+}
+
+.formInput,
+.formSelect {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.formInput:focus,
+.formSelect:focus,
+.formTextarea:focus {
+  border-color: #7c3aed;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.formTextarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'SFMono-Regular', 'Menlo', monospace;
+  background: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.formHint {
+  font-size: 12px;
+  color: var(--ifm-color-emphasis-500);
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.previewLink {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7c3aed;
+  text-decoration: none;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.previewLink:hover {
+  background: rgba(124, 58, 237, 0.2);
+  color: #7c3aed;
+  text-decoration: none;
+}
+
+/* ── Buttons ── */
+
+.btnPrimary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: var(--ifm-color-primary);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  transition: opacity 0.15s;
+}
+.btnPrimary:hover { opacity: 0.9; }
+.btnPrimary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnSecondary {
+  padding: 10px 20px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ifm-color-emphasis-700);
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btnSecondary:hover { background: var(--ifm-color-emphasis-50); }
+
+/* ── Action bar ── */
+
+.actionBar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+/* ── Banners ── */
+
+.errorBanner {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+[data-theme='dark'] .errorBanner {
+  background: #450a0a;
+  border-color: #991b1b;
+  color: #fca5a5;
+}
+
+.successBanner {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+[data-theme='dark'] .successBanner {
+  background: #052e16;
+  border-color: #166534;
+  color: #4ade80;
+}
+
+/* ── Empty state ── */
+
+.emptyState {
+  text-align: center;
+  padding: 48px 24px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.emptyState h2 {
+  margin-bottom: 12px;
+}
+
+.emptyInline {
+  text-align: center;
+  padding: 16px;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--ifm-color-emphasis-600);
+  margin-top: 12px;
+}
+
+/* ── Table ── */
+
+.tableWrap {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  text-align: left;
+  padding: 10px 12px;
+  background: var(--ifm-color-emphasis-100);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ifm-color-emphasis-600);
+  border-bottom: 2px solid var(--ifm-color-emphasis-200);
+}
+
+.table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ifm-color-emphasis-100);
+  vertical-align: middle;
+}
+
+.table tbody tr:hover {
+  background: var(--ifm-color-emphasis-50);
+}
+
+.exportBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--ifm-color-emphasis-100);
+  color: var(--ifm-color-emphasis-600);
+  text-transform: uppercase;
+}
+
+/* ── Info bar ── */
+
+.infoBar {
+  display: flex;
+  gap: 24px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--ifm-color-emphasis-50);
+  font-size: 13px;
+  color: var(--ifm-color-emphasis-600);
+  flex-wrap: wrap;
+}
+
+.infoBar code {
+  font-size: 12px;
+  background: var(--ifm-color-emphasis-100);
+  padding: 1px 6px;
+  border-radius: 4px;
+}

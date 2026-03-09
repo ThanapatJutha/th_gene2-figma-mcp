@@ -18,7 +18,7 @@ from Figma             should be components    selected layers        on Compone
 
 ### Step 1 — Scan all layers
 
-Open the [Discover page](/figma-sync/discover) and click **Connect**, then **🔍 Scan Layers**.
+Open the [Dashboard](/figma-sync/dashboard) and click **Connect**, then **🔍 Scan Layers**.
 
 The plugin reads every layer on the current Figma page and sends the full list to the browser. Each layer includes:
 
@@ -59,7 +59,7 @@ After conversion, the layer list refreshes automatically.
 
 ### Step 4 — View components
 
-Switch to the [Components page](/figma-sync/components) to see all existing components on the current Figma page:
+Check the **Components** section on the [Dashboard](/figma-sync/dashboard) to see all existing components on the current Figma page:
 
 - Live data fetched from Figma via the bridge
 - Card grid with name, node ID, size, description

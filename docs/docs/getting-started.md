@@ -70,7 +70,7 @@ Instead of running commands, you interact with Copilot using natural language. C
 | Pull design changes | *"Get the design context for HeaderCard from Figma node 1:5 in file ghwHnqX2WZXFtfmsrbRLTg"* |
 | Explore Figma file tree | *"Get the metadata for my Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
 | Get design tokens | *"Get the variable definitions from Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
-| View component mappings | Browse the [Component Map](/component-map) page |
+| View component mappings | Browse the [Dashboard](/dashboard) page |
 
 ## Project Structure
 
@@ -87,6 +87,6 @@ figma-sync/
 
 ## Next Steps
 
-- View the [Component Map](/component-map) to see current mappings
+- View the [Dashboard](/dashboard) to see current mappings
 - Read the [MCP Approach](/docs/approach/mcp-overview) to understand the sync strategy
 - Check the [Architecture](/docs/architecture) for the system overview

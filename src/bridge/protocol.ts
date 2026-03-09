@@ -34,7 +34,14 @@ export type BridgeCommand =
   | 'update-variable'
   | 'create-variable'
   | 'list-layers'
-  | 'list-components';
+  | 'list-components'
+  // ── Server-side commands (no plugin round-trip) ──
+  | 'read-config'
+  | 'save-config'
+  | 'list-project-components'
+  | 'list-directories'
+  | 'read-connections'
+  | 'save-connections';
 
 // ── Payload types per command ──────────────────────────────────────────
 
@@ -103,3 +110,45 @@ export interface SerializedVariable {
   valuesByMode: Record<string, unknown>;
   collectionName: string;
 }
+
+// ── Config & connections types (Code Connect aligned) ──────────────────
+
+export interface FigmaSyncConfig {
+  codeConnect: {
+    parser: string;          // e.g. "react", "html", "vue", "swift"
+    include: string[];       // glob patterns relative to rootDir
+    exclude: string[];       // glob patterns to skip
+    label: string;           // label shown in Figma Dev Mode
+    language: string;        // syntax highlighting language
+  };
+  figmaFileKey: string;      // default Figma file key
+  rootDir: string;           // project root (relative to config file)
+}
+
+export interface SaveConfigPayload {
+  config: FigmaSyncConfig;
+}
+
+export interface CodeConnection {
+  figmaNodeId: string;       // Figma node ID, e.g. "1:5"
+  figmaComponentName: string; // Name in Figma, e.g. "HeaderCard"
+  codeComponent: string;     // Code component name, e.g. "HeaderCard"
+  file: string;              // File path relative to rootDir
+  linkedAt: string;          // ISO 8601 timestamp
+}
+
+export interface ConnectionsStore {
+  version: 1;
+  connections: CodeConnection[];
+}
+
+export interface SaveConnectionsPayload {
+  connections: CodeConnection[];
+}
+
+export interface ProjectComponent {
+  name: string;              // exported component name
+  file: string;              // file path relative to rootDir
+  exportType: 'default' | 'named'; // how it's exported
+}
+

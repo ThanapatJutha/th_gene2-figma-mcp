@@ -344,20 +344,42 @@ async function handleListLayers(_p: { maxDepth?: number }) {
 async function handleListComponents() {
   var page = figma.currentPage;
   var components: Array<Record<string, unknown>> = [];
+  var allInstances: Array<Record<string, unknown>> = [];
 
   function walk(node: BaseNode) {
-    if (node.type === 'COMPONENT') {
-      var comp = node as ComponentNode;
+    if (node.type === 'COMPONENT' || node.type === 'COMPONENT_SET') {
+      var comp = node as SceneNode;
+      var childCount = 0;
+      if ('children' in comp) {
+        childCount = (comp as ChildrenMixin).children.length;
+      }
       components.push({
         id: comp.id,
         name: comp.name,
-        type: 'COMPONENT',
-        description: comp.description,
-        width: comp.width,
-        height: comp.height,
-        childCount: comp.children.length,
+        type: node.type,
+        description: ('description' in comp) ? (comp as ComponentNode).description : '',
+        width: (comp as any).width,
+        height: (comp as any).height,
+        childCount: childCount,
         x: comp.x,
         y: comp.y,
+      });
+    }
+    if (node.type === 'INSTANCE') {
+      var inst = node as InstanceNode;
+      var mainId = '';
+      if (inst.mainComponent) {
+        mainId = inst.mainComponent.id;
+      }
+      allInstances.push({
+        id: inst.id,
+        name: inst.name,
+        width: inst.width,
+        height: inst.height,
+        x: inst.x,
+        y: inst.y,
+        visible: inst.visible,
+        mainComponentId: mainId,
       });
     }
     if ('children' in node) {
@@ -371,6 +393,24 @@ async function handleListComponents() {
   var pageChildren = page.children;
   for (var i = 0; i < pageChildren.length; i++) {
     walk(pageChildren[i]);
+  }
+
+  // Group instances by their main component ID
+  var instanceMap: Record<string, Array<Record<string, unknown>>> = {};
+  for (var j = 0; j < allInstances.length; j++) {
+    var mainId = allInstances[j].mainComponentId as string;
+    if (mainId) {
+      if (!instanceMap[mainId]) {
+        instanceMap[mainId] = [];
+      }
+      instanceMap[mainId].push(allInstances[j]);
+    }
+  }
+
+  // Attach instances to their components
+  for (var k = 0; k < components.length; k++) {
+    var compId = components[k].id as string;
+    components[k].instances = instanceMap[compId] || [];
   }
 
   return {
