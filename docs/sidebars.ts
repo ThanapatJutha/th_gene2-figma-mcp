@@ -7,6 +7,13 @@ const sidebars: SidebarsConfig = {
     'setup-plugin',
     {
       type: 'category',
+      label: 'Usecases',
+      items: [
+        'usecases/convert-layer-to-component',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Approach',
       items: [
         'approach/mcp-overview',

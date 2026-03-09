@@ -93,6 +93,8 @@ In the plugin UI, you should see:
 🟢 Connected
 ```
 
+![Plugin connected and executing a queued command](/img/plugin-connected.png)
+
 In the bridge server terminal, you should see:
 
 ```
