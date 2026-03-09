@@ -158,7 +158,13 @@
         setStatus('connecting', `Connecting to ${url}…`);
         log('info', `Connecting to ${url}…`);
 
-        ws = new WebSocket(url);
+        try {
+          ws = new WebSocket(url);
+        } catch (err) {
+          log('err', `WebSocket constructor failed: ${err.message || err}`);
+          setStatus('disconnected', 'Failed to create WebSocket');
+          return;
+        }
 
         ws.onopen = () => {
           connectedAt = Date.now();
@@ -167,9 +173,9 @@
           startUptime();
         };
 
-        ws.onclose = () => {
+        ws.onclose = (e) => {
           setStatus('disconnected', 'Disconnected');
-          log('err', '❌ Disconnected from bridge');
+          log('err', `❌ Disconnected (code=${e.code} reason=${e.reason || 'none'})`);
           stopUptime();
           // Auto-reconnect after 3s
           setTimeout(() => {
@@ -181,7 +187,7 @@
         };
 
         ws.onerror = (e) => {
-          log('err', `WebSocket error: ${e.message || 'unknown'}`);
+          log('err', `WebSocket error: type=${e.type}, url=${url}`);
         };
 
         ws.onmessage = (event) => {
