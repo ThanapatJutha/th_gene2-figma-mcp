@@ -13,7 +13,10 @@
     "start": "node dist/cli.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "fmt": "prettier -w .",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "docs:dev": "cd docs && npm start -- --port 4000",
+    "docs:build": "cd docs && npm run build",
+    "docs:serve": "cd docs && npm run serve -- --port 4000"
   },
   "dependencies": {
     "commander": "^12.1.0",

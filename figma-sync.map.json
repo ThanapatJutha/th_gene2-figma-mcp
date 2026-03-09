@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
+  "components": [
+    {
+      "name": "HeaderCard",
+      "file": "poc-react/src/components/HeaderCard.tsx",
+      "figmaNodeId": "1:5",
+      "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
+      "selector": ".card:first-child"
+    },
+    {
+      "name": "CounterCard",
+      "file": "poc-react/src/components/CounterCard.tsx",
+      "figmaNodeId": "1:17",
+      "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
+      "selector": ".card:has(.pill)"
+    },
+    {
+      "name": "ToggleSwitch",
+      "file": "poc-react/src/components/ToggleSwitch.tsx",
+      "figmaNodeId": "1:42",
+      "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
+      "selector": ".toggle"
+    }
+  ]
+}
