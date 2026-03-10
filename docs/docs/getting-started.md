@@ -50,7 +50,28 @@ npm install
 
 Open [http://localhost:5173](http://localhost:5173) to see the POC app.
 
-### 4. Try your first sync
+### 4. Start the bridge server
+
+```bash
+npm run bridge
+```
+
+You should see: `[bridge] WebSocket server listening on ws://localhost:9001`
+
+The bridge handles two types of commands:
+- **Local commands** — config, connections, project scan (no Figma needed)
+- **Plugin commands** — forwarded to the Figma plugin running inside the desktop app
+
+### 5. Configure the project
+
+Open the [Settings](/settings) page in the documentation site and:
+
+1. Click **Connect** to connect to the bridge
+2. Enter your Figma File Key
+3. Select a root directory and review include/exclude patterns
+4. Click **Save Configuration** — this creates `figma.config.json`
+
+### 6. Try your first sync
 
 Open Copilot Agent Mode in VS Code and try:
 
@@ -76,17 +97,29 @@ Instead of running commands, you interact with Copilot using natural language. C
 
 ```
 figma-sync/
-  poc-react/            ← Sample React app (Vite + React 18)
-    src/
-      components/       ← HeaderCard, CounterCard, ToggleSwitch
-  docs/                 ← This documentation site (Docusaurus)
-  figma-sync.map.json   ← Component ↔ Figma node mappings
-  userstories/          ← Epic & user story tracking
-  .vscode/mcp.json      ← MCP server configuration
+  poc-react/                ← Sample React app (Vite + React 18)
+    src/components/         ← HeaderCard, CounterCard, ToggleSwitch
+  src/bridge/               ← Bridge server & MCP tools
+    server.ts               ← WebSocket server (local + plugin commands)
+    local-handlers.ts       ← Filesystem handlers (config, connections, scan)
+    mcp-server.ts           ← MCP server for Copilot integration
+    protocol.ts             ← Shared message types
+  figma-plugin/             ← Figma Plugin (runs inside Figma)
+    code.ts                 ← Plugin command handlers
+    ui.html                 ← Plugin UI + WebSocket client
+  docs/                     ← Documentation site (Docusaurus)
+    src/pages/dashboard.tsx ← Dashboard — Discover + Components
+    src/pages/settings.tsx  ← Settings — project configuration
+  figma.config.json         ← Project config (created via Settings)
+  .figma-sync/              ← Local DB (gitignored)
+    connections.json        ← Component links (created via Dashboard)
+  .vscode/mcp.json          ← MCP server configuration
 ```
 
 ## Next Steps
 
-- View the [Dashboard](/dashboard) to see current mappings
-- Read the [MCP Approach](/docs/approach/mcp-overview) to understand the sync strategy
-- Check the [Architecture](/docs/architecture) for the system overview
+- Configure the project via [Settings](/settings)
+- Link components in the [Dashboard](/dashboard)
+- Read the [Architecture](/docs/architecture) for the system overview
+- Learn about the [Bridge](/docs/bridge/overview) for write access to Figma
+- Understand the [Local Mapping](/docs/approach/local-mapping) approach for component linking

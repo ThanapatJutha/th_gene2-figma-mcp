@@ -61,7 +61,7 @@ You can trigger MCP tools conversationally in VS Code Agent Mode:
 
 > **You:** "Get the design context for the HeaderCard component from Figma"
 >
-> **Copilot:** Looks up node ID `1:5` from `figma-sync.map.json` → calls `get_design_context` → returns code + screenshot
+> **Copilot:** Looks up node ID from `.figma-sync/connections.json` → calls `get_design_context` → returns code + screenshot
 
 ## Rate Limits by Plan
 
@@ -75,17 +75,11 @@ You can trigger MCP tools conversationally in VS Code Agent Mode:
 
 ## Plugin Bridge MCP Tools
 
-In addition to the official Figma MCP server, we run a **custom MCP server** (`figma-bridge`) that connects to a Figma plugin via WebSocket. This enables write operations that the official tools cannot do.
+In addition to the official Figma MCP server, we run a **custom MCP server** (`figma-bridge`) that connects to a Figma plugin via WebSocket. This enables write operations that the official tools cannot do — and has **no rate limits**.
 
-| Tool | What it does | Rate Limit |
-|---|---|---|
-| `bridge_ping` | Check plugin connection | None |
-| `bridge_read_node` | Read any node's properties | None |
-| `bridge_read_tree` | Get the page node tree | None |
-| `bridge_create_component` | Convert frame → Figma Component | None |
-| `bridge_update_node` | Update text, fills, dimensions | None |
-| `bridge_read_variables` | Read design tokens (any plan) | None |
-| `bridge_create_variable` | Create a design token | None |
-| `bridge_update_variable` | Update a token value | None |
+See the [Bridge section](/docs/bridge/overview) for the full details:
 
-> See the [Plugin Bridge](/docs/approach/plugin-bridge) page for setup instructions.
+- [Bridge Overview](/docs/bridge/overview) — why a plugin is needed, architecture diagram
+- [Commands & MCP Tools](/docs/bridge/commands) — full list of local + plugin commands and MCP tools
+- [Message Protocol](/docs/bridge/protocol) — request/response format, routing, queuing
+- [Setup Guide](/docs/setup-plugin) — step-by-step setup instructions

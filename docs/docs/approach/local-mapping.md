@@ -23,84 +23,113 @@ get_code_connect_suggestions → ❌ Same error
 
 Both Code Connect MCP tools are blocked on Pro/Full plans.
 
-### Attempt 2: Local mapping file ✅
+### Attempt 2: Local config + connection DB ✅
 
-We created `figma-sync.map.json` — a simple JSON file committed to git that stores the same mapping data locally.
+We adopted **the same conventions as Figma Code Connect** — a config file at the project root plus a local connection store — so that migration to the real Code Connect is straightforward if the plan is upgraded.
 
-## The Solution: `figma-sync.map.json`
+## The Solution
+
+### 1. `figma.config.json` — Project Configuration
+
+Created via the **Settings** page in the Dashboard UI. Tells the system where to find components and which Figma file to target.
+
+```json
+{
+  "codeConnect": {
+    "parser": "react",
+    "include": ["poc-react/src/components/**/*.tsx"],
+    "exclude": ["**/*.test.*", "**/*.stories.*", "**/*.figma.*"],
+    "label": "React",
+    "language": "tsx"
+  },
+  "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
+  "rootDir": "."
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `codeConnect.parser` | string | Framework parser (`react`, `vue`, `svelte`, etc.) |
+| `codeConnect.include` | string[] | Glob patterns to find component files |
+| `codeConnect.exclude` | string[] | Glob patterns to skip |
+| `codeConnect.label` | string | Label shown in Figma Dev Mode |
+| `codeConnect.language` | string | Syntax highlighting language |
+| `figmaFileKey` | string | Default Figma file key |
+| `rootDir` | string | Project root relative to config file |
+
+### 2. `.figma-sync/connections.json` — Component Link Database
+
+Created automatically when a developer links a code component to a Figma component via the **Dashboard** page. This file is **gitignored** (local to each developer).
 
 ```json
 {
   "version": 1,
-  "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
-  "components": [
+  "connections": [
     {
-      "name": "HeaderCard",
-      "file": "poc-react/src/components/HeaderCard.tsx",
       "figmaNodeId": "1:5",
-      "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
-      "selector": ".card:first-child"
+      "figmaComponentName": "HeaderCard",
+      "codeComponent": "HeaderCard",
+      "file": "poc-react/src/components/HeaderCard.tsx",
+      "linkedAt": "2026-03-10T10:30:00.000Z"
     }
   ]
 }
 ```
 
-### Schema
-
 | Field | Type | Description |
 |---|---|---|
-| `version` | `1` | Schema version for forward compatibility |
-| `figmaFileKey` | string | Default Figma file key |
-| `components` | array | List of component mappings |
+| `figmaNodeId` | string | Figma node ID, e.g. `"1:5"` |
+| `figmaComponentName` | string | Name of the Figma component |
+| `codeComponent` | string | Exported code component name |
+| `file` | string | File path relative to rootDir |
+| `linkedAt` | string | ISO 8601 timestamp of when the link was created |
 
-### Component Mapping Fields
+## How Linking Works
 
-| Field | Required | Description |
-|---|---|---|
-| `name` | ✅ | React component name, e.g. `"HeaderCard"` |
-| `file` | ✅ | Path to `.tsx` file relative to repo root |
-| `figmaNodeId` | ✅ | Figma node ID, e.g. `"1:5"` |
-| `figmaFileKey` | ✅ | Figma file key |
-| `selector` | ❌ | CSS selector for push sync DOM targeting |
+1. Developer opens the **Dashboard** and connects to the bridge
+2. The bridge fetches **live components** from the Figma plugin (COMPONENT_SET + COMPONENT nodes)
+3. The bridge **scans project files** using the include/exclude globs from `figma.config.json`
+4. For each Figma component, a dropdown shows matching code components
+5. Developer selects and clicks **Link** — the connection is saved to `.figma-sync/connections.json`
+
+```
+┌─────────────┐                 ┌──────────────────┐
+│  Dashboard   │  ── ws ──►    │  Bridge Server    │
+│  (browser)   │               │                    │
+│              │               │  list-components   │──► Figma Plugin
+│  Link UI     │               │  list-project-     │──► Local filesystem
+│              │               │    components      │
+│              │  ◄── ws ──    │  save-connections  │──► .figma-sync/
+└─────────────┘                 └──────────────────┘
+```
 
 ## How Node IDs Were Discovered
 
-Node IDs were found using the MCP `get_metadata` tool, which returns the Figma file's node tree:
+Node IDs were found using the Figma plugin's `list-components` command, which returns all COMPONENT and COMPONENT_SET nodes from the open Figma file. You can also discover node IDs by:
 
-```xml
-<document name="poc-react">
-  <canvas name="Page 1" id="0:1">
-    <frame name="Frame 1" id="1:2">
-      <frame name="HeaderCard" id="1:5">...</frame>
-      <frame name="CounterCard" id="1:17">...</frame>
-      <frame name="ToggleSwitch" id="1:42">...</frame>
-    </frame>
-  </canvas>
-</document>
-```
+- Using the plugin's `list-layers` command in the Dashboard Discover tab
+- Prompting Copilot: *"Get the metadata for my Figma file ghwHnqX2WZXFtfmsrbRLTg"*
+- Selecting a node in Figma and reading its ID from the URL
 
-You can also discover node IDs by prompting Copilot:
+## Comparison: Local Approach vs Code Connect
 
-> **"Get the metadata for my Figma file ghwHnqX2WZXFtfmsrbRLTg and show me the node tree"**
-
-Copilot will call `get_metadata` and return the full node tree with IDs.
-
-## Comparison: Local File vs Code Connect
-
-| Aspect | Local File | Code Connect |
+| Aspect | Local (figma.config.json + .figma-sync/) | Code Connect |
 |---|---|---|
-| **Storage** | Git repo (`figma-sync.map.json`) | Figma servers |
+| **Config** | `figma.config.json` (same schema) | `figma.config.json` |
+| **Storage** | Local DB (`.figma-sync/connections.json`) | Figma servers |
 | **Plan required** | Any | Org/Enterprise |
 | **Visible in Figma Dev Mode** | ❌ | ✅ |
-| **Version controlled** | ✅ | ❌ |
+| **Version controlled** | Config: ✅ / Connections: optional | ❌ |
 | **Works offline** | ✅ | ❌ |
-| **MCP integration** | Via Copilot context | Native |
+| **Interactive UI** | ✅ Dashboard linking | ❌ CLI only |
+| **Config format** | Code Connect aligned | Native |
 
 ## Migration Path
 
 If the Figma plan is upgraded to Org/Enterprise:
 
-1. Read all entries from `figma-sync.map.json`
-2. Call `add_code_connect_map` for each component
+1. Read all entries from `.figma-sync/connections.json`
+2. Call `add_code_connect_map` for each connection
 3. Mappings move to Figma → designers see linked code in Dev Mode
-4. Local file becomes an optional backup
+4. `figma.config.json` remains unchanged (same format)
+5. Local connections file becomes an optional backup

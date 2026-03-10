@@ -11,30 +11,36 @@ Make the **code repo the single source of truth** for UI. Designers and develope
 ## System Overview
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                   CODE REPO (source of truth)        │
-│                                                      │
-│  React components + CSS tokens + Copilot (MCP)       │
-└──────────┬──────────────────────────┬────────────────┘
-           │                          │
-     PUSH (write)               PULL (read)
-           │                          │
-           ▼                          ▼
-┌──────────────────┐    ┌──────────────────────────────┐
-│ generate_figma_  │    │ get_design_context            │
-│ design           │    │ get_variable_defs             │
-│ (UNLIMITED)      │    │ get_metadata                  │
-│                  │    ├──────────────────────────────┤
-│ Local mapping    │    │ Plugin Bridge (MCP)           │
-│ file + Copilot   │    │ create_component · read/write │
-└────────┬─────────┘    └──────────────┬───────────────┘
-         │                             │
-         ▼                             ▼
-┌──────────────────────────────────────────────────────┐
-│                     FIGMA FILE                        │
-│  Editable frames · Component mappings · Tokens        │
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         CODE REPO (source of truth)                      │
+│                                                                          │
+│  React components ─── figma.config.json ─── .figma-sync/connections.json │
+└──────────┬──────────────────────┬─────────────────────────┬──────────────┘
+           │                      │                          │
+     PUSH (write)          CONFIG / LINK            PULL (read)
+           │                      │                          │
+           ▼                      ▼                          ▼
+┌─────────────────┐  ┌────────────────────────┐  ┌─────────────────────────┐
+│ generate_figma_ │  │    Bridge Server        │  │ get_design_context      │
+│ design          │  │    ws://localhost:9001   │  │ get_variable_defs       │
+│ (Figma MCP)     │  │                         │  │ get_metadata            │
+│                 │  │  LOCAL        PLUGIN     │  │ (Figma MCP)             │
+│                 │  │  commands     commands   │  │                         │
+│                 │  │  ┌─────────┐ ┌────────┐ │  │                         │
+│                 │  │  │ config  │ │ create │ │  │                         │
+│                 │  │  │ connect │ │ read   │ │  │                         │
+│                 │  │  │ scan    │ │ update │ │  │                         │
+│                 │  │  └─────────┘ └───┬────┘ │  │                         │
+└────────┬────────┘  └──────────────────┼──────┘  └────────────┬────────────┘
+         │                              │                       │
+         ▼                              ▼                       ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                            FIGMA FILE                                    │
+│         Editable frames · Components · Variables (tokens)                │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
+
+The bridge sits at the center — see the [Bridge section](/docs/bridge/overview) for details on how it works, all available [commands](/docs/bridge/commands), and the [message protocol](/docs/bridge/protocol).
 
 ## Data Flow
 
@@ -52,18 +58,35 @@ Make the **code repo the single source of truth** for UI. Designers and develope
 3. Copilot diffs the Figma state against current code
 4. Developer reviews and accepts changes
 
-## Epics
+### Link (Code ↔ Figma)
 
-| # | Epic | Status | Priority |
-|---|---|---|---|
-| 1 | Component Mapping | ✅ Done (local) | 🔴 High |
-| 2 | Push Sync (Code → Figma) | 🔲 Planned | 🔴 High |
-| 3 | Pull Sync (Figma → Code) | 🔲 Planned | 🔴 High |
-| 4 | Figma Plugin Bridge | ✅ Done | 🟡 Medium |
-| 5 | End-to-End Demo | 🔲 Planned | 🔴 High |
-| 6 | Documentation & UI | 🔄 In Progress | 🟢 Low |
+1. Developer opens the **Dashboard** and connects to the bridge
+2. Bridge fetches live components from Figma plugin + scans project files from config
+3. Developer links code components to Figma components via dropdown
+4. Links persist in `.figma-sync/connections.json`
+
+## Key Files
+
+### Configuration
+
+| File | Purpose | Created by |
+|---|---|---|
+| `figma.config.json` | Project config — file key, include/exclude globs, parser | Settings page |
+| `.figma-sync/connections.json` | Component link database — code ↔ Figma node mappings | Dashboard (auto) |
+| `.vscode/mcp.json` | MCP server registrations (Figma + figma-bridge) | Manual |
+
+### Source Code
+
+| Directory | Purpose |
+|---|---|
+| `src/bridge/` | Bridge server, local handlers, MCP server, protocol types |
+| `figma-plugin/` | Figma Plugin (code.ts, ui.html, manifest) |
+| `docs/src/pages/` | Dashboard + Settings UI |
+| `poc-react/src/components/` | Sample React components (HeaderCard, CounterCard, ToggleSwitch) |
 
 ## MCP Tool Capabilities
+
+### Official Figma MCP
 
 | Tool | Direction | Rate Limit (Pro) | Plan Required |
 |---|---|---|---|
@@ -74,12 +97,8 @@ Make the **code repo the single source of truth** for UI. Designers and develope
 | `add_code_connect_map` | Push | ✅ Unlimited | ⛔ Org/Enterprise |
 | `get_code_connect_suggestions` | Pull | 200/day | ⛔ Org/Enterprise |
 
-> **Key finding:** Code Connect requires Org/Enterprise plan. We use a local mapping file (`figma-sync.map.json`) instead.
+### Custom Bridge MCP (`figma-bridge`)
 
-## Implementation Order
+See [Bridge Commands](/docs/bridge/commands) for the full list of 10 MCP tools and all local/plugin commands.
 
-```
-Epic 1 (Mapping) ✅ → Epic 2 (Push) → Epic 3 (Pull) → Epic 5 (Demo)
-                                                      ↗
-                      Epic 4 (Plugin Bridge) ✅ ──────┘
-```
+> **Key finding:** Code Connect requires Org/Enterprise plan. We use `figma.config.json` + `.figma-sync/connections.json` instead — aligned with Code Connect conventions for future migration.

@@ -84,6 +84,7 @@ const config: Config = {
           items: [
             { label: 'Getting Started', to: '/docs/getting-started' },
             { label: 'Architecture', to: '/docs/architecture' },
+            { label: 'Bridge', to: '/docs/bridge/overview' },
           ],
         },
         {

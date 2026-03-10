@@ -1,9 +1,9 @@
 ---
-sidebar_position: 3
+sidebar_position: 4
 slug: /setup-plugin
 ---
 
-# Setup Plugin Bridge
+# Setup Guide
 
 Step-by-step guide to set up the Figma Plugin Bridge so Copilot can **read, write, and create components** in your Figma file.
 
@@ -93,8 +93,6 @@ In the plugin UI, you should see:
 🟢 Connected
 ```
 
-![Plugin connected and executing a queued command](/img/plugin-connected.png)
-
 In the bridge server terminal, you should see:
 
 ```
@@ -162,19 +160,6 @@ Now that everything is connected, here are real prompts to try in Copilot Agent 
 
 **What happens:** Copilot calls `bridge_read_node` → bridge relays to plugin → plugin reads the node via `figma.getNodeByIdAsync("1:5")` → returns name, type, dimensions, fills, etc.
 
-**Expected response:**
-```json
-{
-  "id": "1:5",
-  "name": "HeaderCard",
-  "type": "FRAME",
-  "visible": true,
-  "width": 320,
-  "height": 200,
-  "fills": [...]
-}
-```
-
 ### 🌳 Read the page tree
 
 > **"Show me the node tree of the current Figma page using the bridge"**
@@ -188,20 +173,6 @@ This is the key capability that only the plugin can do.
 > **"Convert Figma node 1:5 to a component named HeaderCard"**
 
 **What happens:** Copilot calls `bridge_create_component` → plugin runs `figma.createComponent()` → moves all children from the frame into the new component → removes the original frame.
-
-**Expected response:**
-```json
-{
-  "id": "2:100",
-  "name": "HeaderCard",
-  "type": "COMPONENT",
-  "width": 320,
-  "height": 200,
-  "childCount": 3
-}
-```
-
-You'll see the frame change to a **component** (◆ icon) in Figma's layers panel.
 
 ### ✏️ Update text
 
@@ -236,44 +207,3 @@ Use this checklist to confirm your setup:
 - [ ] Copilot `bridge_ping` returns `"pong"`
 - [ ] `bridge_read_node` returns node data for a known node ID
 - [ ] `bridge_create_component` converts a frame to a component in Figma
-
----
-
-## Architecture Recap
-
-```
-You (natural language)
-  │
-  ▼
-Copilot Agent Mode
-  │ calls bridge_* MCP tools
-  ▼
-figma-bridge MCP Server (stdio)     ← src/bridge/mcp-server.ts
-  │ in-process call
-  ▼
-Bridge WebSocket Server              ← src/bridge/server.ts
-  │ ws://localhost:9001
-  ▼
-Figma Plugin UI (iframe)             ← figma-plugin/ui.html
-  │ postMessage
-  ▼
-Figma Plugin Main Thread             ← figma-plugin/code.ts
-  │ figma.* API calls
-  ▼
-Figma File (live changes)
-```
-
----
-
-## Quick Reference: All Bridge Tools
-
-| Copilot Prompt | MCP Tool Called | What It Does |
-|---|---|---|
-| *"Ping the Figma bridge"* | `bridge_ping` | Check connection |
-| *"Read node 1:5 from Figma"* | `bridge_read_node` | Get node properties |
-| *"Show the Figma page tree"* | `bridge_read_tree` | Get node hierarchy |
-| *"Convert node 1:5 to a component"* | `bridge_create_component` | Frame → Component |
-| *"Update text in node 3:12"* | `bridge_update_node` | Modify node properties |
-| *"Read Figma design tokens"* | `bridge_read_variables` | List all variables |
-| *"Create a color variable"* | `bridge_create_variable` | New design token |
-| *"Update variable value"* | `bridge_update_variable` | Modify token value |

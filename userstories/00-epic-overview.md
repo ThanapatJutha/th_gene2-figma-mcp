@@ -1,4 +1,4 @@
-# Figma Sync POC — Epic Overview
+# Figma Sync POC — Overview
 
 ## Vision
 
@@ -16,57 +16,49 @@ Make the **code repo the single source of truth** for UI. Designers and develope
 | **Pull** screenshot | `get_screenshot` | ⚠️ 6/month | Available now |
 | Read component mappings | `get_code_connect_map` | ⚠️ 6/month | Available now |
 | Auto-suggest mappings | `get_code_connect_suggestions` | ⚠️ 6/month | Available now |
-| Modify node properties | Figma Plugin API only | No rate limit | Needs building |
+| Modify node properties | Figma Plugin API only | No rate limit | ✅ Done |
 | Modify node via REST API | ❌ Not possible | — | Does not exist |
 
 > **Source**: [GitHub Blog — Figma MCP can now generate design layers from VS Code](https://github.blog/changelog/2026-03-06-figma-mcp-server-can-now-generate-design-layers-from-vs-code/)
 
-## Revised architecture
+## Current Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                   CODE REPO (source of truth)        │
-│                                                      │
-│  React components + CSS tokens + figma-sync CLI      │
-└──────────┬──────────────────────────┬────────────────┘
-           │                          │
-     PUSH (write)               PULL (read)
-           │                          │
-           ▼                          ▼
-┌──────────────────┐    ┌──────────────────────────────┐
-│ generate_figma_  │    │ get_design_context (6/month)  │
-│ design           │    │ get_variable_defs  (6/month)  │
-│ (UNLIMITED)      │    │ get_metadata       (6/month)  │
-│                  │    ├──────────────────────────────┤
-│ add_code_connect │    │ Figma Plugin bridge          │
-│ _map (UNLIMITED) │    │ (UNLIMITED, stretch goal)    │
-└────────┬─────────┘    └──────────────┬───────────────┘
-         │                             │
-         ▼                             ▼
-┌──────────────────────────────────────────────────────┐
-│                     FIGMA FILE                        │
-│  Editable frames · Component mappings · Tokens        │
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                         CODE REPO (source of truth)                      │
+│                                                                          │
+│  React components ─── figma.config.json ─── .figma-sync/connections.json │
+└──────────┬──────────────────────┬─────────────────────────┬──────────────┘
+           │                      │                          │
+     PUSH (write)          CONFIG / LINK            PULL (read)
+           │                      │                          │
+           ▼                      ▼                          ▼
+┌─────────────────┐  ┌────────────────────────┐  ┌─────────────────────────┐
+│ generate_figma_ │  │    Bridge Server        │  │ get_design_context      │
+│ design          │  │    ws://localhost:9001   │  │ get_variable_defs       │
+│ (Figma MCP)     │  │                         │  │ get_metadata            │
+│                 │  │  LOCAL        PLUGIN     │  │ (Figma MCP)             │
+│                 │  │  commands     commands   │  │                         │
+└────────┬────────┘  └────────────┬────────────┘  └────────────┬────────────┘
+         │                        │                             │
+         ▼                        ▼                             ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                            FIGMA FILE                                    │
+│         Editable frames · Components · Variables (tokens)                │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Epics
+## What's Been Built
 
-| # | Epic | Priority | Depends on |
-|---|---|---|---|
-| 1 | [Component Mapping](01-component-mapping.md) | 🔴 High | — |
-| 2 | [Push Sync (Code → Figma)](02-push-sync.md) | 🔴 High | Epic 1 |
-| 3 | [Pull Sync (Figma → Code)](03-pull-sync.md) | 🔴 High | Epic 1 |
-| 4 | [Figma Plugin Bridge](04-figma-plugin-bridge.md) | 🟡 Medium | — |
-| 5 | [End-to-End Demo](05-e2e-demo.md) | 🔴 High | Epic 1–3 |
-| 6 | [Documentation & UI](06-docs-ui.md) | 🟢 Low | — |
-
-## Implementation order
-
-```
-Epic 1 (Mapping) → Epic 2 (Push) → Epic 3 (Pull) → Epic 5 (Demo)
-                                                  ↗
-                    Epic 4 (Plugin, stretch) ─────┘
-```
+| Area | What | Status |
+|---|---|---|
+| **Plugin Bridge** | WebSocket server + Figma Plugin + MCP tools | ✅ Done |
+| **Component Mapping** | Config (`figma.config.json`) + connections DB (`.figma-sync/`) | ✅ Done |
+| **Dashboard** | Discover layers + link code ↔ Figma components | ✅ Done |
+| **Settings** | Project config editor (file key, globs, parser) | ✅ Done |
+| **Push Sync** | `generate_figma_design` captures rendered UI | ✅ Available |
+| **Pull Sync** | `get_design_context` retrieves design + code | ✅ Available |
+| **Documentation** | Docusaurus site with architecture & approach docs | ✅ Done |
 
 ## Out of scope for POC
 

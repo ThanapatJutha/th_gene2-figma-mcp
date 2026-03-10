@@ -4,7 +4,16 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     'getting-started',
     'architecture',
-    'setup-plugin',
+    {
+      type: 'category',
+      label: 'Bridge',
+      items: [
+        'bridge/overview',
+        'bridge/commands',
+        'bridge/protocol',
+        'bridge/setup',
+      ],
+    },
     {
       type: 'category',
       label: 'Usecases',
@@ -19,7 +28,6 @@ const sidebars: SidebarsConfig = {
       items: [
         'approach/mcp-overview',
         'approach/local-mapping',
-        'approach/plugin-bridge',
       ],
     },
   ],

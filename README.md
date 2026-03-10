@@ -5,14 +5,15 @@ Copilot-driven bidirectional sync between a React codebase and Figma.
 
 ## How It Works
 
-There is **no CLI**. Everything runs through **GitHub Copilot Agent Mode** in VS Code, powered by the **Figma MCP server**.
+There is **no CLI**. Everything runs through **GitHub Copilot Agent Mode** in VS Code, powered by the **Figma MCP server** and a custom **Bridge Server**.
 
-| Action | Copilot Prompt |
+| Action | How |
 |---|---|
-| Push UI to Figma | *"Capture my React app at localhost:5173 and push to Figma"* |
-| Pull design context | *"Get the design context for node 1:5 in Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
-| Explore Figma file | *"Get metadata for Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
-| Get design tokens | *"Get variable definitions from Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
+| Push UI to Figma | Prompt Copilot: *"Capture my React app at localhost:5173 and push to Figma"* |
+| Pull design context | Prompt Copilot: *"Get the design context for node 1:5 in Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
+| Configure project | Open **Settings** page → set file key, include patterns → Save |
+| Link components | Open **Dashboard** → Components tab → link code ↔ Figma components |
+| Discover layers | Open **Dashboard** → Discover tab → scan Figma file tree |
 
 ## Quick Start
 
@@ -51,41 +52,50 @@ npm install
 
 Open [http://localhost:5173](http://localhost:5173).
 
-### 4. Try it
+### 4. Start the bridge server
 
-Open Copilot Agent Mode (⌘⇧I) and type:
+```bash
+npm run bridge
+```
 
-> "Capture my running React app at localhost:5173 and push it to Figma"
+The bridge handles **local commands** (config, connections, file scanning) and **plugin commands** (forwarded to the Figma Plugin running inside the desktop app).
+
+### 5. Configure the project
+
+Open the documentation site and go to the **Settings** page:
+
+```bash
+npm run docs:dev     # Dev server on http://localhost:4000/figma-sync/
+```
+
+Navigate to **Settings**, connect to the bridge, and save your project config. This creates `figma.config.json`.
+
+### 6. Link components
+
+Go to the **Dashboard** → **Components** section to link code components with Figma components. Links persist in `.figma-sync/connections.json`.
 
 ## Project Structure
 
 ```
 figma-sync/
-  poc-react/              ← Sample React app (Vite + React 18)
-    src/components/       ← HeaderCard, CounterCard, ToggleSwitch
-  docs/                   ← Documentation site (Docusaurus)
-  src/                    ← Shared types & mapping utilities
-    types.ts              ← FigmaSyncMap, ComponentMapping types
-    map.ts                ← Read/write figma-sync.map.json
-    nodes.ts              ← Figma node tree helpers
-  figma-sync.map.json     ← Component ↔ Figma node mappings
-  userstories/            ← Epic & user story tracking
-  .vscode/mcp.json        ← MCP server configuration
+  poc-react/                ← Sample React app (Vite + React 18)
+    src/components/         ← HeaderCard, CounterCard, ToggleSwitch
+  src/bridge/               ← Bridge server & MCP tools
+    server.ts               ← WebSocket server (local + plugin commands)
+    local-handlers.ts       ← Filesystem handlers (config, connections, scan)
+    mcp-server.ts           ← MCP server for Copilot integration
+    protocol.ts             ← Shared message types
+  figma-plugin/             ← Figma Plugin (runs inside Figma app)
+    code.ts                 ← Plugin command handlers
+    ui.html                 ← Plugin UI + WebSocket client
+  docs/                     ← Documentation site (Docusaurus)
+    src/pages/dashboard.tsx ← Dashboard — Discover + Components
+    src/pages/settings.tsx  ← Settings — project configuration
+  figma.config.json         ← Project config (created via Settings page)
+  .figma-sync/              ← Local DB — gitignored
+    connections.json        ← Component links (created via Dashboard)
+  .vscode/mcp.json          ← MCP server configuration
 ```
-
-## Component Mappings
-
-Mappings live in `figma-sync.map.json`. Current mappings:
-
-| Component | File | Figma Node |
-|---|---|---|
-| HeaderCard | `poc-react/src/components/HeaderCard.tsx` | `1:5` |
-| CounterCard | `poc-react/src/components/CounterCard.tsx` | `1:17` |
-| ToggleSwitch | `poc-react/src/components/ToggleSwitch.tsx` | `1:42` |
-
-To add a mapping, edit the file directly or prompt Copilot:
-
-> "Add a mapping for MyComponent at poc-react/src/components/MyComponent.tsx with Figma node 1:99"
 
 ## Documentation Site
 
@@ -94,6 +104,10 @@ npm run docs:dev     # Dev server on http://localhost:4000/figma-sync/
 npm run docs:build   # Production build
 npm run docs:serve   # Serve the build locally
 ```
+
+Pages:
+- **Dashboard** — Discover Figma layers, link code ↔ Figma components
+- **Settings** — Configure project file key, include/exclude patterns, parser
 
 ## License
 
