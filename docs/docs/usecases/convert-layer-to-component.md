@@ -25,7 +25,7 @@ Make sure the Plugin Bridge is fully set up:
 - ✅ Figma plugin open and showing 🟢 **Connected**
 - ✅ Copilot Agent Mode enabled in VS Code
 
-See [Setup Plugin Bridge](/docs/setup-plugin) for the full setup guide.
+See [Getting Started](/docs/getting-started) for the full setup guide.
 
 ![Plugin connected to the bridge](/img/plugin-connected.png)
 

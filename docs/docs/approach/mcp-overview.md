@@ -82,4 +82,4 @@ See the [Bridge section](/docs/bridge/overview) for the full details:
 - [Bridge Overview](/docs/bridge/overview) — why a plugin is needed, architecture diagram
 - [Commands & MCP Tools](/docs/bridge/commands) — full list of local + plugin commands and MCP tools
 - [Message Protocol](/docs/bridge/protocol) — request/response format, routing, queuing
-- [Setup Guide](/docs/setup-plugin) — step-by-step setup instructions
+- [Getting Started](/docs/getting-started) — full setup instructions

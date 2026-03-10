@@ -9,13 +9,12 @@ slug: /getting-started
 
 ## Prerequisites
 
-- **VS Code** with **GitHub Copilot** (Agent Mode)
-- **Figma account** (Pro plan or higher recommended)
-- **Node.js** 20+ (for the sample React app)
+- ✅ **VS Code** with **GitHub Copilot** (Agent Mode)
+- ✅ **Figma desktop app** installed ([download](https://www.figma.com/downloads/))
+- ✅ **Figma account** (Pro plan or higher recommended)
+- ✅ **Node.js 20+** installed
 
-## Quick Setup
-
-### 1. Clone the repo
+## Step 1: Clone & Install
 
 ```bash
 git clone https://github.com/patja60/figma-sync.git
@@ -23,46 +22,110 @@ cd figma-sync
 npm install
 ```
 
-### 2. Configure the Figma MCP server
+## Step 2: Configure MCP Servers
 
-The project includes `.vscode/mcp.json` which connects Copilot to Figma:
+The project includes `.vscode/mcp.json` which connects Copilot to both the **official Figma MCP** (read-only tools) and the **custom bridge MCP** (read + write via plugin):
 
 ```json
 {
   "servers": {
-    "Figma": {
+    "figma": {
       "type": "http",
       "url": "https://mcp.figma.com/mcp"
+    },
+    "figma-bridge": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "src/mcp-server.ts"],
+      "cwd": "${workspaceFolder}"
     }
   }
 }
 ```
 
+| Server | Transport | Purpose |
+|--------|-----------|---------|
+| `figma` | HTTP | Official Figma MCP — push UI, pull design context, variables |
+| `figma-bridge` | stdio | Custom bridge — read/write nodes, create components, design tokens |
+
 When you first use a Figma MCP tool, a browser window opens for OAuth authentication.
 
-### 3. Run the sample React app
+## Step 3: Compile the Figma Plugin
+
+The plugin is written in TypeScript and needs to be compiled before Figma can load it.
 
 ```bash
-cd demo
-npm install
-./node_modules/.bin/vite --port 5173
+npm run plugin:build
 ```
 
-Open [http://localhost:5173](http://localhost:5173) to see the POC app.
+This compiles `figma-plugin/code.ts` → `figma-plugin/code.js`.
 
-### 4. Start the bridge server
+## Step 4: Start the Bridge Server
+
+The bridge server is a local WebSocket relay that sits between Copilot and the Figma plugin.
 
 ```bash
 npm run bridge
 ```
 
-You should see: `[bridge] WebSocket server listening on ws://localhost:9001`
+You should see:
+
+```
+[bridge] WebSocket server listening on ws://localhost:9001
+```
+
+:::tip
+Keep this terminal open — the bridge must be running whenever you use the plugin.
+:::
 
 The bridge handles two types of commands:
 - **Local commands** — config, connections, project scan (no Figma needed)
 - **Plugin commands** — forwarded to the Figma plugin running inside the desktop app
 
-### 5. Configure the project
+## Step 5: Load the Plugin in Figma
+
+1. Open the **Figma desktop app**
+2. Open the Figma file you want to work with
+3. Go to the menu: **Plugins → Development → Import plugin from manifest…**
+4. Navigate to your repo folder and select:
+   ```
+   figma-sync/figma-plugin/manifest.json
+   ```
+5. The plugin **"Figma Sync Bridge"** will appear under **Plugins → Development**
+
+### Run the plugin
+
+1. **Plugins → Development → Figma Sync Bridge**
+2. The plugin UI opens and **auto-connects** to `ws://localhost:9001`
+
+### Verify
+
+In the plugin UI, you should see:
+
+```
+🔗 Figma Sync Bridge
+🟢 Connected
+```
+
+In the bridge server terminal:
+
+```
+[bridge] ✅ Figma plugin connected
+```
+
+:::caution
+If the status shows 🔴 **Disconnected**, make sure the bridge server from Step 4 is still running. The plugin retries every 3 seconds.
+:::
+
+## Step 6: Verify Everything Works
+
+Open **Copilot Chat** in VS Code (⌘⇧I for Agent Mode) and type:
+
+> **"Use bridge_ping to check if the Figma plugin is connected"**
+
+Copilot should call `bridge_ping` and return `"pong"`. If you see that, **everything is working end-to-end** ✅
+
+## Step 7: Configure the Project
 
 Open the [Settings](/settings) page in the documentation site and:
 
@@ -71,27 +134,52 @@ Open the [Settings](/settings) page in the documentation site and:
 3. Select a root directory and review include/exclude patterns
 4. Click **Save Configuration** — this creates `figma.config.json`
 
-### 6. Try your first sync
+## Step 8: Run the Demo App (optional)
 
-Open Copilot Agent Mode in VS Code and try:
+```bash
+cd demo
+npm install
+./node_modules/.bin/vite --port 5173
+```
 
-> **"Capture my running React app at localhost:5173 and push it to Figma"**
+Open [http://localhost:5173](http://localhost:5173) to see the sample React app.
 
-Copilot will call `generate_figma_design` to capture the rendered page and create editable frames in a new Figma file.
+## Try It Out
 
-## How It Works
+Now that everything is connected, try these prompts in Copilot Agent Mode:
 
-Instead of running commands, you interact with Copilot using natural language. Copilot uses the **Figma MCP server** to call Figma tools on your behalf.
-
-### Example Prompts
-
-| What you want | Prompt to Copilot |
+| What you want | Prompt |
 |---|---|
-| Push UI to Figma | *"Capture my React app at localhost:5173 and push to the existing Figma file"* |
-| Pull design changes | *"Get the design context for HeaderCard from Figma node 1:5 in file ghwHnqX2WZXFtfmsrbRLTg"* |
-| Explore Figma file tree | *"Get the metadata for my Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
-| Get design tokens | *"Get the variable definitions from Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
+| Push UI to Figma | *"Capture my React app at localhost:5173 and push to Figma"* |
+| Read a Figma node | *"Read the properties of Figma node 1:5 using the bridge"* |
+| Convert frame → component | *"Convert Figma node 1:5 to a component named HeaderCard"* |
+| Read page tree | *"Show me the node tree of the current Figma page using the bridge"* |
+| Pull design context | *"Get the design context for HeaderCard from Figma node 1:5"* |
+| Read design tokens | *"Read all the design variables from Figma using the bridge"* |
+| Create a design token | *"Create a color variable called 'brand-primary' with value #0D99FF"* |
+| Update text | *"Update the text in Figma node 3:12 to say 'Welcome to Figma Sync'"* |
 | View component mappings | Browse the [Dashboard](/dashboard) page |
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| Copilot says "tool not found" | Restart VS Code or click "Start" on `figma-bridge` in MCP panel |
+| `bridge_ping` returns error | Bridge server not running — run `npm run bridge` |
+| Bridge says "plugin not connected" | Open the plugin in Figma: Plugins → Development → Figma Sync Bridge |
+| Plugin shows 🔴 Disconnected | Restart `npm run bridge` — plugin auto-reconnects in 3s |
+| `npx vite` picks wrong version | Use the local binary: `./node_modules/.bin/vite` |
+
+## Setup Checklist
+
+- [ ] `npm install` completed
+- [ ] `npm run plugin:build` produces `figma-plugin/code.js`
+- [ ] `npm run bridge` shows `WebSocket server listening on ws://localhost:9001`
+- [ ] Plugin loaded in Figma via **Import plugin from manifest**
+- [ ] Plugin UI shows 🟢 **Connected**
+- [ ] Bridge terminal shows `✅ Figma plugin connected`
+- [ ] Copilot `bridge_ping` returns `"pong"`
+- [ ] `figma.config.json` created via Settings page
 
 ## Project Structure
 
@@ -104,7 +192,7 @@ figma-sync/
     local-handlers.ts       ← Filesystem handlers (config, connections, scan)
     mcp-server.ts           ← MCP server for Copilot integration
     protocol.ts             ← Shared message types
-  figma-plugin/             ← Figma Plugin (runs inside Figma)
+  figma-plugin/             ← Figma Plugin (runs inside Figma app)
     code.ts                 ← Plugin command handlers
     ui.html                 ← Plugin UI + WebSocket client
   docs/                     ← Documentation site (Docusaurus)
@@ -118,7 +206,6 @@ figma-sync/
 
 ## Next Steps
 
-- Configure the project via [Settings](/settings)
 - Link components in the [Dashboard](/dashboard)
 - Read the [Architecture](/docs/architecture) for the system overview
 - Learn about the [Bridge](/docs/bridge/overview) for write access to Figma

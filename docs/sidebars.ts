@@ -11,7 +11,6 @@ const sidebars: SidebarsConfig = {
         'bridge/overview',
         'bridge/commands',
         'bridge/protocol',
-        'bridge/setup',
       ],
     },
     {
