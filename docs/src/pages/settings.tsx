@@ -60,7 +60,7 @@ export default function SettingsPage(): React.JSX.Element {
 
   // ── Form fields ──
   const [figmaFileKey, setFigmaFileKey] = useState('');
-  const [rootDir, setRootDir] = useState('.');
+  const [rootDir, setRootDir] = useState('demo');
   const [parser, setParser] = useState('react');
   const [language, setLanguage] = useState('tsx');
   const [label, setLabel] = useState('React');
@@ -71,11 +71,18 @@ export default function SettingsPage(): React.JSX.Element {
   const [scanResult, setScanResult] = useState<Array<{ name: string; file: string; exportType: string }> | null>(null);
   const [scanning, setScanning] = useState(false);
 
-  // ── Directory list for dropdown ──
-  const [directories, setDirectories] = useState<string[]>(['.']);
+  // ── Root dir validation state ──
+  const [rootDirValid, setRootDirValid] = useState<null | {
+    exists: boolean;
+    resolvedPath: string;
+    hasPackageJson: boolean;
+    hasSrcDir: boolean;
+  }>(null);
+  const [validating, setValidating] = useState(false);
+  const [rootDirError, setRootDirError] = useState<string | null>(null);
 
   // ── Default patterns for new configs ──
-  const DEFAULT_INCLUDE = 'demo/src/components/**/*.tsx';
+  const DEFAULT_INCLUDE = 'src/components/**/*.tsx';
   const DEFAULT_EXCLUDE = '**/*.test.*\n**/*.stories.*\n**/*.figma.*';
 
   // ── Load config on connect ──
@@ -84,12 +91,6 @@ export default function SettingsPage(): React.JSX.Element {
     setLoading(true);
     setError(null);
     try {
-      // Fetch directories for dropdown
-      const dirData = (await send('list-directories')) as { directories: string[] } | null;
-      if (dirData?.directories) {
-        setDirectories(dirData.directories);
-      }
-
       const data = (await send('read-config')) as FigmaSyncConfig | null;
       if (data) {
         setConfig(data);
@@ -265,17 +266,87 @@ export default function SettingsPage(): React.JSX.Element {
               </div>
               <div className={styles.sectionBody}>
                 <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>Root Directory</label>
-                  <select
-                    className={styles.formSelect}
-                    value={rootDir}
-                    onChange={(e) => { setRootDir(e.target.value); markDirty(); }}
-                  >
-                    {directories.map((d) => (
-                      <option key={d} value={d}>{d === '.' ? '. (project root)' : d}</option>
-                    ))}
-                  </select>
-                  <p className={styles.formHint}>Project root relative to the config file</p>
+                  <label className={styles.formLabel}>Target Project Root</label>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <input
+                      className={styles.formInput}
+                      type="text"
+                      value={rootDir}
+                      onChange={(e) => {
+                        setRootDir(e.target.value);
+                        setRootDirValid(null);
+                        setRootDirError(null);
+                        markDirty();
+                      }}
+                      placeholder="../my-app  or  /absolute/path/to/project"
+                      style={{ flex: 1 }}
+                    />
+                    <button
+                      className={styles.btnSecondary}
+                      style={{ whiteSpace: 'nowrap', marginTop: 0 }}
+                      disabled={validating || !rootDir.trim()}
+                      onClick={async () => {
+                        setValidating(true);
+                        setRootDirValid(null);
+                        setRootDirError(null);
+                        try {
+                          const info = (await send('validate-root-dir', { path: rootDir })) as {
+                            exists: boolean;
+                            resolvedPath: string;
+                            hasPackageJson: boolean;
+                            hasSrcDir: boolean;
+                          };
+                          setRootDirValid(info);
+                        } catch (err) {
+                          setRootDirError(err instanceof Error ? err.message : 'Failed to validate path');
+                        } finally {
+                          setValidating(false);
+                        }
+                      }}
+                    >
+                      {validating ? '…' : '📂 Verify'}
+                    </button>
+                  </div>
+                  {rootDirValid && (
+                    <div style={{
+                      marginTop: 6,
+                      padding: '8px 12px',
+                      borderRadius: 6,
+                      fontSize: 13,
+                      background: rootDirValid.exists
+                        ? 'rgba(40, 167, 69, 0.1)'
+                        : 'rgba(220, 53, 69, 0.1)',
+                      color: rootDirValid.exists ? '#28a745' : '#dc3545',
+                    }}>
+                      {rootDirValid.exists ? (
+                        <>
+                          ✅ Found: <code>{rootDirValid.resolvedPath}</code>
+                          {rootDirValid.hasPackageJson && ' · has package.json'}
+                          {rootDirValid.hasSrcDir && ' · has src/'}
+                        </>
+                      ) : (
+                        <>❌ Directory not found. Check the path and try again.</>
+                      )}
+                    </div>
+                  )}
+                  {rootDirError && (
+                    <div style={{
+                      marginTop: 6,
+                      padding: '8px 12px',
+                      borderRadius: 6,
+                      fontSize: 13,
+                      background: 'rgba(220, 53, 69, 0.1)',
+                      color: '#dc3545',
+                    }}>
+                      ⚠️ {rootDirError}
+                    </div>
+                  )}
+                  <p className={styles.formHint}>
+                    Path to the <strong>target project</strong> you want to sync with Figma.
+                    Can be a relative path (e.g. <code>../my-app</code>, <code>demo</code>) resolved from the figma-sync root,
+                    or an absolute path (e.g. <code>/Users/you/projects/my-app</code>).
+                    Include/exclude patterns below are resolved relative to this directory.
+                  </p>
                 </div>
 
                 <div className={styles.formGroup}>
@@ -284,10 +355,13 @@ export default function SettingsPage(): React.JSX.Element {
                     className={styles.formTextarea}
                     value={includePatterns}
                     onChange={(e) => { setIncludePatterns(e.target.value); markDirty(); }}
-                    placeholder={"demo/src/components/**/*.tsx"}
+                    placeholder={"src/components/**/*.tsx"}
                     rows={3}
                   />
-                  <p className={styles.formHint}>Glob patterns to find component files (one per line)</p>
+                  <p className={styles.formHint}>
+                    Glob patterns to discover component files for <strong>Code Connect mapping</strong> — these are the components
+                    that will appear in the Dashboard for linking to Figma layers. Paths are relative to Target Project Root (one per line).
+                  </p>
                 </div>
 
                 <div className={styles.formGroup}>
@@ -299,7 +373,9 @@ export default function SettingsPage(): React.JSX.Element {
                     placeholder={"**/*.test.*\n**/*.stories.*\n**/*.figma.*"}
                     rows={3}
                   />
-                  <p className={styles.formHint}>Glob patterns to skip (one per line)</p>
+                  <p className={styles.formHint}>
+                    Glob patterns to exclude from component discovery — skip tests, stories, and generated files (one per line).
+                  </p>
                 </div>
               </div>
             </div>

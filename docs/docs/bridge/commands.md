@@ -16,7 +16,8 @@ These run directly on the bridge server — no Figma desktop needed. They read/w
 | `read-config` | Read `figma.config.json` |
 | `save-config` | Write `figma.config.json` |
 | `list-project-components` | Scan files matching include/exclude globs from config |
-| `list-directories` | List project subdirectories (for Settings root directory dropdown) |
+| `list-directories` | List subdirectories in the project root |
+| `validate-root-dir` | Validate a target project path (exists, has package.json, etc.) |
 | `read-connections` | Read `.figma-sync/connections.json` |
 | `save-connections` | Write `.figma-sync/connections.json` |
 
@@ -24,7 +25,7 @@ These run directly on the bridge server — no Figma desktop needed. They read/w
 
 | Caller | How |
 |---|---|
-| **Settings page** | WebSocket → `read-config`, `save-config`, `list-directories` |
+| **Settings page** | WebSocket → `read-config`, `save-config`, `validate-root-dir` |
 | **Dashboard** | WebSocket → `list-project-components`, `read-connections`, `save-connections` |
 | **MCP Server** | In-process → any local command |
 

@@ -2,7 +2,7 @@
   "codeConnect": {
     "parser": "react",
     "include": [
-      "demo/src/components/**/*.tsx"
+      "src/components/**/*.tsx"
     ],
     "exclude": [
       "**/*.test.*",
@@ -13,5 +13,5 @@
     "language": "tsx"
   },
   "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
-  "rootDir": "."
+  "rootDir": "demo"
 }

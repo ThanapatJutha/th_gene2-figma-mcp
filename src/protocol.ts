@@ -40,6 +40,7 @@ export type BridgeCommand =
   | 'save-config'
   | 'list-project-components'
   | 'list-directories'
+  | 'validate-root-dir'
   | 'read-connections'
   | 'save-connections';
 

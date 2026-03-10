@@ -15,6 +15,7 @@ import {
   saveConnections,
   listProjectComponents,
   listDirectories,
+  validateRootDir,
 } from './local-handlers.js';
 
 const PORT = Number(process.env.BRIDGE_PORT ?? 9001);
@@ -91,6 +92,7 @@ const LOCAL_COMMANDS = new Set([
   'save-config',
   'list-project-components',
   'list-directories',
+  'validate-root-dir',
   'read-connections',
   'save-connections',
 ]);
@@ -119,6 +121,11 @@ async function handleLocalCommand(req: BridgeRequest): Promise<BridgeResponse> {
       case 'list-directories': {
         const directories = await listDirectories();
         return { id: req.id, type: 'response', success: true, data: { directories } };
+      }
+
+      case 'validate-root-dir': {
+        const info = await validateRootDir(req.payload.path as string);
+        return { id: req.id, type: 'response', success: true, data: info };
       }
 
       case 'read-connections': {

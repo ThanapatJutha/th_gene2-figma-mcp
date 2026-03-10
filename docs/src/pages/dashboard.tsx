@@ -559,7 +559,7 @@ export default function DashboardPage(): React.JSX.Element {
                 <ol className={styles.steps}>
                   <li>Go to <a href="/figma-sync/settings"><strong>⚙️ Settings</strong></a></li>
                   <li>Set your <strong>Figma File Key</strong></li>
-                  <li>Configure <strong>component include patterns</strong> (e.g. <code>demo/src/components/**/*.tsx</code>)</li>
+                  <li>Configure <strong>component include patterns</strong> (e.g. <code>src/components/**/*.tsx</code>)</li>
                   <li>Click <strong>Save Configuration</strong></li>
                 </ol>
                 <a href="/figma-sync/settings" className={styles.btnPrimary} style={{ display: 'inline-block', marginTop: 12, textDecoration: 'none' }}>

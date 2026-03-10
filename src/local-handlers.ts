@@ -63,6 +63,35 @@ export async function saveConnections(connections: CodeConnection[]): Promise<vo
   await writeFile(CONNECTIONS_PATH, JSON.stringify(store, null, 2) + '\n', 'utf8');
 }
 
+// ── Root dir validation ────────────────────────────────────────────────
+
+export interface RootDirInfo {
+  exists: boolean;
+  resolvedPath: string;
+  hasPackageJson: boolean;
+  hasSrcDir: boolean;
+}
+
+/**
+ * Validate a root directory path.
+ * Accepts relative paths (resolved from PROJECT_ROOT) or absolute paths.
+ * Returns info about whether the path exists and looks like a valid project.
+ */
+export async function validateRootDir(dirPath: string): Promise<RootDirInfo> {
+  const resolvedPath = resolve(PROJECT_ROOT, dirPath);
+  const exists = existsSync(resolvedPath);
+
+  let hasPackageJson = false;
+  let hasSrcDir = false;
+
+  if (exists) {
+    hasPackageJson = existsSync(resolve(resolvedPath, 'package.json'));
+    hasSrcDir = existsSync(resolve(resolvedPath, 'src'));
+  }
+
+  return { exists, resolvedPath, hasPackageJson, hasSrcDir };
+}
+
 // ── Project component scanner ──────────────────────────────────────────
 
 /**

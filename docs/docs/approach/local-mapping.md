@@ -37,25 +37,25 @@ Created via the **Settings** page in the Dashboard UI. Tells the system where to
 {
   "codeConnect": {
     "parser": "react",
-    "include": ["demo/src/components/**/*.tsx"],
+    "include": ["src/components/**/*.tsx"],
     "exclude": ["**/*.test.*", "**/*.stories.*", "**/*.figma.*"],
     "label": "React",
     "language": "tsx"
   },
   "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
-  "rootDir": "."
+  "rootDir": "demo"
 }
 ```
 
 | Field | Type | Description |
 |---|---|---|
 | `codeConnect.parser` | string | Framework parser (`react`, `vue`, `svelte`, etc.) |
-| `codeConnect.include` | string[] | Glob patterns to find component files |
+| `codeConnect.include` | string[] | Glob patterns to find component files (relative to `rootDir`) |
 | `codeConnect.exclude` | string[] | Glob patterns to skip |
 | `codeConnect.label` | string | Label shown in Figma Dev Mode |
 | `codeConnect.language` | string | Syntax highlighting language |
 | `figmaFileKey` | string | Default Figma file key |
-| `rootDir` | string | Project root relative to config file |
+| `rootDir` | string | Path to the target project — relative to figma-sync root (e.g. `demo`, `../my-app`) or absolute |
 
 ### 2. `.figma-sync/connections.json` — Component Link Database
 
@@ -69,7 +69,7 @@ Created automatically when a developer links a code component to a Figma compone
       "figmaNodeId": "1:5",
       "figmaComponentName": "HeaderCard",
       "codeComponent": "HeaderCard",
-      "file": "demo/src/components/HeaderCard.tsx",
+      "file": "src/components/HeaderCard.tsx",
       "linkedAt": "2026-03-10T10:30:00.000Z"
     }
   ]
