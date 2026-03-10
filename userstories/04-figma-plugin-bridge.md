@@ -46,19 +46,19 @@ Requires Figma desktop app to be open with the plugin running. No headless/backg
 **So that** I have a communication channel to Figma  
 
 **Acceptance Criteria:**
-- [ ] Server starts via `npm run bridge` or `figma-sync bridge`
-- [ ] Listens on `ws://localhost:9001`
-- [ ] Accepts JSON messages: `{ id, type, command, payload }`
-- [ ] Queues commands when plugin is not connected
-- [ ] Logs connection/disconnection events
+- [x] Server starts via `npm run bridge` or `figma-sync bridge`
+- [x] Listens on `ws://localhost:9001`
+- [x] Accepts JSON messages: `{ id, type, command, payload }`
+- [x] Queues commands when plugin is not connected
+- [x] Logs connection/disconnection events
 
 **Tasks:**
-- [ ] Create `src/bridge/server.ts` with WebSocket server (`ws` package)
-- [ ] Define message protocol in `src/bridge/protocol.ts`
-- [ ] Add connection management (track plugin client vs CLI client)
-- [ ] Add command queue for offline plugin
-- [ ] Add `bridge` command to CLI
-- [ ] Add `ws` to `package.json` dependencies
+- [x] Create `src/bridge/server.ts` with WebSocket server (`ws` package)
+- [x] Define message protocol in `src/bridge/protocol.ts`
+- [x] Add connection management (track plugin client vs CLI client)
+- [x] Add command queue for offline plugin
+- [x] Add `bridge` command to CLI
+- [x] Add `ws` to `package.json` dependencies
 
 ---
 
@@ -69,17 +69,17 @@ Requires Figma desktop app to be open with the plugin running. No headless/backg
 **So that** the plugin can receive and execute commands from Copilot/CLI  
 
 **Acceptance Criteria:**
-- [ ] Plugin has a UI with connection status (🟢 connected / 🔴 disconnected)
-- [ ] Plugin UI iframe connects to `ws://localhost:9001`
-- [ ] Main thread receives commands from UI via `postMessage`
-- [ ] Activity log shows received commands and results
+- [x] Plugin has a UI with connection status (🟢 connected / 🔴 disconnected)
+- [x] Plugin UI iframe connects to `ws://localhost:9001`
+- [x] Main thread receives commands from UI via `postMessage`
+- [x] Activity log shows received commands and results
 
 **Tasks:**
-- [ ] Create `figma-plugin/` directory with `manifest.json`
-- [ ] Set up plugin UI (`ui.html`) with WebSocket connection
-- [ ] Set up main thread (`code.ts`) with `postMessage` handler
-- [ ] Declare `networkAccess` for `localhost:9001`
-- [ ] Show connection status and activity log in UI
+- [x] Create `figma-plugin/` directory with `manifest.json`
+- [x] Set up plugin UI (`ui.html`) with WebSocket connection
+- [x] Set up main thread (`code.ts`) with `postMessage` handler
+- [x] Declare `networkAccess` for `localhost:9001`
+- [x] Show connection status and activity log in UI
 
 ---
 
@@ -90,15 +90,15 @@ Requires Figma desktop app to be open with the plugin running. No headless/backg
 **So that** I can compare Figma state against code without using rate-limited MCP tools  
 
 **Acceptance Criteria:**
-- [ ] Bridge command `read-node { nodeId }` returns node type, name, text content, fills, dimensions, children
-- [ ] Works for text nodes, frames, rectangles, components
-- [ ] Returns structured JSON matching a defined schema
+- [x] Bridge command `read-node { nodeId }` returns node type, name, text content, fills, dimensions, children
+- [x] Works for text nodes, frames, rectangles, components
+- [x] Returns structured JSON matching a defined schema
 
 **Tasks:**
-- [ ] Implement `read-node` handler in plugin main thread
-- [ ] Serialize relevant node properties to JSON
-- [ ] Handle different node types (TEXT, FRAME, RECTANGLE, COMPONENT, etc.)
-- [ ] Send response back through bridge
+- [x] Implement `read-node` handler in plugin main thread
+- [x] Serialize relevant node properties to JSON
+- [x] Handle different node types (TEXT, FRAME, RECTANGLE, COMPONENT, etc.)
+- [x] Send response back through bridge
 
 ---
 
@@ -109,14 +109,14 @@ Requires Figma desktop app to be open with the plugin running. No headless/backg
 **So that** I can discover all components and their node IDs  
 
 **Acceptance Criteria:**
-- [ ] Bridge command `read-tree` returns hierarchical node structure
-- [ ] Each node includes: id, name, type, children (recursive)
-- [ ] Optionally includes key properties (fills, text content) for leaf nodes
+- [x] Bridge command `read-tree` returns hierarchical node structure
+- [x] Each node includes: id, name, type, children (recursive)
+- [x] Optionally includes key properties (fills, text content) for leaf nodes
 
 **Tasks:**
-- [ ] Implement `read-tree` handler with recursive traversal
-- [ ] Limit depth to avoid huge payloads (configurable max depth)
-- [ ] Return JSON tree structure
+- [x] Implement `read-tree` handler with recursive traversal
+- [x] Limit depth to avoid huge payloads (configurable max depth)
+- [x] Return JSON tree structure
 
 ---
 
@@ -127,17 +127,17 @@ Requires Figma desktop app to be open with the plugin running. No headless/backg
 **So that** code changes are reflected surgically without full-page recapture  
 
 **Acceptance Criteria:**
-- [ ] Bridge command `update-node { nodeId, properties }` modifies the node
-- [ ] Supports updating: `characters` (text), `fills` (colors), `width`/`height`, `opacity`
-- [ ] Changes are visible immediately in Figma
-- [ ] Returns success/failure response
+- [x] Bridge command `update-node { nodeId, properties }` modifies the node
+- [x] Supports updating: `characters` (text), `fills` (colors), `width`/`height`, `opacity`
+- [x] Changes are visible immediately in Figma
+- [x] Returns success/failure response
 
 **Tasks:**
-- [ ] Implement `update-node` handler in plugin main thread
-- [ ] Handle text node updates (`node.characters`, requires font loading)
-- [ ] Handle fill updates (`node.fills`)
-- [ ] Handle dimension updates (`node.resize()`)
-- [ ] Error handling for invalid node IDs or unsupported properties
+- [x] Implement `update-node` handler in plugin main thread
+- [x] Handle text node updates (`node.characters`, requires font loading)
+- [x] Handle fill updates (`node.fills`)
+- [x] Handle dimension updates (`node.resize()`)
+- [x] Error handling for invalid node IDs or unsupported properties
 
 ---
 
@@ -148,15 +148,15 @@ Requires Figma desktop app to be open with the plugin running. No headless/backg
 **So that** token sync works on any plan, not just Enterprise  
 
 **Acceptance Criteria:**
-- [ ] Bridge command `read-variables` returns all local variables with names, types, values
-- [ ] Bridge command `update-variable { name, value }` modifies an existing variable
-- [ ] Bridge command `create-variable { name, type, value, collection }` creates a new variable
+- [x] Bridge command `read-variables` returns all local variables with names, types, values
+- [x] Bridge command `update-variable { name, value }` modifies an existing variable
+- [x] Bridge command `create-variable { name, type, value, collection }` creates a new variable
 
 **Tasks:**
-- [ ] Implement `read-variables` via `figma.variables.getLocalVariables()`
-- [ ] Implement `update-variable` via `variable.setValueForMode()`
-- [ ] Implement `create-variable` via `figma.variables.createVariable()`
-- [ ] Handle variable collections and modes
+- [x] Implement `read-variables` via `figma.variables.getLocalVariables()`
+- [x] Implement `update-variable` via `variable.setValueForMode()`
+- [x] Implement `create-variable` via `figma.variables.createVariable()`
+- [x] Handle variable collections and modes
 
 ---
 
@@ -167,23 +167,23 @@ Requires Figma desktop app to be open with the plugin running. No headless/backg
 **So that** Copilot can call bridge commands as native MCP tools  
 
 **Acceptance Criteria:**
-- [ ] Bridge server implements MCP protocol (stdio or HTTP)
-- [ ] Registered in `.vscode/mcp.json` as `figma-bridge`
-- [ ] Exposes tools: `bridge_read_node`, `bridge_update_node`, `bridge_read_tree`, etc.
-- [ ] Copilot can call these tools directly in agent mode
+- [x] Bridge server implements MCP protocol (stdio or HTTP)
+- [x] Registered in `.vscode/mcp.json` as `figma-bridge`
+- [x] Exposes tools: `bridge_read_node`, `bridge_update_node`, `bridge_read_tree`, etc.
+- [x] Copilot can call these tools directly in agent mode
 
 **Tasks:**
-- [ ] Implement MCP server wrapper around bridge commands
-- [ ] Add to `.vscode/mcp.json`
-- [ ] Test from Copilot agent mode
+- [x] Implement MCP server wrapper around bridge commands
+- [x] Add to `.vscode/mcp.json`
+- [x] Test from Copilot agent mode
 
 ---
 
 ## Definition of Done
 
-- [ ] Bridge server runs and accepts WebSocket connections
-- [ ] Figma plugin connects and shows status
-- [ ] Can read any node's properties via bridge
-- [ ] Can update text and fill properties via bridge
-- [ ] Can read and write variables via bridge
-- [ ] Activity log visible in plugin UI
+- [x] Bridge server runs and accepts WebSocket connections
+- [x] Figma plugin connects and shows status
+- [x] Can read any node's properties via bridge
+- [x] Can update text and fill properties via bridge
+- [x] Can read and write variables via bridge
+- [x] Activity log visible in plugin UI
