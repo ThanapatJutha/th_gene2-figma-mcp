@@ -75,7 +75,7 @@ export default function SettingsPage(): React.JSX.Element {
   const [directories, setDirectories] = useState<string[]>(['.']);
 
   // ── Default patterns for new configs ──
-  const DEFAULT_INCLUDE = 'poc-react/src/components/**/*.tsx';
+  const DEFAULT_INCLUDE = 'demo/src/components/**/*.tsx';
   const DEFAULT_EXCLUDE = '**/*.test.*\n**/*.stories.*\n**/*.figma.*';
 
   // ── Load config on connect ──
@@ -284,7 +284,7 @@ export default function SettingsPage(): React.JSX.Element {
                     className={styles.formTextarea}
                     value={includePatterns}
                     onChange={(e) => { setIncludePatterns(e.target.value); markDirty(); }}
-                    placeholder={"poc-react/src/components/**/*.tsx"}
+                    placeholder={"demo/src/components/**/*.tsx"}
                     rows={3}
                   />
                   <p className={styles.formHint}>Glob patterns to find component files (one per line)</p>

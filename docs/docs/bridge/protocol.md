@@ -15,10 +15,10 @@ You (natural language)
 Copilot Agent Mode
   │ calls bridge_* MCP tools
   ▼
-figma-bridge MCP Server (stdio)     ← src/bridge/mcp-server.ts
+figma-bridge MCP Server (stdio)     ← src/mcp-server.ts
   │ in-process call
   ▼
-Bridge WebSocket Server              ← src/bridge/server.ts
+Bridge WebSocket Server              ← src/server.ts
   │
   ├─── LOCAL command? ──► local-handlers.ts (filesystem)
   │

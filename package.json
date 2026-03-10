@@ -5,8 +5,8 @@
   "description": "Copilot-driven bidirectional sync between React code and Figma.",
   "type": "module",
   "scripts": {
-    "bridge": "tsx src/bridge/server.ts",
-    "bridge:mcp": "tsx src/bridge/mcp-server.ts",
+    "bridge": "tsx src/server.ts",
+    "bridge:mcp": "tsx src/mcp-server.ts",
     "plugin:build": "tsc -p figma-plugin/tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "fmt": "prettier -w .",

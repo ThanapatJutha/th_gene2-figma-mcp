@@ -2,7 +2,7 @@
   "codeConnect": {
     "parser": "react",
     "include": [
-      "poc-react/src/components/**/*.tsx"
+      "demo/src/components/**/*.tsx"
     ],
     "exclude": [
       "**/*.test.*",

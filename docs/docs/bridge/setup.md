@@ -115,7 +115,7 @@ The `figma-bridge` MCP server is already configured in `.vscode/mcp.json`:
     "figma-bridge": {
       "type": "stdio",
       "command": "npx",
-      "args": ["tsx", "src/bridge/mcp-server.ts"],
+      "args": ["tsx", "src/mcp-server.ts"],
       "cwd": "${workspaceFolder}"
     }
   }

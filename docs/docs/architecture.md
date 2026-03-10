@@ -79,10 +79,10 @@ The bridge sits at the center — see the [Bridge section](/docs/bridge/overview
 
 | Directory | Purpose |
 |---|---|
-| `src/bridge/` | Bridge server, local handlers, MCP server, protocol types |
+| `src/` | Bridge server, local handlers, MCP server, protocol types |
 | `figma-plugin/` | Figma Plugin (code.ts, ui.html, manifest) |
 | `docs/src/pages/` | Dashboard + Settings UI |
-| `poc-react/src/components/` | Sample React components (HeaderCard, CounterCard, ToggleSwitch) |
+| `demo/src/components/` | Sample React components (HeaderCard, CounterCard, ToggleSwitch) |
 
 ## MCP Tool Capabilities
 

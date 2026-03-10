@@ -7,7 +7,7 @@
     "figma-bridge": {
       "type": "stdio",
       "command": "npx",
-      "args": ["tsx", "src/bridge/mcp-server.ts"],
+      "args": ["tsx", "src/mcp-server.ts"],
       "cwd": "${workspaceFolder}"
     }
   }

@@ -28,7 +28,7 @@ The **only** way to programmatically write to a Figma file is the **Figma Plugin
 │  Copilot         │  stdio  │  figma-bridge    │  WS     │  Figma Plugin    │
 │  (Agent Mode)    │◄──────►│  MCP Server      │◄───────►│  (inside Figma)  │
 │                  │         │                  │         │                  │
-│  calls MCP tools │         │  src/bridge/     │  9001   │  figma-plugin/   │
+│  calls MCP tools │         │  src/            │  9001   │  figma-plugin/   │
 │  naturally       │         │  mcp-server.ts   │         │  code.ts + ui    │
 └──────────────────┘         └────────┬─────────┘         └────────┬─────────┘
                                       │ in-process                  │
@@ -58,10 +58,10 @@ The **only** way to programmatically write to a Figma file is the **Figma Plugin
 
 | File | Purpose |
 |---|---|
-| `src/bridge/protocol.ts` | Shared TypeScript types for messages |
-| `src/bridge/server.ts` | WebSocket bridge server — routes local vs plugin commands |
-| `src/bridge/local-handlers.ts` | Local filesystem handlers (config, connections, scan) |
-| `src/bridge/mcp-server.ts` | MCP server exposing tools to Copilot |
+| `src/protocol.ts` | Shared TypeScript types for messages |
+| `src/server.ts` | WebSocket bridge server — routes local vs plugin commands |
+| `src/local-handlers.ts` | Local filesystem handlers (config, connections, scan) |
+| `src/mcp-server.ts` | MCP server exposing tools to Copilot |
 | `figma-plugin/manifest.json` | Figma plugin manifest |
 | `figma-plugin/code.ts` | Plugin main thread — all command handlers |
 | `figma-plugin/ui.html` | Plugin UI — WebSocket + status dashboard |

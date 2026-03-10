@@ -13,7 +13,7 @@ A small React + Vite proof-of-concept app used to test the **Figma MCP `generate
 ## Running the dev server
 
 ```bash
-cd poc-react
+cd demo
 npm install
 npm run dev          # â†’ http://localhost:5173/
 ```
@@ -30,14 +30,14 @@ This section documents how to push the running app into a Figma design file usin
 |---|---|
 | **Figma MCP server** | Configured in `.vscode/mcp.json` and started via the Command Palette (`MCP: Open Workspace Folder MCP Configuration`) |
 | **VS Code Copilot** | Agent mode with MCP tools enabled |
-| **Dev server running** | `npm run dev` inside `poc-react/` |
+| **Dev server running** | `npm run dev` inside `demo/` |
 
 ### Step-by-step
 
 1. **Start the dev server**
 
    ```bash
-   cd poc-react
+   cd demo
    npm run dev
    ```
 
@@ -100,7 +100,7 @@ Alternatively, the browser shows a **capture toolbar** after the first capture â
 | Problem | Fix |
 |---|---|
 | Capture stays `pending` | Make sure the dev server is running (`lsof -i :5173`) and the page loaded in the browser |
-| Dev server exits | Run `npm run dev` from inside `poc-react/`, not the repo root |
+| Dev server exits | Run `npm run dev` from inside `demo/`, not the repo root |
 | `npx vite` picks wrong version | Use the local binary: `./node_modules/.bin/vite` |
 | Capture script not loading | Check that the `<script>` tag is present in `index.html` and there are no CSP errors in the browser console |
 

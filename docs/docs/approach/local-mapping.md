@@ -37,7 +37,7 @@ Created via the **Settings** page in the Dashboard UI. Tells the system where to
 {
   "codeConnect": {
     "parser": "react",
-    "include": ["poc-react/src/components/**/*.tsx"],
+    "include": ["demo/src/components/**/*.tsx"],
     "exclude": ["**/*.test.*", "**/*.stories.*", "**/*.figma.*"],
     "label": "React",
     "language": "tsx"
@@ -69,7 +69,7 @@ Created automatically when a developer links a code component to a Figma compone
       "figmaNodeId": "1:5",
       "figmaComponentName": "HeaderCard",
       "codeComponent": "HeaderCard",
-      "file": "poc-react/src/components/HeaderCard.tsx",
+      "file": "demo/src/components/HeaderCard.tsx",
       "linkedAt": "2026-03-10T10:30:00.000Z"
     }
   ]

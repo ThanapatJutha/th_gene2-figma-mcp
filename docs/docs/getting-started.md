@@ -43,7 +43,7 @@ When you first use a Figma MCP tool, a browser window opens for OAuth authentica
 ### 3. Run the sample React app
 
 ```bash
-cd poc-react
+cd demo
 npm install
 ./node_modules/.bin/vite --port 5173
 ```
@@ -97,9 +97,9 @@ Instead of running commands, you interact with Copilot using natural language. C
 
 ```
 figma-sync/
-  poc-react/                ← Sample React app (Vite + React 18)
+  demo/                     ← Sample React app (Vite + React 18)
     src/components/         ← HeaderCard, CounterCard, ToggleSwitch
-  src/bridge/               ← Bridge server & MCP tools
+  src/                      ← Bridge server & MCP tools
     server.ts               ← WebSocket server (local + plugin commands)
     local-handlers.ts       ← Filesystem handlers (config, connections, scan)
     mcp-server.ts           ← MCP server for Copilot integration

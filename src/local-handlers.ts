@@ -80,7 +80,7 @@ export async function listDirectories(): Promise<string[]> {
       if (!entry.isDirectory() || entry.name.startsWith('.') || SKIP.has(entry.name)) continue;
       dirs.push(entry.name);
 
-      // Also scan one level deeper for common patterns like poc-react/src
+      // Also scan one level deeper for common patterns like demo/src
       try {
         const subPath = resolve(PROJECT_ROOT, entry.name);
         const subEntries = await readdir(subPath, { withFileTypes: true });
