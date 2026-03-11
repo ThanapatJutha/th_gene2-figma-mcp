@@ -30,11 +30,15 @@ export type BridgeCommand =
   | 'read-tree'
   | 'update-node'
   | 'create-component'
+  | 'create-instance'
+  | 'create-node'
   | 'read-variables'
   | 'update-variable'
   | 'create-variable'
   | 'list-layers'
   | 'list-components'
+  | 'delete-node'
+  | 'reorder-children'
   // ── Server-side commands (no plugin round-trip) ──
   | 'read-config'
   | 'save-config'
@@ -42,7 +46,12 @@ export type BridgeCommand =
   | 'list-directories'
   | 'validate-root-dir'
   | 'read-connections'
-  | 'save-connections';
+  | 'save-connections'
+  // ── Layer map commands ──
+  | 'read-layer-map'
+  | 'save-layer-map'
+  // ── Component source reader ──
+  | 'read-component-source';
 
 // ── Payload types per command ──────────────────────────────────────────
 
@@ -62,6 +71,15 @@ export interface UpdateNodePayload {
     width?: number;
     height?: number;
     opacity?: number;
+    fontSize?: number;
+    fontName?: { family: string; style: string };
+    cornerRadius?: number;
+    paddingLeft?: number;
+    paddingRight?: number;
+    paddingTop?: number;
+    paddingBottom?: number;
+    strokeWeight?: number;
+    strokes?: unknown[];
   };
 }
 
@@ -88,6 +106,44 @@ export interface CreateVariablePayload {
   value: unknown;
 }
 
+export interface CreateInstancePayload {
+  componentId: string;       // Master component node ID
+  parentId: string;          // Parent frame/component to insert into
+  name?: string;             // Optional name override
+  properties?: {             // Initial property overrides
+    characters?: string;
+    width?: number;
+    height?: number;
+  };
+}
+
+export interface CreateNodePayload {
+  type: 'FRAME' | 'TEXT';    // Node type to create
+  parentId: string;          // Parent frame/component to insert into
+  name?: string;
+  properties?: {
+    characters?: string;     // TEXT nodes only
+    width?: number;
+    height?: number;
+    fills?: unknown[];
+    fontSize?: number;
+    fontName?: { family: string; style: string };
+  };
+}
+
+export interface ReadComponentSourcePayload {
+  name: string;              // Component name to look up
+}
+
+export interface DeleteNodePayload {
+  nodeId: string;            // Figma node ID to delete
+}
+
+export interface ReorderChildrenPayload {
+  parentId: string;          // Parent frame whose children to reorder
+  childIds: string[];        // Ordered list of child IDs (new order)
+}
+
 // ── Serialised node shapes (returned from plugin) ──────────────────────
 
 export interface SerializedNode {
@@ -101,6 +157,15 @@ export interface SerializedNode {
   y: number;
   characters?: string;       // TEXT nodes
   fills?: unknown[];
+  fontSize?: number;         // TEXT nodes
+  fontName?: { family: string; style: string }; // TEXT nodes
+  cornerRadius?: number;     // FRAME/RECTANGLE/COMPONENT
+  paddingLeft?: number;      // Auto-layout frames
+  paddingRight?: number;
+  paddingTop?: number;
+  paddingBottom?: number;
+  strokeWeight?: number;
+  strokes?: unknown[];
   children?: SerializedNode[];
 }
 
@@ -151,5 +216,33 @@ export interface ProjectComponent {
   name: string;              // exported component name
   file: string;              // file path relative to rootDir
   exportType: 'default' | 'named'; // how it's exported
+}
+
+// ── Layer map types (sub-component ↔ Figma layer/instance) ─────────────
+// Unlike CodeConnection (component ↔ master component), a LayerMap
+// records which specific Figma child nodes inside a parent frame
+// correspond to sub-components in code. Auto-generated during push sync.
+
+export interface LayerMapping {
+  nodeId: string;            // Figma child node ID, e.g. "20:5"
+  nodeType: string;          // "INSTANCE" | "FRAME" | "TEXT" | etc.
+  codeComponent?: string;    // Code component name if it maps to one
+}
+
+export interface LayerFrame {
+  codeComponent: string;     // Parent code component, e.g. "Card"
+  file: string;              // File path relative to rootDir
+  children: Record<string, LayerMapping>; // key = child name (e.g. "Button1")
+  lastSyncedAt: string;      // ISO 8601 timestamp
+}
+
+export interface LayerMapStore {
+  version: 1;
+  frames: Record<string, LayerFrame>; // key = parent Figma node ID (e.g. "20:1")
+}
+
+export interface SaveLayerMapPayload {
+  parentNodeId: string;      // Figma parent node ID
+  frame: LayerFrame;         // The frame data to save/update
 }
 

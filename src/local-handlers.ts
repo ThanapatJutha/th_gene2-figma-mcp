@@ -16,6 +16,8 @@ import type {
   ConnectionsStore,
   CodeConnection,
   ProjectComponent,
+  LayerMapStore,
+  LayerFrame,
 } from './protocol.js';
 
 // ── Paths ──────────────────────────────────────────────────────────────
@@ -24,6 +26,7 @@ const PROJECT_ROOT = resolve(process.cwd());
 const CONFIG_PATH = resolve(PROJECT_ROOT, 'figma.config.json');
 const DB_DIR = resolve(PROJECT_ROOT, '.figma-sync');
 const CONNECTIONS_PATH = resolve(DB_DIR, 'connections.json');
+const LAYER_MAP_PATH = resolve(DB_DIR, 'layer-map.json');
 
 // ── Config ─────────────────────────────────────────────────────────────
 
@@ -239,4 +242,153 @@ function extractExports(content: string, file: string): ProjectComponent[] {
   }
 
   return components;
+}
+
+// ── Layer map DB ───────────────────────────────────────────────────────
+
+export async function readLayerMap(): Promise<LayerMapStore> {
+  try {
+    const raw = await readFile(LAYER_MAP_PATH, 'utf8');
+    return JSON.parse(raw) as LayerMapStore;
+  } catch {
+    return { version: 1, frames: {} };
+  }
+}
+
+export async function saveLayerMap(
+  parentNodeId: string,
+  frame: LayerFrame,
+): Promise<void> {
+  await ensureDbDir();
+  const store = await readLayerMap();
+  store.frames[parentNodeId] = frame;
+  await writeFile(LAYER_MAP_PATH, JSON.stringify(store, null, 2) + '\n', 'utf8');
+}
+
+// ── Component source reader ────────────────────────────────────────────
+
+export interface ComponentSource {
+  name: string;
+  file: string;
+  source: string;
+}
+
+export interface ReadComponentSourceResult {
+  component: ComponentSource;
+  subComponents: ComponentSource[];
+}
+
+/**
+ * Read a component's source code by name.
+ * Resolves the file from connections.json, or falls back to scanning project files.
+ * Extracts PascalCase imports and reads one level of sub-component sources.
+ */
+export async function readComponentSource(
+  componentName: string,
+): Promise<ReadComponentSourceResult> {
+  const config = await readConfig();
+  if (!config) {
+    throw new Error('No figma.config.json found. Please configure the project first.');
+  }
+
+  const rootDir = resolve(PROJECT_ROOT, config.rootDir || '.');
+
+  // Step 1: Find the component file
+  let componentFile: string | null = null;
+  let fileRelativeToProjectRoot = false;
+
+  // Try connections first
+  const connections = await readConnections();
+  const conn = connections.connections.find(
+    (c) => c.codeComponent === componentName,
+  );
+  if (conn) {
+    componentFile = conn.file;
+    fileRelativeToProjectRoot = true; // connections.json paths are relative to PROJECT_ROOT
+  }
+
+  // Fall back to project component scan
+  if (!componentFile) {
+    const components = await listProjectComponents();
+    const match = components.find((c) => c.name === componentName);
+    if (match) {
+      componentFile = match.file;
+      fileRelativeToProjectRoot = false; // listProjectComponents paths are relative to rootDir
+    }
+  }
+
+  if (!componentFile) {
+    throw new Error(
+      `Component "${componentName}" not found in connections or project files.`,
+    );
+  }
+
+  // Step 2: Read the main component source
+  const fullPath = fileRelativeToProjectRoot
+    ? resolve(PROJECT_ROOT, componentFile)
+    : resolve(rootDir, componentFile);
+  let source: string;
+  try {
+    source = await readFile(fullPath, 'utf8');
+  } catch {
+    throw new Error(`Could not read file: ${componentFile}`);
+  }
+
+  const component: ComponentSource = {
+    name: componentName,
+    file: componentFile,
+    source,
+  };
+
+  // Step 3: Extract PascalCase imports (one level deep)
+  const subComponents: ComponentSource[] = [];
+  const importRegex =
+    /import\s+(?:(?:\{[^}]*\b([A-Z]\w*)\b[^}]*\})|(?:([A-Z]\w*)))\s+from\s+['"](\.[^'"]+)['"]/g;
+
+  let importMatch: RegExpExecArray | null;
+  while ((importMatch = importRegex.exec(source)) !== null) {
+    const importedName = importMatch[1] || importMatch[2];
+    const importPath = importMatch[3];
+    if (!importedName || !importPath) continue;
+
+    // Resolve the import relative to the component file
+    const componentDir = dirname(fullPath);
+    let resolvedImport = resolve(componentDir, importPath);
+
+    // Try common extensions if the import doesn't have one
+    const extensions = ['.tsx', '.ts', '.jsx', '.js'];
+    let importFullPath: string | null = null;
+
+    if (existsSync(resolvedImport)) {
+      importFullPath = resolvedImport;
+    } else {
+      for (const ext of extensions) {
+        if (existsSync(resolvedImport + ext)) {
+          importFullPath = resolvedImport + ext;
+          break;
+        }
+        // Also try index files
+        if (existsSync(resolve(resolvedImport, `index${ext}`))) {
+          importFullPath = resolve(resolvedImport, `index${ext}`);
+          break;
+        }
+      }
+    }
+
+    if (importFullPath) {
+      try {
+        const subSource = await readFile(importFullPath, 'utf8');
+        const relPath = relative(rootDir, importFullPath);
+        subComponents.push({
+          name: importedName,
+          file: relPath,
+          source: subSource,
+        });
+      } catch {
+        // Skip unreadable sub-components
+      }
+    }
+  }
+
+  return { component, subComponents };
 }

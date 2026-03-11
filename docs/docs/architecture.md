@@ -47,9 +47,12 @@ The bridge sits at the center — see the [Bridge section](/docs/bridge/overview
 ### Push (Code → Figma)
 
 1. Developer changes a React component
-2. Dev server hot-reloads the UI
-3. `generate_figma_design` captures the rendered page
-4. Figma file receives **editable frames** (not flattened images)
+2. Copilot reads component source + Figma node via bridge
+3. Copilot compares properties and presents a diff
+4. Developer approves — Copilot applies surgical updates via `bridge_update_node`
+5. For new children, Copilot creates instances via `bridge_create_instance`
+6. Layer map (`.figma-sync/layer-map.json`) is updated automatically
+7. For major overhauls, `generate_figma_design` captures the full page
 
 ### Pull (Figma → Code)
 
@@ -72,7 +75,8 @@ The bridge sits at the center — see the [Bridge section](/docs/bridge/overview
 | File | Purpose | Created by |
 |---|---|---|
 | `figma.config.json` | Project config — file key, include/exclude globs, parser | Settings page |
-| `.figma-sync/connections.json` | Component link database — code ↔ Figma node mappings | Dashboard (auto) |
+| `.figma-sync/connections.json` | Component links — code component ↔ Figma master component | Dashboard / Copilot push sync |
+| `.figma-sync/layer-map.json` | Layer links — sub-components ↔ Figma layers inside a parent frame | Copilot push sync (auto) |
 | `.vscode/mcp.json` | MCP server registrations (Figma + figma-bridge) | Manual |
 
 ### Source Code
@@ -101,4 +105,4 @@ The bridge sits at the center — see the [Bridge section](/docs/bridge/overview
 
 See [Bridge Commands](/docs/bridge/commands) for the full list of 10 MCP tools and all local/plugin commands.
 
-> **Key finding:** Code Connect requires Org/Enterprise plan. We use `figma.config.json` + `.figma-sync/connections.json` instead — aligned with Code Connect conventions for future migration.
+> **Key finding:** Code Connect requires Org/Enterprise plan. We use `figma.config.json` + `.figma-sync/connections.json` (component links) + `.figma-sync/layer-map.json` (sub-component layer links) instead — aligned with Code Connect conventions for future migration.

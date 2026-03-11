@@ -9,6 +9,7 @@ export default function App() {
   return (
     <div className={`page ${compactMode ? 'is-compact' : ''}`}>
       <HeaderCard title="Figma Sync POC" subtitle="Simple React page with two components" />
+      <HeaderCard title="What's New" subtitle="Latest updates and announcements" />
       <div className="grid">
         <CounterCard />
         <div className="card">

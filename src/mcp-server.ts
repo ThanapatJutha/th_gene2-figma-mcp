@@ -1,7 +1,7 @@
 /**
  * Custom MCP Server — exposes Figma Plugin Bridge commands as MCP tools.
  *
- * Runs alongside the Bridge WebSocket server.
+ * Connects to the Bridge WebSocket server as a client.
  * Registered in .vscode/mcp.json as "figma-bridge".
  *
  * Uses the MCP SDK's stdio transport so VS Code can discover it.
@@ -11,7 +11,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
-import { sendToPlugin } from './server.js';
+import { sendCommand } from './bridge-client.js';
 import type { BridgeRequest } from './protocol.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ async function callPlugin(
   payload: Record<string, unknown> = {},
 ) {
   const req = makeRequest(command, payload);
-  const res = await sendToPlugin(req);
+  const res = await sendCommand(req);
   if (!res.success) {
     return { content: [{ type: 'text' as const, text: `Error: ${res.error}` }], isError: true };
   }
@@ -58,19 +58,25 @@ server.registerTool(
   'bridge_read_node',
   {
     description: 'Read properties of a specific Figma node by ID. Returns type, name, dimensions, fills, text content, and children.',
-    inputSchema: { nodeId: z.string().describe('Figma node ID, e.g. "1:5"') },
+    inputSchema: {
+      nodeId: z.string().describe('Figma node ID, e.g. "1:5"'),
+      depth: z.number().optional().default(1).describe('How many levels of children to include (default 1). Use higher values to see nested text nodes.'),
+    },
   },
-  async ({ nodeId }) => callPlugin('read-node', { nodeId }),
+  async ({ nodeId, depth }) => callPlugin('read-node', { nodeId, depth }),
 );
 
 // -- read-tree --
 server.registerTool(
   'bridge_read_tree',
   {
-    description: 'Read the current page node tree from Figma. Returns hierarchical JSON of all nodes.',
-    inputSchema: { maxDepth: z.number().optional().default(4).describe('Maximum tree depth (default 4)') },
+    description: 'Read a node tree from Figma. If nodeId is provided, reads the subtree rooted at that node; otherwise reads the full current page.',
+    inputSchema: {
+      nodeId: z.string().optional().describe('Optional Figma node ID to start the tree from. Omit for full page.'),
+      maxDepth: z.number().optional().default(4).describe('Maximum tree depth (default 4)'),
+    },
   },
-  async ({ maxDepth }) => callPlugin('read-tree', { maxDepth }),
+  async ({ nodeId, maxDepth }) => callPlugin('read-tree', { nodeId, maxDepth }),
 );
 
 // -- create-component --
@@ -92,14 +98,27 @@ server.registerTool(
 server.registerTool(
   'bridge_update_node',
   {
-    description: 'Update properties of a Figma node (text, fills, dimensions, opacity).',
+    description: 'Update properties of a Figma node (text, fills, dimensions, opacity, font, corner radius, padding, stroke).',
     inputSchema: {
       nodeId: z.string().describe('Figma node ID'),
       properties: z.object({
         characters: z.string().optional().describe('New text content (TEXT nodes only)'),
+        fills: z.array(z.unknown()).optional().describe('Array of fill paints, e.g. [{ type: "SOLID", color: { r: 0.5, g: 0, b: 1 } }]'),
         width: z.number().optional().describe('New width'),
         height: z.number().optional().describe('New height'),
         opacity: z.number().optional().describe('Opacity 0-1'),
+        fontSize: z.number().optional().describe('Font size (TEXT nodes only)'),
+        fontName: z.object({
+          family: z.string(),
+          style: z.string(),
+        }).optional().describe('Font name, e.g. { family: "Inter", style: "Bold" } (TEXT nodes only)'),
+        cornerRadius: z.number().optional().describe('Corner radius (FRAME/RECTANGLE/COMPONENT)'),
+        paddingLeft: z.number().optional().describe('Left padding (auto-layout frames)'),
+        paddingRight: z.number().optional().describe('Right padding (auto-layout frames)'),
+        paddingTop: z.number().optional().describe('Top padding (auto-layout frames)'),
+        paddingBottom: z.number().optional().describe('Bottom padding (auto-layout frames)'),
+        strokeWeight: z.number().optional().describe('Stroke/border width'),
+        strokes: z.array(z.unknown()).optional().describe('Array of stroke paints'),
       }).describe('Properties to update'),
     },
   },
@@ -164,6 +183,169 @@ server.registerTool(
     description: 'List all Figma Component nodes on the current page. Returns id, name, description, dimensions for each component.',
   },
   async () => callPlugin('list-components'),
+);
+
+// ── Local commands (no Figma plugin required) ──────────────────────────
+
+// -- read-config --
+server.registerTool(
+  'bridge_read_config',
+  {
+    description: 'Read the figma.config.json project configuration. Returns rootDir, figmaFileKey, include/exclude globs.',
+  },
+  async () => callPlugin('read-config'),
+);
+
+// -- read-connections --
+server.registerTool(
+  'bridge_read_connections',
+  {
+    description: 'Read all Code Connect links from .figma-sync/connections.json. Each connection maps a code component to a Figma master component node ID.',
+  },
+  async () => callPlugin('read-connections'),
+);
+
+// -- save-connections --
+server.registerTool(
+  'bridge_save_connections',
+  {
+    description: 'Save Code Connect links to .figma-sync/connections.json. Replaces the entire connections list.',
+    inputSchema: {
+      connections: z.array(z.object({
+        figmaNodeId: z.string().describe('Figma node ID of the master component'),
+        figmaComponentName: z.string().describe('Name of the Figma component'),
+        codeComponent: z.string().describe('Code component name'),
+        file: z.string().describe('File path relative to rootDir'),
+        linkedAt: z.string().describe('ISO 8601 timestamp'),
+      })).describe('Array of connection entries'),
+    },
+  },
+  async ({ connections }) => callPlugin('save-connections', { connections }),
+);
+
+// -- list-project-components --
+server.registerTool(
+  'bridge_list_project_components',
+  {
+    description: 'Scan project files and list exported code components. Uses include/exclude globs from figma.config.json.',
+  },
+  async () => callPlugin('list-project-components'),
+);
+
+// -- read-layer-map --
+server.registerTool(
+  'bridge_read_layer_map',
+  {
+    description: 'Read the layer map from .figma-sync/layer-map.json. Maps sub-components in code to specific Figma child nodes inside parent frames.',
+  },
+  async () => callPlugin('read-layer-map'),
+);
+
+// -- save-layer-map --
+server.registerTool(
+  'bridge_save_layer_map',
+  {
+    description: 'Save a layer map entry for a parent frame. Records which Figma child nodes correspond to which sub-components in code.',
+    inputSchema: {
+      parentNodeId: z.string().describe('Figma parent node ID (e.g. "20:1")'),
+      frame: z.object({
+        codeComponent: z.string().describe('Parent code component name'),
+        file: z.string().describe('File path relative to rootDir'),
+        children: z.record(z.string(), z.object({
+          nodeId: z.string().describe('Figma child node ID'),
+          nodeType: z.string().describe('Node type: INSTANCE, FRAME, TEXT, etc.'),
+          codeComponent: z.string().optional().describe('Code component name if mapped'),
+        })).describe('Map of child name → layer mapping'),
+        lastSyncedAt: z.string().describe('ISO 8601 timestamp'),
+      }).describe('Frame mapping data'),
+    },
+  },
+  async ({ parentNodeId, frame }) => callPlugin('save-layer-map', { parentNodeId, frame }),
+);
+
+// -- read-component-source --
+server.registerTool(
+  'bridge_read_component_source',
+  {
+    description: 'Read a code component\'s source file and its imported sub-components (one level deep). Returns source code for the main component and all PascalCase imports.',
+    inputSchema: {
+      name: z.string().describe('Component name to look up (e.g. "HeaderCard", "Card")'),
+    },
+  },
+  async ({ name }) => callPlugin('read-component-source', { name }),
+);
+
+// ── Plugin commands — create instance / node ───────────────────────────
+
+// -- create-instance --
+server.registerTool(
+  'bridge_create_instance',
+  {
+    description: 'Create an instance of a Figma master component inside a parent frame. Use this to add new child components during push sync.',
+    inputSchema: {
+      componentId: z.string().describe('ID of the master component to instantiate (e.g. "30:1")'),
+      parentId: z.string().describe('ID of the parent frame to insert the instance into (e.g. "20:1")'),
+      name: z.string().optional().describe('Optional name override for the new instance'),
+      properties: z.object({
+        characters: z.string().optional().describe('Text to set on the first TEXT child'),
+        width: z.number().optional().describe('Width override'),
+        height: z.number().optional().describe('Height override'),
+      }).optional().describe('Initial property overrides'),
+    },
+  },
+  async ({ componentId, parentId, name, properties }) =>
+    callPlugin('create-instance', { componentId, parentId, name, properties }),
+);
+
+// -- create-node --
+server.registerTool(
+  'bridge_create_node',
+  {
+    description: 'Create a basic FRAME or TEXT node inside a parent frame. Use as fallback when no master component exists to instantiate.',
+    inputSchema: {
+      type: z.enum(['FRAME', 'TEXT']).describe('Node type to create'),
+      parentId: z.string().describe('ID of the parent frame to insert into'),
+      name: z.string().optional().describe('Name for the new node'),
+      properties: z.object({
+        characters: z.string().optional().describe('Text content (TEXT nodes only)'),
+        width: z.number().optional().describe('Width'),
+        height: z.number().optional().describe('Height'),
+        fills: z.array(z.unknown()).optional().describe('Fill paints'),
+        fontSize: z.number().optional().describe('Font size (TEXT nodes only)'),
+        fontName: z.object({
+          family: z.string(),
+          style: z.string(),
+        }).optional().describe('Font (TEXT nodes only)'),
+      }).optional().describe('Initial properties'),
+    },
+  },
+  async ({ type, parentId, name, properties }) =>
+    callPlugin('create-node', { type, parentId, name, properties }),
+);
+
+// -- delete-node --
+server.registerTool(
+  'bridge_delete_node',
+  {
+    description: 'Delete a Figma node by ID. Removes it from the canvas permanently. Cannot delete PAGE nodes.',
+    inputSchema: {
+      nodeId: z.string().describe('Figma node ID to delete, e.g. "51:104"'),
+    },
+  },
+  async ({ nodeId }) => callPlugin('delete-node', { nodeId }),
+);
+
+// -- reorder-children --
+server.registerTool(
+  'bridge_reorder_children',
+  {
+    description: 'Reorder the children of a Figma parent frame. Provide the parent ID and an array of child IDs in the desired order. All child IDs must be existing children of the parent. Children not in the list will remain but shift to accommodate the reordered ones.',
+    inputSchema: {
+      parentId: z.string().describe('ID of the parent frame whose children to reorder, e.g. "1:4"'),
+      childIds: z.array(z.string()).describe('Array of child node IDs in the desired order, e.g. ["8:2", "51:104", "10:1"]'),
+    },
+  },
+  async ({ parentId, childIds }) => callPlugin('reorder-children', { parentId, childIds }),
 );
 
 // ── Start ──────────────────────────────────────────────────────────────

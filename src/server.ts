@@ -16,6 +16,9 @@ import {
   listProjectComponents,
   listDirectories,
   validateRootDir,
+  readLayerMap,
+  saveLayerMap,
+  readComponentSource,
 } from './local-handlers.js';
 
 const PORT = Number(process.env.BRIDGE_PORT ?? 9001);
@@ -95,6 +98,9 @@ const LOCAL_COMMANDS = new Set([
   'validate-root-dir',
   'read-connections',
   'save-connections',
+  'read-layer-map',
+  'save-layer-map',
+  'read-component-source',
 ]);
 
 async function handleLocalCommand(req: BridgeRequest): Promise<BridgeResponse> {
@@ -136,6 +142,23 @@ async function handleLocalCommand(req: BridgeRequest): Promise<BridgeResponse> {
       case 'save-connections': {
         await saveConnections(req.payload.connections as Parameters<typeof saveConnections>[0]);
         return { id: req.id, type: 'response', success: true, data: { saved: true } };
+      }
+
+      case 'read-layer-map': {
+        const store = await readLayerMap();
+        return { id: req.id, type: 'response', success: true, data: store };
+      }
+
+      case 'save-layer-map': {
+        const parentNodeId = req.payload.parentNodeId as string;
+        const frame = req.payload.frame as Parameters<typeof saveLayerMap>[1];
+        await saveLayerMap(parentNodeId, frame);
+        return { id: req.id, type: 'response', success: true, data: { saved: true } };
+      }
+
+      case 'read-component-source': {
+        const result = await readComponentSource(req.payload.name as string);
+        return { id: req.id, type: 'response', success: true, data: result };
       }
 
       default:

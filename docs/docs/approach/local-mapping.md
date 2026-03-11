@@ -59,7 +59,9 @@ Created via the **Settings** page in the Dashboard UI. Tells the system where to
 
 ### 2. `.figma-sync/connections.json` — Component Link Database
 
-Created automatically when a developer links a code component to a Figma component via the **Dashboard** page. This file is **gitignored** (local to each developer).
+Links **code components** to **Figma master components** (Code Connect style). Created when a developer links a component via the **Dashboard** page, or auto-saved when Copilot resolves a component during push sync.
+
+This answers: *"Which Figma component IS this code component?"*
 
 ```json
 {
@@ -78,13 +80,61 @@ Created automatically when a developer links a code component to a Figma compone
 
 | Field | Type | Description |
 |---|---|---|
-| `figmaNodeId` | string | Figma node ID, e.g. `"1:5"` |
+| `figmaNodeId` | string | Figma node ID of the **master component**, e.g. `"1:5"` |
 | `figmaComponentName` | string | Name of the Figma component |
 | `codeComponent` | string | Exported code component name |
 | `file` | string | File path relative to rootDir |
 | `linkedAt` | string | ISO 8601 timestamp of when the link was created |
 
+### 3. `.figma-sync/layer-map.json` — Layer Link Database
+
+Links **sub-components in code** to **specific Figma layers/instances inside a parent frame**. Auto-generated during push sync when Copilot name-matches (or creates) children.
+
+This answers: *"Inside this Figma frame, which child node is Button1? Button2?"*
+
+```json
+{
+  "version": 1,
+  "frames": {
+    "20:1": {
+      "codeComponent": "Card",
+      "file": "src/components/Card.tsx",
+      "children": {
+        "Button1": { "nodeId": "20:5", "nodeType": "INSTANCE" },
+        "Button2": { "nodeId": "20:8", "nodeType": "INSTANCE" },
+        "Button3": { "nodeId": "20:15", "nodeType": "INSTANCE", "codeComponent": "Button3" }
+      },
+      "lastSyncedAt": "2026-03-11T10:30:00.000Z"
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `frames` | object | Keyed by parent Figma node ID |
+| `frames[].codeComponent` | string | Parent code component name (e.g. `"Card"`) |
+| `frames[].file` | string | File path relative to rootDir |
+| `frames[].children` | object | Keyed by child name as it appears in Figma |
+| `children[].nodeId` | string | Figma child node ID (e.g. `"20:5"`) |
+| `children[].nodeType` | string | `"INSTANCE"`, `"FRAME"`, `"TEXT"`, etc. |
+| `children[].codeComponent` | string? | Code component name, if it maps to one |
+| `frames[].lastSyncedAt` | string | ISO 8601 timestamp of last push sync |
+
+### Why two files?
+
+| | `connections.json` | `layer-map.json` |
+|---|---|---|
+| **Maps** | Code component ↔ Figma **master component** | Sub-component ↔ Figma **layer/instance inside a frame** |
+| **Granularity** | 1 entry per component | 1 entry per parent, N children |
+| **Created by** | Dashboard link UI or Copilot (push sync Step 3) | Copilot automatically during push sync |
+| **Lifecycle** | Stable — rarely changes once linked | Dynamic — updated every push sync |
+| **Git** | Optional (shareable with team) | Gitignored (personal, ephemeral) |
+| **Purpose** | "HeaderCard in code IS HeaderCard in Figma" | "Inside Card's frame, node 20:5 is Button1" |
+
 ## How Linking Works
+
+### Component connections (via Dashboard)
 
 1. Developer opens the **Dashboard** and connects to the bridge
 2. The bridge fetches **live components** from the Figma plugin (COMPONENT_SET + COMPONENT nodes)
@@ -99,7 +149,26 @@ Created automatically when a developer links a code component to a Figma compone
 │              │               │  list-components   │──► Figma Plugin
 │  Link UI     │               │  list-project-     │──► Local filesystem
 │              │               │    components      │
-│              │  ◄── ws ──    │  save-connections  │──► .figma-sync/
+│              │  ◄── ws ──    │  save-connections  │──► .figma-sync/connections.json
+└─────────────┘                 └──────────────────┘
+```
+
+### Layer map (via Copilot push sync)
+
+1. Developer asks Copilot to push sync a component (e.g. "Push sync Card to Figma")
+2. Copilot reads the Figma node tree via `bridge_read_node`
+3. Copilot **name-matches** sub-components in code against children in the Figma node
+4. Matched children are saved to `.figma-sync/layer-map.json` automatically
+5. New children (exist in code but not in Figma) can be created via `bridge_create_instance`
+
+```
+┌─────────────┐                 ┌──────────────────┐
+│  Copilot     │  ── MCP ──►   │  Bridge Server    │
+│  (agent)     │               │                    │
+│              │               │  read-node         │──► Figma Plugin
+│  Push sync   │               │  create-instance   │──► Figma Plugin
+│              │               │  save-layer-map    │──► .figma-sync/layer-map.json
+│              │  ◄── MCP ──   │  read-layer-map    │──► .figma-sync/layer-map.json
 └─────────────┘                 └──────────────────┘
 ```
 
@@ -116,7 +185,7 @@ Node IDs were found using the Figma plugin's `list-components` command, which re
 | Aspect | Local (figma.config.json + .figma-sync/) | Code Connect |
 |---|---|---|
 | **Config** | `figma.config.json` (same schema) | `figma.config.json` |
-| **Storage** | Local DB (`.figma-sync/connections.json`) | Figma servers |
+| **Storage** | Local DB (`.figma-sync/connections.json` + `layer-map.json`) | Figma servers |
 | **Plan required** | Any | Org/Enterprise |
 | **Visible in Figma Dev Mode** | ❌ | ✅ |
 | **Version controlled** | Config: ✅ / Connections: optional | ❌ |
