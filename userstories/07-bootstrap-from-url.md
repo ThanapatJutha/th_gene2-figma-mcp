@@ -460,19 +460,19 @@ Copilot:
 **So that** the Figma file follows best practices with a clean component library page  
 
 **Acceptance Criteria:**
-- [ ] New bridge command `create-page` creates a named Figma page
-- [ ] New bridge command `set-current-page` switches the plugin's active page
-- [ ] New bridge command `move-node` moves a node between pages/parents
-- [ ] All three commands exposed as MCP tools
+- [x] New bridge command `create-page` creates a named Figma page
+- [x] New bridge command `set-current-page` switches the plugin's active page
+- [x] New bridge command `move-node` moves a node between pages/parents
+- [x] All three commands exposed as MCP tools
 - [ ] Components page is created before any component frames
 
 **Tasks:**
-- [ ] Add `create-page` handler in `figma-plugin/code.ts`
-- [ ] Add `set-current-page` handler in `figma-plugin/code.ts`
-- [ ] Add `move-node` handler in `figma-plugin/code.ts`
-- [ ] Add `CreatePagePayload`, `SetCurrentPagePayload`, `MoveNodePayload` types to `src/protocol.ts`
-- [ ] Register as plugin commands in `src/server.ts`
-- [ ] Expose as MCP tools in `src/mcp-server.ts`
+- [x] Add `create-page` handler in `figma-plugin/code.ts`
+- [x] Add `set-current-page` handler in `figma-plugin/code.ts`
+- [x] Add `move-node` handler in `figma-plugin/code.ts`
+- [x] Add `CreatePagePayload`, `SetCurrentPagePayload`, `MoveNodePayload` types to `src/protocol.ts`
+- [x] Register as plugin commands in `src/server.ts` (auto-forwarded, no changes needed)
+- [x] Expose as MCP tools in `src/mcp-server.ts`
 
 ---
 
@@ -525,10 +525,10 @@ Copilot:
 **So that** anyone can learn how to bootstrap Figma components from a UI library URL  
 
 **Acceptance Criteria:**
-- [ ] New use case page `docs/docs/usecases/bootstrap-from-url.md` created
-- [ ] Bridge commands page `docs/docs/bridge/commands.md` updated with 3 new commands
-- [ ] Sidebar (`docs/sidebars.ts`) updated to include the new use case page
-- [ ] Docs site builds cleanly (`npx docusaurus build`)
+- [x] New use case page `docs/docs/usecases/bootstrap-from-url.md` created
+- [x] Bridge commands page `docs/docs/bridge/commands.md` updated with 3 new commands
+- [x] Sidebar (`docs/sidebars.ts`) updated to include the new use case page
+- [x] Docs site builds cleanly (`npx docusaurus build`)
 
 **Tasks:**
 
@@ -671,9 +671,9 @@ Add `'usecases/bootstrap-from-url'` to the Usecases category items array.
 - [ ] Components are created **directly** via bridge (no local showcase app needed)
 - [ ] Components live on a dedicated "📦 Components" page, **not** the default page
 - [ ] At least one library (MUI) fully demonstrated end-to-end
-- [ ] Bridge commands `create-page`, `set-current-page`, `move-node` implemented and tested
+- [x] Bridge commands `create-page`, `set-current-page`, `move-node` implemented and tested
 - [ ] Connections saved in `.figma-sync/connections.json`
 - [ ] Components are reusable master components (can create instances)
-- [ ] Docusaurus use case page `usecases/bootstrap-from-url.md` created
-- [ ] Bridge commands doc updated with 3 new commands + MCP tools
-- [ ] Sidebar updated and docs site builds cleanly
+- [x] Docusaurus use case page `usecases/bootstrap-from-url.md` created
+- [x] Bridge commands doc updated with 3 new commands + MCP tools
+- [x] Sidebar updated and docs site builds cleanly

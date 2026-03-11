@@ -39,6 +39,10 @@ export type BridgeCommand =
   | 'list-components'
   | 'delete-node'
   | 'reorder-children'
+  // ── Page management commands ──
+  | 'create-page'
+  | 'set-current-page'
+  | 'move-node'
   // ── Server-side commands (no plugin round-trip) ──
   | 'read-config'
   | 'save-config'
@@ -142,6 +146,21 @@ export interface DeleteNodePayload {
 export interface ReorderChildrenPayload {
   parentId: string;          // Parent frame whose children to reorder
   childIds: string[];        // Ordered list of child IDs (new order)
+}
+
+// ── Page management payloads ───────────────────────────────────────────
+
+export interface CreatePagePayload {
+  name: string;              // Name for the new page, e.g. "📦 Components"
+}
+
+export interface SetCurrentPagePayload {
+  pageId: string;            // ID of the page to switch to
+}
+
+export interface MoveNodePayload {
+  nodeId: string;            // ID of the node to move
+  targetParentId: string;    // ID of the new parent (page or frame)
 }
 
 // ── Serialised node shapes (returned from plugin) ──────────────────────

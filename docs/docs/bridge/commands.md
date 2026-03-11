@@ -56,12 +56,15 @@ These are forwarded over WebSocket to the Figma Plugin running inside the Figma 
 | `create-node` | Create a basic FRAME or TEXT node inside a parent frame |
 | `delete-node` | Delete a Figma node by ID. Cannot delete PAGE nodes. |
 | `reorder-children` | Reorder the children of a parent frame to match a desired order |
+| `create-page` | Create a new Figma page with a given name |
+| `set-current-page` | Switch the plugin's active page so subsequent commands target it |
+| `move-node` | Move a node to a different parent (page or frame), even across pages |
 | `create-variable` | Create a new design token |
 | `update-variable` | Update a token value |
 
 ## MCP Tools
 
-The `figma-bridge` custom MCP server exposes **21 MCP tools** that Copilot can call via Agent Mode. These are registered in `.vscode/mcp.json`.
+The `figma-bridge` custom MCP server exposes **24 MCP tools** that Copilot can call via Agent Mode. These are registered in `.vscode/mcp.json`.
 
 ### Plugin Tools (require Figma desktop open)
 
@@ -78,6 +81,9 @@ The `figma-bridge` custom MCP server exposes **21 MCP tools** that Copilot can c
 | `bridge_create_node` | `create-node` | Create a basic FRAME or TEXT node (fallback when no component exists) |
 | `bridge_delete_node` | `delete-node` | Delete a Figma node by ID permanently |
 | `bridge_reorder_children` | `reorder-children` | Reorder children of a parent frame to match desired order |
+| `bridge_create_page` | `create-page` | Create a new Figma page with a given name |
+| `bridge_set_current_page` | `set-current-page` | Switch the plugin's active page |
+| `bridge_move_node` | `move-node` | Move a node to a different parent (page or frame) |
 | `bridge_read_variables` | `read-variables` | Read all local variables (design tokens) |
 | `bridge_create_variable` | `create-variable` | Create a new design token |
 | `bridge_update_variable` | `update-variable` | Update an existing token value |
@@ -106,6 +112,9 @@ The `figma-bridge` custom MCP server exposes **21 MCP tools** that Copilot can c
 | Push sync a new child | *"Create an instance of component 8:2 inside parent 1:4"* |
 | Fix child order | *"Reorder the children of 1:4 to \[8:2, 51:104, 1:16\]"* |
 | Delete a node | *"Delete Figma node 51:104"* |
+| Create a page | *"Create a new Figma page called 📦 Components"* |
+| Switch page | *"Switch to the Components page (42:1) before building"* |
+| Move node | *"Move node 50:1 to the Components page (42:1)"* |
 | Read tokens | *"Read all the design variables from my Figma file"* |
 | Create token | *"Create a color variable called 'brand-primary' with value #0D99FF in Figma"* |
 | Read component source | *"Read the source code for the HeaderCard component"* |

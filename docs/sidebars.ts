@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'usecases/convert-layer-to-component',
         'usecases/discover-components',
+        'usecases/bootstrap-from-url',
       ],
     },
     {

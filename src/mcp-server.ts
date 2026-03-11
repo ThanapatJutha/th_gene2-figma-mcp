@@ -348,6 +348,45 @@ server.registerTool(
   async ({ parentId, childIds }) => callPlugin('reorder-children', { parentId, childIds }),
 );
 
+// ── Page management commands ───────────────────────────────────────────
+
+// -- create-page --
+server.registerTool(
+  'bridge_create_page',
+  {
+    description: 'Create a new Figma page with a given name. Use this to set up a dedicated "Components" page before building component frames. Returns the new page ID.',
+    inputSchema: {
+      name: z.string().describe('Name for the new page, e.g. "📦 Components"'),
+    },
+  },
+  async ({ name }) => callPlugin('create-page', { name }),
+);
+
+// -- set-current-page --
+server.registerTool(
+  'bridge_set_current_page',
+  {
+    description: 'Switch the Figma plugin\'s active page. Subsequent commands (create-node, list-layers, etc.) will target this page. Required before building components on a non-default page.',
+    inputSchema: {
+      pageId: z.string().describe('ID of the Figma page to switch to, e.g. "42:1"'),
+    },
+  },
+  async ({ pageId }) => callPlugin('set-current-page', { pageId }),
+);
+
+// -- move-node --
+server.registerTool(
+  'bridge_move_node',
+  {
+    description: 'Move a Figma node to a different parent (page or frame). The node is removed from its current parent and appended to the target. Works across pages.',
+    inputSchema: {
+      nodeId: z.string().describe('ID of the node to move, e.g. "50:1"'),
+      targetParentId: z.string().describe('ID of the new parent (page or frame), e.g. "42:1"'),
+    },
+  },
+  async ({ nodeId, targetParentId }) => callPlugin('move-node', { nodeId, targetParentId }),
+);
+
 // ── Start ──────────────────────────────────────────────────────────────
 
 async function main() {

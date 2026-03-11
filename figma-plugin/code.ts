@@ -105,6 +105,24 @@ figma.ui.onmessage = async (msg: {
         );
         break;
 
+      case 'create-page':
+        data = await handleCreatePage(
+          payload as { name: string },
+        );
+        break;
+
+      case 'set-current-page':
+        data = await handleSetCurrentPage(
+          payload as { pageId: string },
+        );
+        break;
+
+      case 'move-node':
+        data = await handleMoveNode(
+          payload as { nodeId: string; targetParentId: string },
+        );
+        break;
+
       default:
         throw new Error(`Unknown command: ${command}`);
     }
@@ -714,7 +732,41 @@ async function handleReorderChildren(p: {
     children: newOrder,
   };
 }
+// ── Page management ────────────────────────────────────────────────────────
 
+async function handleCreatePage(p: { name: string }) {
+  var page = figma.createPage();
+  page.name = p.name;
+  return { pageId: page.id, name: page.name };
+}
+
+async function handleSetCurrentPage(p: { pageId: string }) {
+  var node = await figma.getNodeByIdAsync(p.pageId);
+  if (!node) throw new Error('Page not found: ' + p.pageId);
+  if (node.type !== 'PAGE') throw new Error('Node ' + p.pageId + ' is ' + node.type + ', expected PAGE');
+  await figma.setCurrentPageAsync(node as PageNode);
+  return { pageId: node.id, name: node.name };
+}
+
+async function handleMoveNode(p: { nodeId: string; targetParentId: string }) {
+  var node = await figma.getNodeByIdAsync(p.nodeId);
+  if (!node) throw new Error('Node not found: ' + p.nodeId);
+
+  var target = await figma.getNodeByIdAsync(p.targetParentId);
+  if (!target) throw new Error('Target parent not found: ' + p.targetParentId);
+  if (!('appendChild' in target)) {
+    throw new Error('Target ' + p.targetParentId + ' (' + target.type + ') cannot have children');
+  }
+
+  (target as ChildrenMixin).appendChild(node as SceneNode);
+
+  return {
+    nodeId: node.id,
+    name: node.name,
+    newParentId: target.id,
+    newParentName: target.name,
+  };
+}
 // ── Serialization ──────────────────────────────────────────────────────
 
 function serializeNode(node: BaseNode, maxDepth: number, depth = 0): Record<string, unknown> {
