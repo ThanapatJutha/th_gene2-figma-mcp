@@ -10,34 +10,51 @@ Make the **code repo the single source of truth** for UI. Designers and develope
 
 ## System Overview
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                         CODE REPO (source of truth)                      │
-│                                                                          │
-│  React components ─── figma.config.json ─── .figma-sync/connections.json │
-└──────────┬──────────────────────┬─────────────────────────┬──────────────┘
-           │                      │                          │
-     PUSH (write)          CONFIG / LINK            PULL (read)
-           │                      │                          │
-           ▼                      ▼                          ▼
-┌─────────────────┐  ┌────────────────────────┐  ┌─────────────────────────┐
-│ generate_figma_ │  │    Bridge Server        │  │ get_design_context      │
-│ design          │  │    ws://localhost:9001   │  │ get_variable_defs       │
-│ (Figma MCP)     │  │                         │  │ get_metadata            │
-│                 │  │  LOCAL        PLUGIN     │  │ (Figma MCP)             │
-│                 │  │  commands     commands   │  │                         │
-│                 │  │  ┌─────────┐ ┌────────┐ │  │                         │
-│                 │  │  │ config  │ │ create │ │  │                         │
-│                 │  │  │ connect │ │ read   │ │  │                         │
-│                 │  │  │ scan    │ │ update │ │  │                         │
-│                 │  │  └─────────┘ └───┬────┘ │  │                         │
-└────────┬────────┘  └──────────────────┼──────┘  └────────────┬────────────┘
-         │                              │                       │
-         ▼                              ▼                       ▼
-┌──────────────────────────────────────────────────────────────────────────┐
-│                            FIGMA FILE                                    │
-│         Editable frames · Components · Variables (tokens)                │
-└──────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph LR
+  subgraph LEFT[" "]
+    direction TB
+    subgraph COPILOT["Copilot · Agent Mode"]
+      direction TB
+      MCP["MCP Server<br/><i>mcp-server.ts · 21 tools</i>"]
+      BC["Bridge Client<br/><i>bridge-client.ts</i>"]
+      MCP -->|"in-process"| BC
+    end
+    Dashboard["Dashboard / Settings<br/><i>Docusaurus</i>"]
+  end
+
+  subgraph CENTER[" "]
+    direction TB
+    subgraph BRIDGE["Bridge Server · ws://localhost:9001"]
+      direction TB
+      Router{"Route"}
+      Local["LOCAL commands<br/>config · connections<br/>layer-map · scan<br/>component source"]
+      Router -->|"local"| Local
+    end
+    subgraph CODE["CODE REPO — source of truth"]
+      direction LR
+      Components["React components"]
+      Config["figma.config.json"]
+      Connections[".figma-sync/connections.json"]
+      LayerMap[".figma-sync/layer-map.json"]
+    end
+    Local -->|"read/write"| CODE
+  end
+
+  Plugin["Figma Plugin<br/><i>code.ts · 14 handlers</i>"]
+
+  BC -->|"WS :9001<br/>plugin commands"| Router
+  BC -.->|"in-process<br/>local commands"| Local
+  Dashboard -->|"WS :9001"| Router
+  Router -->|"WS"| Plugin
+
+  style LEFT fill:none,stroke:none
+  style CENTER fill:none,stroke:none
+  style COPILOT fill:#fff,stroke:#999,color:#333
+  style Dashboard fill:#fff,stroke:#999,color:#333
+  style Plugin fill:#fff,stroke:#999,color:#333
+  style BRIDGE fill:#fff,stroke:#999,color:#333
+  style CODE fill:#fff,stroke:#999,color:#333
 ```
 
 The bridge sits at the center — see the [Bridge section](/docs/bridge/overview) for details on how it works, all available [commands](/docs/bridge/commands), and the [message protocol](/docs/bridge/protocol).
@@ -103,6 +120,6 @@ The bridge sits at the center — see the [Bridge section](/docs/bridge/overview
 
 ### Custom Bridge MCP (`figma-bridge`)
 
-See [Bridge Commands](/docs/bridge/commands) for the full list of 10 MCP tools and all local/plugin commands.
+See [Bridge Commands](/docs/bridge/commands) for the full list of 21 MCP tools (14 plugin + 7 local) and all bridge commands.
 
 > **Key finding:** Code Connect requires Org/Enterprise plan. We use `figma.config.json` + `.figma-sync/connections.json` (component links) + `.figma-sync/layer-map.json` (sub-component layer links) instead — aligned with Code Connect conventions for future migration.

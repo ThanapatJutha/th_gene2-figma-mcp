@@ -11,6 +11,12 @@ const config: Config = {
     v4: true,
   },
 
+  markdown: {
+    mermaid: true,
+  },
+
+  themes: ['@docusaurus/theme-mermaid'],
+
   url: 'https://patja60.github.io',
   baseUrl: '/figma-sync/',
 

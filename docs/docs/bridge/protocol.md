@@ -116,7 +116,9 @@ incoming request
     └── queue the command → respond with "plugin not connected" error
 ```
 
-The `LOCAL_COMMANDS` set currently includes: `ping`, `read-config`, `save-config`, `list-project-components`, `list-directories`, `read-connections`, `save-connections`.
+The `LOCAL_COMMANDS` set currently includes: `read-config`, `save-config`, `list-project-components`, `list-directories`, `validate-root-dir`, `read-connections`, `save-connections`, `read-layer-map`, `save-layer-map`, `read-component-source`.
+
+> **Note:** `ping` is handled by the plugin (not local). In the MCP server, local commands are handled in-process by `bridge-client.ts` without a WebSocket round-trip to the bridge.
 
 ## Command Queuing
 
