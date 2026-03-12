@@ -1,24 +1,3 @@
----
-sidebar_position: 2
-slug: /setup/instruction-guide
-title: Copilot Instructions
----
-
-# `.github/copilot-instructions.md`
-
-This is the **Copilot instructions file** that lives at `.github/copilot-instructions.md`. VS Code Copilot **auto-reads** this file on every prompt — no manual setup needed. It tells Copilot how to use all figma-sync workflows: capturing websites, discovering components, reading/updating nodes, and managing design tokens.
-
-:::tip How it works
-- Copilot reads `.github/copilot-instructions.md` automatically in every session
-- You don't need to explain workflows — just say "capture this URL" or "scan for components"
-- Copilot knows the correct tool sequence, layout rules, and workarounds
-:::
-
----
-
-## The file
-
-````markdown
 # Figma Sync — Copilot Instructions
 
 > Auto-read by Copilot on every prompt. Covers all workflows.
@@ -166,19 +145,3 @@ Direct manipulation of Figma layers from Copilot.
 | `src/mcp-server.ts` | MCP tool definitions for bridge commands |
 | `src/server.ts` | WebSocket bridge server |
 | `figma.config.json` | Project config (file key, root dir, patterns) |
-````
-
----
-
-## What Copilot does with this file
-
-Copilot automatically reads `.github/copilot-instructions.md` on every prompt. This means:
-
-- **You don't need to explain workflows** — just say "capture this URL", "scan for components", or "update node text"
-- **Copilot knows the tool sequence** — it will call the right MCP tools in the right order
-- **Copilot knows the layout rules** — it will reposition components in a grid instead of leaving them overlapping
-- **Copilot knows the workarounds** — timeout fixes, conversion rules, and troubleshooting steps
-
-:::info Already included in figma-sync
-If you cloned this project, `.github/copilot-instructions.md` is already present — no setup needed. Just start prompting!
-:::
