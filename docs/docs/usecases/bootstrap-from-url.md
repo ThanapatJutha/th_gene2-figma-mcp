@@ -19,7 +19,7 @@ Make sure you have:
 2. **Figma plugin connected** — Open Figma → Plugins → Figma Sync Bridge → 🟢 Connected
 3. **Copilot in Agent Mode** — Open VS Code Chat → select **Agent** mode
 4. **Your Figma file key** — Copy from the URL: `figma.com/design/`**`YOUR_FILE_KEY`**`/…`
-5. **Read [instruction.md for Copilot](/docs/usecases/instruction-guide)** — Complete runbook with detailed prompts, capture options, layout conventions, and troubleshooting
+5. **Read [instruction.md for Copilot](/docs/setup/instruction-guide)** — Complete runbook with detailed prompts, capture options, layout conventions, and troubleshooting
 
 ---
 

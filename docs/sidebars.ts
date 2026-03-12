@@ -7,7 +7,7 @@ const sidebars: SidebarsConfig = {
       label: 'Setup',
       items: [
         'getting-started',
-        'usecases/instruction-guide',
+        'setup/instruction-guide',
       ],
     },
     'architecture',
