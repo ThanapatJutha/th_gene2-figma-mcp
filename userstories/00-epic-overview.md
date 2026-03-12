@@ -59,7 +59,7 @@ Make the **code repo the single source of truth** for UI. Designers and develope
 | **Push Sync** | `generate_figma_design` captures rendered UI | ✅ Available |
 | **Pull Sync** | `get_design_context` retrieves design + code | ✅ Available |
 | **Documentation** | Docusaurus site with architecture & approach docs | ✅ Done |
-| **Bootstrap from URL** | Create Figma components from UI library URL (MUI, Chakra, etc.) | 🔧 In Progress |
+| **Bootstrap from URL** | Capture UI library HTML → Figma layers, then promote to components (2-prompt flow) | ✅ Done |
 
 ## Out of scope for POC
 

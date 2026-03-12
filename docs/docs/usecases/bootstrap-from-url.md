@@ -3,107 +3,88 @@ sidebar_position: 3
 slug: /usecases/bootstrap-from-url
 ---
 
-# Bootstrap Figma Components from a UI Library URL
+# Create Figma Components from Any UI Library
 
-Start from an **empty Figma file**, give Copilot a URL like `https://mui.com` or `https://chakra-ui.com`, and let it build a full component library inside Figma — all through the Bridge.
+You can create a full Figma component library from any live website — **Shadcn**, **Bootstrap**, **MUI**, **Chakra UI**, **Ant Design**, or your own app. Just give Copilot a URL and it will capture the real rendered page into Figma, then organize and promote the key UI pieces into reusable master components.
 
-## The Flow
+The whole process takes **2 steps** and about **5 minutes**.
 
-```
-Step 1: Scrape            Step 2: Create Page      Step 3: Build           Step 4: Register
-──────────────            ─────────────────        ────────────            ────────────────
-Copilot reads the    →    Create a dedicated  →    For each component  →   Convert frames
-UI library docs            "📦 Components" page     build FRAME + TEXT      to master components
-and extracts info         and switch to it          nodes in Figma          via create-component
-```
+---
 
-### Step 1 — Copilot scrapes the library
+## Before You Start
 
-When you provide a URL, Copilot:
+Make sure you have:
 
-1. Fetches the documentation / component catalogue page.
-2. Extracts a list of **component names**, props, and visual descriptions (colours, typography, spacing).
-3. Builds an internal plan of which components to create and what they should look like.
+1. **Bridge server running** — `npm run bridge` in your terminal
+2. **Figma plugin connected** — Open Figma → Plugins → Figma Sync Bridge → 🟢 Connected
+3. **Copilot in Agent Mode** — Open VS Code Chat → select **Agent** mode
+4. **Your Figma file key** — Copy from the URL: `figma.com/design/`**`YOUR_FILE_KEY`**`/…`
+5. **Read [instruction.md for Copilot](/docs/usecases/instruction-guide)** — Complete runbook with detailed prompts, capture options, layout conventions, and troubleshooting
 
-No local project is needed — Copilot works entirely from the remote docs.
+---
 
-### Step 2 — Create a Components page
+## Step 1 — Capture the Website into Figma
 
-Rather than dumping components on the default page, Copilot calls:
+Paste this into Copilot:
 
-1. **`bridge_create_page`** with `name: "📦 Components"` → returns a new `pageId`.
-2. **`bridge_set_current_page`** with that `pageId` → all subsequent commands target the new page.
+:::note 💬 Prompt
+Capture the UI from `https://ui.shadcn.com/examples/dashboard` into my Figma file (key: `YOUR_FILE_KEY`). Add it as a new page in the existing file. Poll until the capture is complete.
+:::
 
-This keeps the Figma file organised from the start.
+Replace the URL with any page you want, for example:
+- **Shadcn** — `https://ui.shadcn.com/examples/dashboard`
+- **MUI** — `https://mui.com/material-ui/getting-started/templates/dashboard/`
+- **Chakra UI** — `https://chakra-ui.com/docs/components`
+- **Ant Design** — `https://ant.design/components/button`
+- **Your own app** — `http://localhost:3000/dashboard`
 
-### Step 3 — Build component frames
+**What happens:**
+- Copilot opens the URL, takes a full-page capture, and imports it into your Figma file as a **temporary new page**
+- The capture preserves **real CSS layout** — fonts, colors, spacing, shadows, auto-layout — exactly as rendered in the browser
+- Copilot will tell you when it's done and which page was created
 
-For each component (e.g. Button, Card, TextField), Copilot uses existing bridge tools:
+:::caution This page is temporary
+The captured page is a raw dump of the website — it contains every HTML element as a Figma layer. You'll extract the useful components from it in Step 2, and **the raw capture page will be deleted** after the components are organized.
+:::
 
-| Bridge Tool | What it does |
-|---|---|
-| `bridge_create_node` | Create the outer FRAME with layout, padding, fills |
-| `bridge_create_node` (TEXT) | Add labels, placeholders, and text content |
-| `bridge_update_node` | Fine-tune fills, corner radius, strokes, typography |
+**✅ Check your result in Figma:**
 
-Copilot spaces components across the canvas (e.g. 300 px apart) so they don't overlap.
+You should see a new page with editable layers that match the original website:
 
-### Step 4 — Register as master components
+![Captured page in Figma — real CSS layout preserved as editable layers](/img/bootstrap-component-library-frame.png)
 
-Once a frame is built and looks correct, Copilot calls **`bridge_create_component`** to convert it into a reusable master component. This means:
+:::tip Why capture instead of building from scratch?
+Capturing real HTML gives you pixel-perfect results. Building Figma nodes one-by-one with AI would lose layout fidelity — fonts get approximated, spacing is off, shadows are missed. The capture approach preserves everything.
+:::
 
-- The component appears in the Figma **Assets** panel.
-- Other pages can create **instances** of it.
-- Future push-sync can update it in place.
+---
 
-## New Bridge Commands
+## Step 2 — Organize into a Component Library
 
-Three commands were added specifically for this workflow:
+Once you've verified the capture looks good, paste this into Copilot:
 
-| Command | Purpose |
-|---|---|
-| `create-page` | Create a new Figma page with a given name |
-| `set-current-page` | Switch the plugin's active page so subsequent commands target it |
-| `move-node` | Move a node to a different parent (page or frame), even across pages |
+:::note 💬 Prompt
+Look at the captured page in Figma. Find the key UI components — things like Sidebar, Stat Cards, Charts, Data Tables, Buttons, Headers, etc. Create a new page called '📦 Components' with a 'Component Library' frame. Move all the components into it, arrange them in a clean grid layout, and promote each one to a master component. Then delete the raw capture page.
+:::
 
-See the full reference in [Commands & MCP Tools](/docs/bridge/commands).
+**What happens:**
+- Copilot scans the captured layers and identifies the reusable UI pieces
+- It creates a dedicated **📦 Components** page with a wrapper frame
+- Each component is moved in, positioned in a tidy grid (small controls in a row, cards in a row, large layouts stacked), and promoted to a **master component**
+- The raw capture page is cleaned up
 
-## Prerequisites
+**✅ Check your result in Figma:**
 
-| Requirement | How |
-|---|---|
-| Bridge server | `npm run bridge` |
-| Figma plugin open | Plugins → Development → Figma Sync Bridge |
-| Plugin shows 🟢 Connected | Verify in the plugin UI |
-| Copilot Agent Mode | Open VS Code Chat → select Agent mode |
+You should see a clean **📦 Components** page with a "Component Library" frame containing all your master components:
 
-## Copilot Prompts
+![📦 Components page with all master components in a wrapper frame](/img/bootstrap-components-page.png)
 
-Try these prompts in Agent Mode:
+---
 
-| What you want | Prompt |
-|---|---|
-| Bootstrap MUI | *"I want to create Figma components from https://mui.com/material-ui/all-components/. Create a Components page and build Button, Card, and TextField."* |
-| Bootstrap Chakra | *"Scrape https://chakra-ui.com/docs/components and create Figma master components for each one on a new 📦 Components page."* |
-| Single component | *"Read the docs at https://ant.design/components/button and create a matching Figma component on a new page."* |
-| Move to page | *"Move node 50:1 to the 📦 Components page (42:1)."* |
+## Tips for Best Results
 
-## Behind the Scenes
-
-```
-User prompt
-   │
-   ▼
-Copilot (LLM)
-   │  1. fetch_webpage(url)           → scrape component list
-   │  2. bridge_create_page("📦 …")  → pageId
-   │  3. bridge_set_current_page(id)  → switch
-   │  4. For each component:
-   │     a. bridge_create_node(FRAME) → outer frame
-   │     b. bridge_create_node(TEXT)  → labels / content
-   │     c. bridge_update_node(…)     → styling
-   │     d. bridge_create_component(…)→ promote to master
-   ▼
-Figma file now has a "📦 Components" page
-with master components ready to use.
-```
+- **Start with a rich page** — Dashboards or kitchen-sink pages give you 10–20 components in one capture
+- **Be specific in Step 2** — Name the components you want (e.g. "Sidebar, StatCards, DataTable") so Copilot picks the right layers
+- **One URL per prompt** — Don't ask Copilot to capture multiple URLs at once
+- **Always check between steps** — Open Figma after each step to verify the result before moving on
+- **Repeat for more components** — Capture additional URLs and merge into your existing 📦 Components page incrementally

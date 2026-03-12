@@ -1,6 +1,6 @@
 # Epic 7: Bootstrap Figma Components from UI Library URL
 
-> Start from an empty project and populate a Figma file with reusable components built directly via the Plugin Bridge — all driven by a single Copilot prompt.
+> Give Copilot a UI library URL → capture high-fidelity HTML into Figma → promote the best layers to master components — across **two short prompt sessions**.
 
 ## Context
 
@@ -8,25 +8,27 @@
 
 A designer or developer starting a new project wants their Figma file to contain components that match a chosen UI library (MUI, Chakra UI, Ant Design, Shadcn, etc.). Today this requires manually recreating every component in Figma — buttons, inputs, cards, modals, etc. — which takes days of work.
 
-### The solution
+### The solution — Capture then Componentize
 
-The user gives Copilot a URL (e.g. `https://mui.com`) and a prompt like:
+Instead of hand-building Figma nodes one by one (poor layout fidelity), we leverage **`generate_figma_design`** from Figma's official MCP server to capture **real rendered HTML** as editable Figma layers. Then Copilot uses the custom bridge tools to inspect, reorganize, and promote the best layers into master components.
 
-> _"Create Figma components based on this UI library: https://mui.com"_
+**Two-session approach:**
 
-Copilot then:
+| Session | What happens | ~Tool calls | Duration |
+|---------|-------------|-------------|----------|
+| **Prompt 1** — Capture | Copilot picks the right URL(s), captures HTML into Figma via `generate_figma_design` | 5–8 | ~1 min |
+| **Prompt 2** — Componentize | Copilot inspects captured layers, creates a Components page, moves + promotes selected frames, cleans up | 15–25 | ~2 min |
 
-1. Fetches the library's documentation to discover its component catalog
-2. Creates a dedicated **"📦 Components"** page in the Figma file via the Plugin Bridge
-3. For each selected component, **directly builds** the Figma node tree (frames, text, colors, auto-layout) using bridge commands
-4. Promotes each top-level frame into a reusable Figma **master component**
-5. Saves connections to `.figma-sync/connections.json`
+**Why two sessions instead of one?**
 
-**No local React app needed.** Copilot uses its knowledge of the UI library (from docs + LLM knowledge) to construct the visual structure directly in Figma.
+- Each session stays well within context window limits (~25–35 tool calls max)
+- You get a **visual checkpoint** after Prompt 1 — you can inspect the capture in Figma and guide Prompt 2
+- If Prompt 1 captures poorly (wrong URL, page didn't load), you can retry cheaply without losing Prompt 2 work
+- Debugging is trivial — each session has a clear, verifiable outcome
 
 ### Key constraint: Components page
 
-All generated components must live on a **dedicated Figma page** (e.g. `📦 Components`), **not** the default page. This follows Figma best practices where:
+All promoted components must live on a **dedicated Figma page** (e.g. `📦 Components`), **not** the default page. This follows Figma best practices where:
 
 - **Default page** = design compositions / screens
 - **Components page** = the component library (master components)
@@ -34,600 +36,384 @@ All generated components must live on a **dedicated Figma page** (e.g. `📦 Com
 ### Architecture
 
 ```
-User prompt                          Figma File
-  │                                     │
-  │ "Create Figma components            │
-  │  from https://mui.com"              │
-  │                                     │
-  ▼                                     ▼
-┌────────────────────────────────────────────────────────────┐
-│                     COPILOT (Agent Mode)                   │
-│                                                            │
-│  1. fetch_webpage(url)         → component catalog         │
-│  2. bridge: create-page        → "📦 Components" page      │
-│  3. bridge: set-current-page   → switch to Components page │
-│  4. For each component:                                    │
-│     a. bridge: create-node     → build frame structure     │
-│     b. bridge: create-node     → add text, sub-frames      │
-│     c. bridge: update-node     → set fills, radius, etc.   │
-│     d. bridge: create-component→ promote to master comp    │
-│  5. bridge: save-connections   → persist mappings           │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
-                                        │
-                                        ▼
-                               ┌─────────────────┐
-                               │   Figma File     │
-                               │                  │
-                               │  Page 1 (default)│
-                               │    (empty/screens)│
-                               │                  │
-                               │  📦 Components   │
-                               │    ├─ Button     │ ← master component
-                               │    ├─ Card       │ ← master component
-                               │    ├─ TextField  │ ← master component
-                               │    └─ Alert      │ ← master component
-                               └─────────────────┘
+                           Prompt 1 (Capture)                   Prompt 2 (Componentize)
+                           ─────────────────                    ────────────────────────
+
+User: "Capture the          Copilot:                            User: "Now inspect the
+Shadcn dashboard from        │                                   captured page, create
+this URL into Figma"         │ 1. fetch_webpage(url)             📦 Components page,
+       │                     │    → find best showcase URL       promote Sidebar,
+       ▼                     │                                   StatCard, etc."
+   ┌────────┐                │ 2. generate_figma_design(         │
+   │Copilot │                │      outputMode: "existingFile",  │ 1. bridge_list_layers
+   │Agent   │                │      fileKey: "ghwHnq...")        │    → see captured tree
+   │Mode    │                │    → captureId                    │
+   └────────┘                │                                   │ 2. bridge_create_page
+                             │ 3. Open browser + inject          │    → "📦 Components"
+                             │    capture.js into URL            │
+                             │                                   │ 2.5 bridge_create_node
+                             │                                   │    → "Component Library" frame
+                             │                                   │
+                             │                                   │ 3. bridge_move_node ×N
+                             │ 4. Poll until "completed"         │    → move frames into wrapper
+                             ▼                                   │
+                     ┌──────────────┐                            │ 3.5 bridge_update_node(x,y) ×N
+                     │ Figma File   │                            │    → reposition in grid
+                     │              │                            │
+                     │ Captured Page│  ← editable frames,       │ 4. bridge_create_component ×N
+                     │  (raw HTML)  │    text, auto-layout,     │    → promote to master
+                     │              │    fills, radius           │
+                     └──────────────┘                            │ 5. bridge_delete_node
+                                                                 │    → remove raw capture page
+                                                                 │
+                                                                 │ 6. bridge_save_connections
+                                                                 │    → persist mappings
+                                                                 ▼
+                                                         ┌───────────────────┐
+                                                         │ Figma File        │
+                                                         │                   │
+                                                         │ Page 1            │
+                                                         │  (designs)        │
+                                                         │                   │
+                                                         │ 📦 Components     │
+                                                         │  └─ Component     │
+                                                         │     Library       │ ← wrapper
+                                                         │     ├─ Sidebar    │ ← master
+                                                         │     ├─ StatCard   │ ← master
+                                                         │     ├─ Chart      │ ← master
+                                                         │     └─ Table      │ ← master
+                                                         └───────────────────┘
 ```
 
-### Approach: Direct Figma construction via Bridge
+### Why Capture > Direct Construction
 
-Instead of capturing a running web app, Copilot **constructs each component directly** in Figma using existing bridge commands:
+| Aspect | Direct construction (old) | Capture then componentize (new) |
+|--------|--------------------------|----------------------------------|
+| **Layout fidelity** | ❌ No auto-layout, no x/y — children overlap at (0,0) | ✅ Real CSS → Figma auto-layout, flex, padding |
+| **Typography** | ⚠️ LLM guesses font sizes/weights | ✅ Exact computed CSS fonts |
+| **Colors** | ⚠️ LLM approximates from docs | ✅ Exact CSS computed colors |
+| **Shadows, gradients** | ❌ Not supported by bridge | ✅ Captured from real rendering |
+| **Tool calls** | 🔴 60–100+ (create + update every node) | 🟢 20–30 (capture + reorganize) |
+| **Session count** | 1 long, risky session | 2 short, reliable sessions |
 
-| Step | Bridge command | Purpose |
-|------|---------------|---------|
-| Create container frame | `create-node (FRAME)` | Outer frame with auto-layout, padding, fills |
-| Add text labels | `create-node (TEXT)` | Button text, card titles, input labels |
-| Style the frame | `update-node` | Set fills (colors), corner radius, strokes, padding |
-| Add child variants | `create-node (FRAME)` | Nested frames for different states/sizes |
-| Promote to component | `create-component` | Convert frame → master component |
+### Tools used
 
-**Why this works:**
-- The bridge already supports `create-node`, `update-node`, and `create-component` — no new write commands needed for the nodes themselves
-- Copilot's LLM knowledge knows what MUI Button looks like (blue `#1976d2`, 36px height, 8px radius, "Inter" font, etc.)
-- The `fetch_webpage` step supplements LLM knowledge with exact colors, sizes, and typography from the library docs
-
-### New bridge commands needed (page management only)
-
-| Command | What it does | Where |
-|---|---|---|
-| `create-page` | Create a new Figma page with a given name | Plugin |
-| `set-current-page` | Switch the plugin's active page | Plugin |
-| `move-node` | Move a node from one parent (page) to another | Plugin |
-
-### Existing tools used
+**Prompt 1 — Capture** (Figma official MCP):
 
 | Tool | Used for |
 |---|---|
-| `fetch_webpage` (Copilot built-in) | Scrape the UI library docs for colors, sizes, tokens |
-| `bridge_create_node` | Build frame/text nodes directly in Figma |
-| `bridge_update_node` | Set fills, corner radius, padding, strokes, font |
-| `bridge_create_component` | Promote built frames → master components |
-| `bridge_save_connections` | Persist code ↔ Figma component links |
-| `bridge_list_layers` | Verify what was created |
-| `bridge_read_config` | Get Figma file key |
+| `fetch_webpage` (Copilot built-in) | Scrape the UI library to find the best showcase URL |
+| `generate_figma_design` (Figma MCP) | Capture rendered HTML → editable Figma layers |
+
+**Prompt 2 — Componentize** (Custom bridge MCP):
+
+| Tool | Used for |
+|---|---|
+| `bridge_list_layers` | Inspect all captured layers on the page |
+| `bridge_read_node` | Read details of specific frames (optional, for naming) |
+| `bridge_create_page` | Create "📦 Components" page |
+| `bridge_create_node` | Create "Component Library" wrapper frame to hold all components |
+| `bridge_set_current_page` | Switch plugin to the new page |
+| `bridge_move_node` | Move selected frames into the wrapper frame |
+| `bridge_update_node` | Reposition moved frames in a grid layout (x/y) to prevent overlap |
+| `bridge_create_component` | Promote frames to master components |
+| `bridge_delete_node` | Remove leftover capture page/layers |
+| `bridge_save_connections` | Persist component → code mappings |
+
+### Bridge commands (implemented ✅)
+
+| Command | Status | What it does |
+|---|---|---|
+| `create-page` | ✅ Done | Create a new Figma page with a given name |
+| `set-current-page` | ✅ Done | Switch the plugin's active page |
+| `move-node` | ✅ Done | Move a node from one parent (page) to another |
 
 ---
 
-## Walkthrough Flow
+## Prompt Instructions (copy-paste ready)
 
-### Phase 0 — User prompt
+### Prompt 1 — Capture
 
-The user opens VS Code with a project and types:
+```
+Capture the UI from {URL} into my existing Figma file.
 
-> _"Create Figma components based on this UI library: https://mui.com"_
+Steps:
+1. Use fetch_webpage to find the best component showcase page at {URL}
+2. Use generate_figma_design with outputMode "existingFile" and
+   fileKey "ghwHnqX2WZXFtfmsrbRLTg" to capture the page
+3. Poll until the capture is completed
+4. Tell me when it's done and what page was created
+```
 
-Or with more specificity:
+**Example with Shadcn:**
 
-> _"Create Figma components for Button, Card, TextField, and Alert from MUI (https://mui.com). Put them on a Components page."_
+> _"Capture the UI from https://ui.shadcn.com/examples/dashboard into my existing Figma file (key: ghwHnqX2WZXFtfmsrbRLTg). Use generate_figma_design with outputMode existingFile."_
+
+**Expected outcome:** A new page appears in Figma with editable layers captured from the URL.
+
+### Prompt 2 — Componentize
+
+```
+Look at the captured page "{CAPTURED_PAGE_NAME}" in my Figma file.
+
+Steps:
+1. Use bridge_list_layers to see all captured layers
+2. Identify the key UI components (e.g. Sidebar, StatCard, ChartCard,
+   DataTable, Badge, Button, Input, Card)
+3. Create a new page called "📦 Components" using bridge_create_page
+4. Create a wrapper frame called "Component Library" on that page
+   using bridge_create_node
+5. For each identified component:
+   a. Move it into the "Component Library" frame using bridge_move_node
+   b. Reposition it using bridge_update_node with x/y (group small controls
+      in a row, stat cards in a row, large cards stacked vertically)
+   c. Rename it properly
+   d. Promote it to a master component using bridge_create_component
+6. Delete the original captured page using bridge_delete_node
+7. Save connections using bridge_save_connections
+8. Report a summary of what was created
+```
+
+**Example with Shadcn dashboard:**
+
+> _"Inspect the captured dashboard page in Figma. Use bridge_list_layers to find the key components. Create a '📦 Components' page with a 'Component Library' wrapper frame. Move the Sidebar, 4 StatCards, ChartCard, DataTable, and any other good component candidates into it. Reposition in a grid, promote each to a master component, then delete the raw capture page."_
+
+**Expected outcome:** A clean `📦 Components` page with a "Component Library" wrapper frame containing promoted master components.
+
+### Optional Prompt 3+ — Iterate / Add More
+
+If you want to capture additional component pages and add to the existing Components page:
+
+> _"Capture https://ui.shadcn.com/docs/components/button into my Figma file. Then move the captured button variants to the existing 📦 Components page and promote them."_
+
+This pattern is useful for:
+- Adding individual component pages with more variants/states
+- Capturing dark mode versions
+- Adding components from a different library to the same file
+- Building up a complete design system incrementally over several prompts
 
 ---
 
-### Phase 1 — Discover component catalog & design tokens
+## Walkthrough: Shadcn Dashboard Example
 
-**Goal:** Understand which components the library offers and extract design tokens (colors, typography, sizes).
+### Prompt 1 — Capture the dashboard
 
-```
-Copilot internally:
+**User says:**
 
-1. fetch_webpage("https://mui.com/material-ui/all-components/")
-   → Scrapes the component catalog page
-   → Extracts component list: Button, Card, TextField, Alert, ...
+> _"Capture https://ui.shadcn.com/examples/dashboard into my Figma file (key: ghwHnqX2WZXFtfmsrbRLTg) using generate_figma_design with existingFile mode."_
 
-2. fetch_webpage("https://mui.com/material-ui/customization/default-theme/")
-   → Extracts design tokens:
-     - Primary: #1976d2
-     - Secondary: #9c27b0
-     - Error: #d32f2f
-     - Success: #2e7d32
-     - Font: Roboto, 14px base
-     - Border radius: 4px
-     - Spacing unit: 8px
-
-3. Copilot presents the list to the user:
-
-   "I found MUI Material components. Here are the most common ones:
-   
-   | # | Component   | Category    |
-   |---|-------------|-------------|
-   | 1 | Button      | Inputs      |
-   | 2 | TextField   | Inputs      |
-   | 3 | Select      | Inputs      |
-   | 4 | Checkbox    | Inputs      |
-   | 5 | Card        | Surfaces    |
-   | 6 | Alert       | Feedback    |
-   | 7 | Dialog      | Feedback    |
-   | 8 | Chip        | Data Display|
-   | 9 | Avatar      | Data Display|
-   |10 | Tabs        | Navigation  |
-   
-   Which components should I create in Figma? 
-   (e.g. 'all', '1-6', or 'Button, Card, Alert')"
-```
-
-**User responds:** _"Create 1, 2, 5, and 6"_ → Button, TextField, Card, Alert
-
----
-
-### Phase 2 — Create Components page in Figma
-
-**Goal:** Set up the dedicated Components page before building anything.
+**Copilot does (~5 tool calls):**
 
 ```
-Copilot internally:
+1. fetch_webpage("https://ui.shadcn.com/examples/dashboard")
+   → Confirms the URL has a rich component dashboard
 
-Step 2a — Read project config:
+2. generate_figma_design({
+     outputMode: "existingFile",
+     fileKey: "ghwHnqX2WZXFtfmsrbRLTg"
+   })
+   → Returns { captureId: "abc123..." }
 
-→ bridge_read_config()
-   → { figmaFileKey: "ghwHnqX2WZXFtfmsrbRLTg", rootDir: "demo", ... }
+3. Opens browser with capture.js injected
+   (Playwright for external URL, or direct for localhost)
 
-Step 2b — Create the Components page:
+4. Polls: generate_figma_design({ captureId: "abc123" })
+   → Poll 1: "pending"
+   → Poll 2: "completed" ✅
 
-→ bridge: create-page({ name: "📦 Components" })
-   → returns { pageId: "42:1", name: "📦 Components" }
-
-Step 2c — Switch plugin to the new page:
-
-→ bridge: set-current-page({ pageId: "42:1" })
-   → plugin now targets the Components page for all subsequent commands
-
-Copilot confirms:
-  "Created '📦 Components' page in your Figma file. Building components now..."
+5. Reports to user:
+   "✅ Captured! A new page has been added to your Figma file.
+    Open Figma to preview the captured layers, then start Prompt 2."
 ```
 
----
+**User checks Figma** — sees a page with editable frames matching the real Shadcn dashboard. ✅ Checkpoint.
 
-### Phase 3 — Build each component directly in Figma
+### Prompt 2 — Componentize
 
-**Goal:** For each selected component, construct the visual node tree directly using bridge commands.
+**User says:**
 
-This is the core of the flow. Copilot uses its LLM knowledge + fetched design tokens to build each component as a structured Figma frame.
+ > _"Now inspect the captured page in Figma. Create a '📦 Components' page with a wrapper frame called 'Component Library'. Identify the Sidebar, the 4 stat cards, the chart card, the data table, and any badges/buttons. Move each into the wrapper frame, reposition them in a clean grid, and promote to master components. Delete the raw capture page afterward."_
 
-#### Example: Building a MUI Button
-
-```
-Copilot internally:
-
-Step 3a — Create the container frame on the Components page:
-
-→ bridge_create_node({
-    type: "FRAME",
-    parentId: "42:1",           ← the 📦 Components page ID
-    name: "Button",
-    properties: {
-      width: 400,
-      height: 200,
-      fills: [{ type: "SOLID", color: { r: 1, g: 1, b: 1 }, opacity: 0 }]
-    }
-  })
-  → returns { id: "50:1", name: "Button", ... }
-
-Step 3b — Create a "Contained" variant button:
-
-→ bridge_create_node({
-    type: "FRAME",
-    parentId: "50:1",
-    name: "Contained",
-    properties: {
-      width: 120,
-      height: 36,
-      fills: [{ type: "SOLID", color: { r: 0.098, g: 0.463, b: 0.824 } }]
-              ← #1976d2 (MUI primary)
-    }
-  })
-  → returns { id: "50:2" }
-
-→ bridge_update_node({
-    nodeId: "50:2",
-    properties: { cornerRadius: 4, paddingLeft: 16, paddingRight: 16,
-                  paddingTop: 8, paddingBottom: 8 }
-  })
-
-→ bridge_create_node({
-    type: "TEXT",
-    parentId: "50:2",
-    name: "Label",
-    properties: {
-      characters: "BUTTON",
-      fontSize: 14,
-      fontName: { family: "Inter", style: "Medium" }
-    }
-  })
-  → returns { id: "50:3" }
-
-Step 3c — Create an "Outlined" variant:
-
-→ bridge_create_node({
-    type: "FRAME",
-    parentId: "50:1",
-    name: "Outlined",
-    properties: {
-      width: 120,
-      height: 36,
-      fills: []                 ← transparent
-    }
-  })
-  → returns { id: "50:4" }
-
-→ bridge_update_node({
-    nodeId: "50:4",
-    properties: {
-      cornerRadius: 4,
-      strokeWeight: 1,
-      strokes: [{ type: "SOLID", color: { r: 0.098, g: 0.463, b: 0.824 } }],
-      paddingLeft: 16, paddingRight: 16,
-      paddingTop: 8, paddingBottom: 8
-    }
-  })
-
-→ bridge_create_node({
-    type: "TEXT",
-    parentId: "50:4",
-    name: "Label",
-    properties: {
-      characters: "BUTTON",
-      fontSize: 14,
-      fontName: { family: "Inter", style: "Medium" }
-    }
-  })
-
-Step 3d — Create a "Text" variant:
-
-→ (similar pattern with no fills, no stroke, just text)
-
-Step 3e — Promote to master component:
-
-→ bridge_create_component({
-    nodeId: "50:1",
-    name: "Button",
-    description: "MUI Button — contained, outlined, text variants. Primary color: #1976d2."
-  })
-  → returns { id: "50:1", type: "COMPONENT" }
-```
-
-#### Example: Building a MUI Card
+**Copilot does (~22 tool calls):**
 
 ```
-Copilot internally:
+1. bridge_list_layers()
+   → Returns ~80 layers including:
+     - Frame "Sidebar" (240×640)
+     - Frame "StatCard" × 4 (280×140 each)
+     - Frame "ChartCard" (600×360)
+     - Frame "DataTable" (900×420)
+     - Various text, nested frames, etc.
 
-→ bridge_create_node({
-    type: "FRAME",
-    parentId: "42:1",
-    name: "Card",
-    properties: { width: 345, height: 260, fills: [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }] }
-  })
-  → returns { id: "60:1" }
+2. bridge_create_page({ name: "📦 Components" })
+   → Returns { pageId: "80:1" }
 
-→ bridge_update_node({
-    nodeId: "60:1",
-    properties: { cornerRadius: 4, strokeWeight: 1,
-                  strokes: [{ type: "SOLID", color: { r: 0, g: 0, b: 0 }, opacity: 0.12 }] }
-  })
+3. bridge_create_node({ type: "FRAME", parentId: "80:1", name: "Component Library" })
+   → Returns wrapper frame to hold all components
 
-→ bridge_create_node({
-    type: "TEXT", parentId: "60:1", name: "Title",
-    properties: { characters: "Card Title", fontSize: 20, fontName: { family: "Inter", style: "Medium" } }
-  })
+4. bridge_move_node × 7
+   → Moves each component frame into the wrapper frame
 
-→ bridge_create_node({
-    type: "TEXT", parentId: "60:1", name: "Content",
-    properties: { characters: "Card content body text goes here.\nSupports multiple lines.", fontSize: 14,
-                  fontName: { family: "Inter", style: "Regular" } }
-  })
+5. bridge_update_node(x, y) × 7
+   → Repositions components in a grid layout (prevents overlap)
 
-→ bridge_create_node({
-    type: "FRAME", parentId: "60:1", name: "Actions",
-    properties: { width: 345, height: 48, fills: [] }
-  })
-  → returns { id: "60:4" }
+6. bridge_create_component × 7
+   → Promotes each to master component with proper name/description
 
-→ bridge_create_node({
-    type: "TEXT", parentId: "60:4", name: "Action Button",
-    properties: { characters: "LEARN MORE", fontSize: 14, fontName: { family: "Inter", style: "Medium" } }
-  })
+7. bridge_delete_node → Removes the raw capture page
 
-→ bridge_create_component({
-    nodeId: "60:1",
-    name: "Card",
-    description: "MUI Card — surface container with title, content, and actions area."
-  })
-```
+8. bridge_save_connections → Persists mappings
 
-#### Example: Building a MUI Alert
-
-```
-Copilot internally:
-
-→ Create outer frame "Alert" on Components page (42:1)
-   width: 400, height: 200
-
-→ Create "Success" variant frame:
-   fills: [{ type: "SOLID", color: { r: 0.929, g: 0.973, b: 0.937 } }]  ← #edf7ed
-   cornerRadius: 4, padding: 8/16
-   → Add text: "This is a success alert — check it out!"
-     color: { r: 0.11, g: 0.38, b: 0.16 }  ← #1e4620
-
-→ Create "Error" variant frame:
-   fills: [{ type: "SOLID", color: { r: 0.992, g: 0.929, b: 0.933 } }]  ← #fdeded
-   → Add text: "This is an error alert — check it out!"
-
-→ Create "Warning" variant frame
-→ Create "Info" variant frame
-
-→ Promote to component:
-   bridge_create_component({ nodeId: ..., name: "Alert",
-     description: "MUI Alert — success, error, warning, info severity levels." })
-```
-
-**Copilot builds all 4 components sequentially, reporting progress:**
-
-> _"Building Button... ✅ Done (3 variants)_  
-> _Building TextField... ✅ Done (2 variants)_  
-> _Building Card... ✅ Done_  
-> _Building Alert... ✅ Done (4 variants)"_
-
----
-
-### Phase 4 — Save connections & report
-
-**Goal:** Persist the component mappings and give the user a summary.
-
-```
-Copilot:
-
-→ bridge_save_connections({
-    connections: [
-      { figmaNodeId: "50:1",  figmaComponentName: "Button",    codeComponent: "Button",    file: "—", linkedAt: "2026-03-12T..." },
-      { figmaNodeId: "55:1",  figmaComponentName: "TextField", codeComponent: "TextField", file: "—", linkedAt: "2026-03-12T..." },
-      { figmaNodeId: "60:1",  figmaComponentName: "Card",      codeComponent: "Card",      file: "—", linkedAt: "2026-03-12T..." },
-      { figmaNodeId: "65:1",  figmaComponentName: "Alert",     codeComponent: "Alert",     file: "—", linkedAt: "2026-03-12T..." },
-    ]
-  })
-
-→ Report to user:
-
-  "✅ Created 4 Figma master components on the **📦 Components** page:
-
-  | Component | Figma Node | Variants                             |
-  |-----------|-----------|--------------------------------------|
-  | Button    | 50:1      | Contained, Outlined, Text            |
-  | TextField | 55:1      | Outlined, Filled                     |
-  | Card      | 60:1      | Title + Content + Actions            |
-  | Alert     | 65:1      | Success, Error, Warning, Info        |
-
-  Design tokens used:
-  - Primary: #1976d2  |  Secondary: #9c27b0
-  - Font: Inter  |  Border radius: 4px
-  - Spacing: 8px grid
-
-  [Open in Figma ↗](https://www.figma.com/design/ghwHnqX2WZXFtfmsrbRLTg)
-
-  You can now:
-  - Use these as master components in your Figma designs
-  - Ask me to add more components
-  - Ask me to update colors/sizes to match a different theme"
+9. Reports summary table
 ```
 
 ---
 
 ## User Stories
 
-### 7.1 — Discover components from UI library URL
+### 7.1 — Discover best showcase URL from library
 
 **As a** developer  
-**I want to** give Copilot a UI library URL and have it list available components  
-**So that** I can choose which components to create in Figma  
+**I want** Copilot to figure out the best URL to capture from a UI library  
+**So that** I get the most representative components in one capture  
 
 **Acceptance Criteria:**
-- [ ] Copilot fetches the library's component catalog page via `fetch_webpage`
-- [ ] Combines scraped info with LLM knowledge of the library
-- [ ] Presents a categorized list of components to the user
-- [ ] User can select specific components or "all"
-- [ ] Works with at least: MUI, Chakra UI, Ant Design, Shadcn
+- [ ] Copilot fetches the library's site via `fetch_webpage`
+- [ ] Identifies component showcase / example / kitchen-sink pages
+- [ ] Picks the URL with the richest set of visible components
+- [ ] Works with at least: Shadcn, MUI, Chakra UI, Ant Design
 
 **Tasks:**
-- [ ] Identify the common component catalog URL patterns for major libraries
-- [ ] Use `fetch_webpage` to scrape and extract component names + design tokens
-- [ ] Present structured list to user for selection
-- [ ] Document supported libraries and their catalog URLs
+- [ ] Copilot uses `fetch_webpage` to scrape the main URL and find showcase links
+- [ ] Copilot selects the best URL (e.g. `/examples/dashboard`, `/all-components/`)
+- [ ] Falls back to the user-provided URL if no better option is found
 
 ---
 
-### 7.2 — Create dedicated Components page in Figma
+### 7.2 — Capture HTML into Figma via generate_figma_design
 
 **As a** developer  
-**I want** Figma components to be created on a dedicated page (e.g. "📦 Components")  
-**So that** the Figma file follows best practices with a clean component library page  
+**I want** the UI library page captured as editable Figma layers  
+**So that** I get high-fidelity components with real CSS layout, fonts, and colors  
 
 **Acceptance Criteria:**
-- [x] New bridge command `create-page` creates a named Figma page
-- [x] New bridge command `set-current-page` switches the plugin's active page
-- [x] New bridge command `move-node` moves a node between pages/parents
-- [x] All three commands exposed as MCP tools
-- [ ] Components page is created before any component frames
+- [ ] `generate_figma_design` called with `outputMode: "existingFile"` and project's `fileKey`
+- [ ] Capture completes successfully (polled to `"completed"` status)
+- [ ] Captured page appears in Figma with editable frames (not flattened images)
+- [ ] Text layers are editable, fonts match the original CSS
+- [ ] Colors, corner radius, padding match the original CSS
+- [ ] Auto-layout is applied where the original used flexbox/grid
 
 **Tasks:**
-- [x] Add `create-page` handler in `figma-plugin/code.ts`
-- [x] Add `set-current-page` handler in `figma-plugin/code.ts`
-- [x] Add `move-node` handler in `figma-plugin/code.ts`
-- [x] Add `CreatePagePayload`, `SetCurrentPagePayload`, `MoveNodePayload` types to `src/protocol.ts`
-- [x] Register as plugin commands in `src/server.ts` (auto-forwarded, no changes needed)
-- [x] Expose as MCP tools in `src/mcp-server.ts`
+- [ ] Copilot calls `generate_figma_design` with correct parameters
+- [ ] For external URLs: Copilot uses Playwright to inject `capture.js`
+- [ ] Copilot polls `captureId` until `"completed"` (max 10 polls, 5s interval)
+- [ ] User confirms captured page looks correct before Prompt 2
 
 ---
 
-### 7.3 — Build Figma components directly via bridge
+### 7.3 — Create Components page and promote captured frames
 
 **As a** developer  
-**I want** Copilot to construct each UI component directly in Figma using bridge commands  
-**So that** components are built with the correct structure, colors, and typography without needing a local showcase app  
+**I want** Copilot to inspect the captured layers, move the best frames to a Components page, and promote them to master components  
+**So that** I have a clean, reusable component library in Figma  
 
 **Acceptance Criteria:**
-- [ ] Each component is built as a frame with proper auto-layout, fills, typography
-- [ ] Design tokens from the library (colors, radius, font) are accurately applied
-- [ ] Components include key variants (e.g. Button: contained, outlined, text)
-- [ ] Each top-level frame is promoted to a master component via `bridge_create_component`
-- [ ] Components are named correctly (e.g. "Button", "Card", not "Frame 42")
-- [ ] Component descriptions include variant info and library name
+- [x] `bridge_list_layers` used to inspect all captured layers
+- [x] Copilot identifies component-worthy frames (by name, size, structure)
+- [x] `bridge_create_page` creates "📦 Components" page (id: 78:318)
+- [x] A wrapper frame ("Component Library") is created on the Components page to hold all components
+- [x] `bridge_move_node` moves selected frames into the wrapper frame
+- [x] `bridge_create_component` promotes each frame to a master component (18 total)
+- [x] Components are named properly (e.g. "Sidebar", "StatCard-Revenue", "ChartCard")
+- [x] Components are repositioned in a non-overlapping grid layout using `bridge_update_node` x/y
+- [x] Component descriptions include source library name ("Captured from Shadcn UI dashboard")
 
 **Tasks:**
-- [ ] Copilot uses `bridge_create_node` (FRAME/TEXT) to build node trees
-- [ ] Copilot uses `bridge_update_node` to set fills, corner radius, padding, strokes
-- [ ] Copilot uses `bridge_create_component` to promote frames
-- [ ] Verify components are properly structured in Figma
-- [ ] Verify components can be instantiated (create instances from master)
+- [x] `create-page`, `set-current-page`, `move-node` bridge commands implemented
+- [x] All three exposed as MCP tools
+- [x] Copilot inspects layers and selects component candidates (18 total)
+- [x] Copilot moves and promotes each selected frame
+- [x] Verify promoted components appear in Figma Assets panel
 
 ---
 
-### 7.4 — Save connections & report summary
+### 7.4 — Clean up and save connections
 
 **As a** developer  
-**I want** the component mappings saved and a clear summary shown  
-**So that** I know what was created and future sync operations work  
+**I want** the raw capture page deleted and component mappings saved  
+**So that** the Figma file stays clean and future sync operations work  
 
 **Acceptance Criteria:**
-- [ ] `.figma-sync/connections.json` updated with new component links
-- [ ] Copilot reports a summary table: component name, Figma node, variants
-- [ ] Copilot reports design tokens used (colors, font, radius)
-- [ ] User can follow up to add more components or modify existing ones
+- [x] Raw capture page/layers cleaned up after componentization
+- [x] `.figma-sync/connections.json` updated with 18 component links
+- [x] Copilot reports a summary table: component name, Figma node, source
+- [x] User can follow up with additional captures (Prompt 3+ pattern)
 
 **Tasks:**
-- [ ] Call `bridge_save_connections` with new component mappings
-- [ ] Print summary table with component names, node IDs, and variant info
-- [ ] Include Figma file link in summary
+- [x] `bridge_delete_node` removes leftover capture layers
+- [x] `bridge_save_connections` persists 18 component mappings
+- [x] Summary report printed with component names, node IDs, descriptions
 
 ---
 
 ### 7.5 — Update documentation site
 
 **As a** developer or contributor  
-**I want** the Docusaurus docs site updated with this new use case  
-**So that** anyone can learn how to bootstrap Figma components from a UI library URL  
+**I want** the Docusaurus docs site updated with this use case  
+**So that** anyone can learn the capture-then-componentize workflow  
 
 **Acceptance Criteria:**
 - [x] New use case page `docs/docs/usecases/bootstrap-from-url.md` created
 - [x] Bridge commands page `docs/docs/bridge/commands.md` updated with 3 new commands
 - [x] Sidebar (`docs/sidebars.ts`) updated to include the new use case page
 - [x] Docs site builds cleanly (`npx docusaurus build`)
+- [x] Docs updated to reflect capture-then-componentize approach (not direct construction)
+- [x] Multi-prompt session instructions included in docs
 
 **Tasks:**
-
-#### 7.5.1 — New use case doc: `docs/docs/usecases/bootstrap-from-url.md`
-
-Content structure:
-
-```markdown
----
-sidebar_position: 3
-slug: /usecases/bootstrap-from-url
----
-# Bootstrap Components from UI Library
-
-## Why?
-- Start from empty Figma file
-- Populate with components matching a UI library
-
-## Prerequisites
-- Bridge server running
-- Figma plugin connected
-- Figma file key configured in figma.config.json
-
-## How to Prompt
-- Minimal: "Create Figma components based on https://mui.com"
-- Specific: "Create Button, Card, Alert from Chakra UI"
-- Add more: "Add TextField to the Components page"
-- Custom theme: "Create Button from Shadcn with zinc dark theme"
-
-## What Happens Behind the Scenes
-- Phase 1: Discover (fetch_webpage → component list)
-- Phase 2: Create page (create-page → set-current-page)
-- Phase 3: Build components (create-node → update-node → create-component)
-- Phase 4: Save & report (save-connections → summary)
-
-## Supported Libraries
-- MUI, Chakra UI, Ant Design, Shadcn (and any library Copilot knows)
-
-## Tips
-- Start with 3–5 components, add more later
-- Check the 📦 Components page in Figma after each run
-- Components are master components — you can create instances from them
-```
-
-#### 7.5.2 — Update commands doc: `docs/docs/bridge/commands.md`
-
-Add 3 new plugin write commands to the existing tables:
-
-| Command | Purpose |
-|---|---|
-| `create-page` | Create a new Figma page with a given name |
-| `set-current-page` | Switch the plugin's active page for subsequent commands |
-| `move-node` | Move a node from one parent/page to another |
-
-Add 3 new MCP tools to the Plugin Tools table:
-
-| MCP Tool | Bridge Command | Description |
-|---|---|---|
-| `bridge_create_page` | `create-page` | Create a new named Figma page |
-| `bridge_set_current_page` | `set-current-page` | Switch plugin's active page |
-| `bridge_move_node` | `move-node` | Move a node to a different parent/page |
-
-Add example prompts:
-
-| What you want | Prompt |
-|---|---|
-| Create components page | *"Create a new Figma page called Components"* |
-| Bootstrap from URL | *"Create Figma components based on https://mui.com"* |
-| Move to page | *"Move node 50:1 to the Components page"* |
-
-#### 7.5.3 — Update sidebar: `docs/sidebars.ts`
-
-Add `'usecases/bootstrap-from-url'` to the Usecases category items array.
+- [x] Created `docs/docs/usecases/bootstrap-from-url.md`
+- [x] Updated `docs/docs/bridge/commands.md` with 3 new commands
+- [x] Updated `docs/sidebars.ts`
+- [x] Rewrite use case doc to describe the 2-session capture approach
+- [x] Add copy-paste prompt templates to the docs
 
 ---
 
-## Example Prompts
+## Multi-Prompt Session Guide
 
-### Minimal prompt
+### Why multiple prompts?
 
-> _"Create Figma components based on https://mui.com"_
+| Concern | Single prompt | Multiple prompts |
+|---------|--------------|-----------------|
+| **Context window** | ⚠️ 40+ tool calls risks overflow | ✅ 8–25 per session |
+| **Reliability** | ❌ Failure midway = start over | ✅ Each session is independent |
+| **Debugging** | Hard — can't inspect mid-flow | ✅ Visual checkpoint between sessions |
+| **Flexibility** | None — all-or-nothing | ✅ Adjust Prompt 2 based on capture result |
+| **Quality** | Same | Same (capture quality is identical) |
 
-### Specific components
+### Session budget estimates
 
-> _"Create Figma components for Button, Card, and Alert from Chakra UI (https://chakra-ui.com). Put them on a Components page."_
+| Scenario | Prompts | Total tool calls | Quality |
+|----------|---------|-----------------|---------|
+| 1 dashboard page → 5–7 components | 2 | ~25 | ✅ High |
+| 3 component pages → 12+ components | 4 | ~50 | ✅ High |
+| Full library (20+ components) | 5–6 | ~80 | ✅ High |
+| One capture + componentize in 1 prompt | 1 | ~30 | ⚠️ Tight but possible for ≤5 components |
 
-### Adding more components to existing file
+### Tips for best results
 
-> _"Add TextField, Select, and DatePicker from Ant Design to the Components page in my Figma file."_
-
-### With specific theme
-
-> _"Create Figma components for Button from Shadcn with the zinc dark theme."_
+1. **Start with one rich page** — Dashboard or Kitchen Sink pages contain many components in one capture. Better than capturing individual pages.
+2. **Inspect before componentizing** — After Prompt 1, open Figma and check the captured layers. Note which frames are component-worthy.
+3. **Be specific in Prompt 2** — Name the exact components you want promoted. Copilot works better with explicit instructions than vague "find the components."
+4. **Iterate** — Use Prompt 3+ pattern to add more component pages later. Each capture adds to the same Components page.
+5. **One capture per prompt** — Don't ask Copilot to capture multiple URLs in one session. Each `generate_figma_design` call needs browser interaction + polling.
 
 ---
 
 ## New Bridge Commands Specification
 
-### `create-page`
+### `create-page` (✅ Implemented)
 
 ```typescript
 // Request
@@ -639,7 +425,7 @@ Add `'usecases/bootstrap-from-url'` to the Usecases category items array.
 
 **Plugin implementation:** `figma.createPage()` + set name.
 
-### `set-current-page`
+### `set-current-page` (✅ Implemented)
 
 ```typescript
 // Request
@@ -649,9 +435,9 @@ Add `'usecases/bootstrap-from-url'` to the Usecases category items array.
 { success: true, data: { pageId: "42:1", name: "📦 Components" } }
 ```
 
-**Plugin implementation:** `figma.setCurrentPageAsync(page)` — required so subsequent `create-node` / `create-component` calls target the correct page.
+**Plugin implementation:** `figma.setCurrentPageAsync(page)`.
 
-### `move-node`
+### `move-node` (✅ Implemented)
 
 ```typescript
 // Request
@@ -661,19 +447,24 @@ Add `'usecases/bootstrap-from-url'` to the Usecases category items array.
 { success: true, data: { nodeId: "50:1", newParentId: "42:1" } }
 ```
 
-**Plugin implementation:** `targetParent.appendChild(node)` — removes from old parent and inserts into new parent. Works across pages.
+**Plugin implementation:** `targetParent.appendChild(node)` — works across pages.
 
 ---
 
 ## Definition of Done
 
-- [ ] User can prompt Copilot with a UI library URL and get Figma components
-- [ ] Components are created **directly** via bridge (no local showcase app needed)
-- [ ] Components live on a dedicated "📦 Components" page, **not** the default page
-- [ ] At least one library (MUI) fully demonstrated end-to-end
+- [x] User can prompt Copilot with a UI library URL and get Figma components
+- [x] Approach uses `generate_figma_design` to capture real HTML (not direct node construction)
+- [x] Components live on a dedicated "📦 Components" page, **not** the default page
+- [x] All components are inside a wrapper frame ("Component Library"), not loose on the page
+- [x] At least one library (Shadcn) fully demonstrated end-to-end with 2-prompt flow
 - [x] Bridge commands `create-page`, `set-current-page`, `move-node` implemented and tested
-- [ ] Connections saved in `.figma-sync/connections.json`
-- [ ] Components are reusable master components (can create instances)
-- [x] Docusaurus use case page `usecases/bootstrap-from-url.md` created
+- [x] Raw capture page cleaned up after componentization
+- [x] Connections saved in `.figma-sync/connections.json` (18 components)
+- [x] Components are reusable master components (can create instances)
+- [x] Components arranged in non-overlapping grid on 📦 Components page (via `bridge_update_node` x/y)
+- [x] Docusaurus use case page created
 - [x] Bridge commands doc updated with 3 new commands + MCP tools
 - [x] Sidebar updated and docs site builds cleanly
+- [x] Docs updated to reflect capture-then-componentize approach
+- [x] Multi-prompt instructions documented

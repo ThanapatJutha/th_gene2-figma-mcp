@@ -98,10 +98,12 @@ server.registerTool(
 server.registerTool(
   'bridge_update_node',
   {
-    description: 'Update properties of a Figma node (text, fills, dimensions, opacity, font, corner radius, padding, stroke).',
+    description: 'Update properties of a Figma node (position, text, fills, dimensions, opacity, font, corner radius, padding, stroke).',
     inputSchema: {
       nodeId: z.string().describe('Figma node ID'),
       properties: z.object({
+        x: z.number().optional().describe('X position'),
+        y: z.number().optional().describe('Y position'),
         characters: z.string().optional().describe('New text content (TEXT nodes only)'),
         fills: z.array(z.unknown()).optional().describe('Array of fill paints, e.g. [{ type: "SOLID", color: { r: 0.5, g: 0, b: 1 } }]'),
         width: z.number().optional().describe('New width'),

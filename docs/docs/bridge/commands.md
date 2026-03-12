@@ -51,7 +51,7 @@ These are forwarded over WebSocket to the Figma Plugin running inside the Figma 
 | Command | Purpose |
 |---|---|
 | `create-component` | Convert a frame/group into a reusable Figma Component |
-| `update-node` | Update text, fills, dimensions, opacity, font, corner radius, padding, strokes |
+| `update-node` | Update position (x, y), text, fills, dimensions, opacity, font, corner radius, padding, strokes |
 | `create-instance` | Create an instance of a master component inside a parent frame |
 | `create-node` | Create a basic FRAME or TEXT node inside a parent frame |
 | `delete-node` | Delete a Figma node by ID. Cannot delete PAGE nodes. |
@@ -76,7 +76,7 @@ The `figma-bridge` custom MCP server exposes **24 MCP tools** that Copilot can c
 | `bridge_list_layers` | `list-layers` | List all layers on the current page as a flat list |
 | `bridge_list_components` | `list-components` | List all COMPONENT / COMPONENT_SET nodes |
 | `bridge_create_component` | `create-component` | Convert a frame/group into a reusable Component |
-| `bridge_update_node` | `update-node` | Update text, fills, dimensions, opacity, font, padding, strokes |
+| `bridge_update_node` | `update-node` | Update position (x, y), text, fills, dimensions, opacity, font, padding, strokes |
 | `bridge_create_instance` | `create-instance` | Create an instance of a master component inside a parent frame |
 | `bridge_create_node` | `create-node` | Create a basic FRAME or TEXT node (fallback when no component exists) |
 | `bridge_delete_node` | `delete-node` | Delete a Figma node by ID permanently |
@@ -109,6 +109,7 @@ The `figma-bridge` custom MCP server exposes **24 MCP tools** that Copilot can c
 | See the page tree | *"Show me the node tree of the current Figma page"* |
 | Convert to component | *"Convert Figma node 1:5 to a component named HeaderCard"* |
 | Update text | *"Update the text in Figma node 3:12 to say 'Hello World'"* |
+| Reposition node | *"Move node 50:1 to position x=300, y=600 using bridge_update_node"* |
 | Push sync a new child | *"Create an instance of component 8:2 inside parent 1:4"* |
 | Fix child order | *"Reorder the children of 1:4 to \[8:2, 51:104, 1:16\]"* |
 | Delete a node | *"Delete Figma node 51:104"* |

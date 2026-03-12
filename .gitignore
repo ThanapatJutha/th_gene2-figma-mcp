@@ -8,3 +8,6 @@ dist/
 
 # Compiled Figma plugin
 figma-plugin/code.js
+
+# Temporary helper scripts (one-off capture/build scripts)
+*.cjs

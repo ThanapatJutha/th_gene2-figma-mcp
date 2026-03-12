@@ -334,6 +334,18 @@ async function handleUpdateNode(p: {
     updated.push('strokes');
   }
 
+  // x position
+  if (props.x !== undefined && 'x' in node) {
+    (node as SceneNode).x = props.x as number;
+    updated.push('x');
+  }
+
+  // y position
+  if (props.y !== undefined && 'y' in node) {
+    (node as SceneNode).y = props.y as number;
+    updated.push('y');
+  }
+
   return { nodeId: p.nodeId, updated };
 }
 
