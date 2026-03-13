@@ -5,14 +5,12 @@ slug: /usecases/bootstrap-from-url
 
 # Create Figma Components from Any URL
 
-You can create a full Figma component library from **any URL** — an external website, a local dev server, or a purpose-built showcase app. Copilot captures the real rendered page into Figma, then organizes and promotes the key UI pieces into reusable master components.
+Capture any web page into Figma, then promote the key UI pieces into reusable master components. This workflow supports **two use cases** — pick the one that fits:
 
-The URL can be:
-
-- **An external site** — `https://ui.shadcn.com/examples/dashboard`, `https://ant.design/components/button`
-- **A local project** — `http://localhost:3000/dashboard`, `http://localhost:5173`
-
-The whole process takes **3 prompts**.
+| Use Case | Description | Start from |
+|---|---|---|
+| **A) UI Library** — shadcn/ui, MUI, Chakra UI, etc. | You want a Figma component library for a specific UI framework. Copilot builds a local showcase app that renders every variant, captures it into Figma, then organizes the pieces into master components. | **Prompt 1** → 2 → 3 |
+| **B) Any Website** — external site or local dev server | You already have a URL — an external site like `https://ui.shadcn.com/examples/dashboard` or a local dev server like `http://localhost:3000`. Copilot captures it directly and organizes the components. | **Prompt 2** → 3 *(skip Prompt 1)* |
 
 ---
 
@@ -32,9 +30,9 @@ While Copilot is actively executing commands through the bridge, **do not switch
 
 ---
 
-## Prompt 1 — Build a Showcase App (optional)
+## Prompt 1 — Build a Showcase App
 
-> Skip this step if you're capturing an external website or already have a running page.
+> **Use Case A only.** Skip this step if you already have a URL to capture (Use Case B).
 
 If you want to build a Figma component library for a UI library (e.g., shadcn/ui, MUI, Chakra UI), the best approach is to **render real components** in a local app and capture them — not draw them by hand.
 
@@ -68,6 +66,10 @@ Capture the UI from `https://ui.shadcn.com/examples/dashboard` into my Figma fil
 Capture the UI from `http://localhost:5173` into my Figma file (key: `YOUR_FILE_KEY`). Use Playwright to capture the full page. Add it as a new page in the existing file. Poll until the capture is complete.
 :::
 
+Here's an example of a website before capture — this is what Copilot will capture and import into Figma:
+
+![Example website to capture — a dashboard with components like cards, charts, and navigation](/img/bootstrap-example-website.png)
+
 **What happens:**
 - Copilot uses Playwright to open the URL, handle lazy-loading (for external sites), and take a full-page capture
 - The capture is imported into your Figma file as a **temporary new page**
@@ -79,9 +81,9 @@ The captured page is a raw dump of the website — it contains every HTML elemen
 
 **✅ Check your result in Figma:**
 
-You should see a new page with editable layers that match the original website:
+You should see a new page with editable layers that match the original website — editable layers preserving the original CSS layout:
 
-![Captured page in Figma — real CSS layout preserved as editable layers](/img/bootstrap-component-library-frame.png)
+![Captured page in Figma — editable layers matching the original website](/img/bootstrap-captured-in-figma.png)
 
 ---
 
@@ -109,7 +111,7 @@ You should see master components organized in Figma's Assets panel by category:
 
 ## Full Workflow Example
 
-Here's the three prompts in sequence for a complete run:
+### Use Case A — UI Library (all 3 prompts)
 
 | # | Prompt | What it does |
 |---|--------|-------------|
@@ -117,7 +119,12 @@ Here's the three prompts in sequence for a complete run:
 | 2 | *"Capture `http://localhost:5173` into my Figma file (key: `ABC123`). Use Playwright. Poll until complete."* | Full-page capture → Figma page |
 | 3 | *"Find all components in the capture. Promote each to a master component with `Category / Variant` naming. Arrange in a grid. Delete the capture page."* | Components organized & promoted |
 
-For **external URLs**, skip Prompt 1 and use the external URL directly in Prompt 2.
+### Use Case B — Any Website (prompts 2 & 3 only)
+
+| # | Prompt | What it does |
+|---|--------|-------------|
+| 2 | *"Capture `https://ui.shadcn.com/examples/dashboard` into my Figma file (key: `ABC123`). Use Playwright to handle lazy-loading — slow-scroll, force eager images, resize viewport. Poll until complete."* | Full-page capture → Figma page |
+| 3 | *"Find all components in the capture. Promote each to a master component with `Category / Variant` naming. Arrange in a grid. Delete the capture page."* | Components organized & promoted |
 
 ---
 
