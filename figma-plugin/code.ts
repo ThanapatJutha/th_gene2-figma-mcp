@@ -154,11 +154,55 @@ async function handleReadTree(p: { nodeId?: string; maxDepth?: number }) {
   return serializeNode(root, p.maxDepth ?? 4);
 }
 
+// ── Auto-layout inference helpers ──────────────────────────────────────
+// Used by handleCreateComponent to fix HTML-to-Design captured frames
+// where CSS padding is stored as metadata but auto-layout is not enabled.
+
+/** Infer HORIZONTAL vs VERTICAL from children positions. */
+function inferLayoutDirection(
+  children: readonly SceneNode[],
+): 'HORIZONTAL' | 'VERTICAL' {
+  if (children.length <= 1) return 'HORIZONTAL';
+  const sorted = [...children];
+  const xRange =
+    Math.max(...sorted.map((c) => c.x)) - Math.min(...sorted.map((c) => c.x));
+  const yRange =
+    Math.max(...sorted.map((c) => c.y)) - Math.min(...sorted.map((c) => c.y));
+  return xRange >= yRange ? 'HORIZONTAL' : 'VERTICAL';
+}
+
+/** Infer item spacing (gap) from average distance between adjacent children. */
+function inferItemSpacing(
+  children: readonly SceneNode[],
+  direction: 'HORIZONTAL' | 'VERTICAL',
+): number {
+  if (children.length <= 1) return 0;
+  const sorted = [...children].sort((a, b) =>
+    direction === 'HORIZONTAL' ? a.x - b.x : a.y - b.y,
+  );
+  let totalGap = 0;
+  let gapCount = 0;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i - 1];
+    const curr = sorted[i];
+    const gap =
+      direction === 'HORIZONTAL'
+        ? curr.x - (prev.x + prev.width)
+        : curr.y - (prev.y + prev.height);
+    if (gap > 0) {
+      totalGap += gap;
+      gapCount++;
+    }
+  }
+  return gapCount > 0 ? Math.round(totalGap / gapCount) : 0;
+}
+
 async function handleCreateComponent(p: {
   nodeId: string;
   name?: string;
   description?: string;
 }) {
+  let autoLayoutApplied = false;
   const node = await figma.getNodeByIdAsync(p.nodeId);
   if (!node) throw new Error(`Node not found: ${p.nodeId}`);
 
@@ -211,6 +255,32 @@ async function handleCreateComponent(p: {
       component.itemSpacing = frame.itemSpacing;
       component.primaryAxisAlignItems = frame.primaryAxisAlignItems;
       component.counterAxisAlignItems = frame.counterAxisAlignItems;
+    } else {
+      // ── Auto-layout fixup for HTML-to-Design captured frames ──
+      // The capture stores CSS padding as metadata but leaves layoutMode='NONE',
+      // so the frame width = content width (padding not visually applied).
+      // Fix: enable auto-layout when significant padding exists (>4px total).
+      const totalHPad = frame.paddingLeft + frame.paddingRight;
+      const totalVPad = frame.paddingTop + frame.paddingBottom;
+
+      if (totalHPad > 4 || totalVPad > 4) {
+        autoLayoutApplied = true;
+        const direction = inferLayoutDirection(component.children);
+        component.layoutMode = direction;
+        // Primary axis (flow direction) hugs content + padding
+        component.primaryAxisSizingMode = 'AUTO';
+        // Counter axis keeps original dimension (e.g., explicit h-10 = 40px)
+        component.counterAxisSizingMode = 'FIXED';
+        component.paddingTop = frame.paddingTop;
+        component.paddingRight = frame.paddingRight;
+        component.paddingBottom = frame.paddingBottom;
+        component.paddingLeft = frame.paddingLeft;
+        component.counterAxisAlignItems = 'CENTER';
+
+        if (component.children.length > 1) {
+          component.itemSpacing = inferItemSpacing(component.children, direction);
+        }
+      }
     }
   }
 
@@ -235,6 +305,8 @@ async function handleCreateComponent(p: {
     width: component.width,
     height: component.height,
     childCount: component.children.length,
+    layoutMode: component.layoutMode,
+    autoLayoutApplied,
   };
 }
 
@@ -334,14 +406,15 @@ async function handleUpdateNode(p: {
     updated.push('strokes');
   }
 
-  // x position
-  if (props.x !== undefined && 'x' in node) {
+  // x position — use type check instead of 'x' in node (Figma Proxy objects
+  // don't reliably support the `in` operator for position properties)
+  if (props.x !== undefined && node.type !== 'DOCUMENT' && node.type !== 'PAGE') {
     (node as SceneNode).x = props.x as number;
     updated.push('x');
   }
 
   // y position
-  if (props.y !== undefined && 'y' in node) {
+  if (props.y !== undefined && node.type !== 'DOCUMENT' && node.type !== 'PAGE') {
     (node as SceneNode).y = props.y as number;
     updated.push('y');
   }
@@ -814,6 +887,11 @@ function serializeNode(node: BaseNode, maxDepth: number, depth = 0): Record<stri
   if ('cornerRadius' in node) {
     var cr = (node as FrameNode).cornerRadius;
     if (cr !== figma.mixed) result.cornerRadius = cr;
+  }
+
+  // Layout mode
+  if ('layoutMode' in node) {
+    result.layoutMode = (node as FrameNode).layoutMode;
   }
 
   // Padding (auto-layout frames)
