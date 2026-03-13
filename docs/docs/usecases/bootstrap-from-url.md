@@ -26,6 +26,10 @@ Make sure you have:
 4. **Your Figma file key** — Copy from the URL: `figma.com/design/`**`YOUR_FILE_KEY`**`/…`
 5. **Read [Copilot Instructions](/docs/setup/instruction-guide)** — Complete reference covering all workflows, layout conventions, and troubleshooting
 
+:::danger Don't touch Figma while Copilot is working
+While Copilot is actively executing commands through the bridge, **do not switch pages or open a different Figma file**. All bridge commands operate on the currently active page — switching mid-operation will cause commands to target the wrong page, fail to find nodes, or create components in the wrong location. Wait for Copilot to finish its current batch before navigating in Figma.
+:::
+
 ---
 
 ## Prompt 1 — Build a Showcase App (optional)
