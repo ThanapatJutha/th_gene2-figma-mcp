@@ -212,6 +212,10 @@ async function handleCreateComponent(p: {
     );
   }
 
+  // Save original dimensions before any conversion (node is removed later)
+  const origWidth = (node as FrameNode).width || 100;
+  const origHeight = (node as FrameNode).height || 100;
+
   // Create a component with the same size
   const component = figma.createComponent();
   component.resize(
@@ -244,6 +248,12 @@ async function handleCreateComponent(p: {
     component.cornerRadius =
       frame.cornerRadius !== figma.mixed ? frame.cornerRadius : 0;
     component.clipsContent = frame.clipsContent;
+
+    // Save original dimensions before enabling auto-layout
+    // (setting layoutMode triggers relayout which can shrink the frame)
+    const savedWidth = frame.width;
+    const savedHeight = frame.height;
+
     component.layoutMode = frame.layoutMode;
     if (frame.layoutMode !== 'NONE') {
       component.primaryAxisSizingMode = frame.primaryAxisSizingMode;
@@ -255,6 +265,8 @@ async function handleCreateComponent(p: {
       component.itemSpacing = frame.itemSpacing;
       component.primaryAxisAlignItems = frame.primaryAxisAlignItems;
       component.counterAxisAlignItems = frame.counterAxisAlignItems;
+      // Restore original dimensions after auto-layout props are set
+      component.resize(savedWidth, savedHeight);
     } else {
       // ── Auto-layout fixup for HTML-to-Design captured frames ──
       // The capture stores CSS padding as metadata but leaves layoutMode='NONE',
@@ -280,6 +292,18 @@ async function handleCreateComponent(p: {
         if (component.children.length > 1) {
           component.itemSpacing = inferItemSpacing(component.children, direction);
         }
+
+        // Safety net: restore counter-axis dimension after relayout.
+        // Setting layoutMode triggers an immediate Figma relayout that can
+        // shrink the frame before padding/sizing props are fully applied.
+        // The counter axis is FIXED, so we must explicitly resize it back.
+        if (direction === 'HORIZONTAL') {
+          // Counter axis = height; primary (width) is HUG so leave it alone
+          component.resize(component.width, savedHeight);
+        } else {
+          // Counter axis = width; primary (height) is HUG so leave it alone
+          component.resize(savedWidth, component.height);
+        }
       }
     }
   }
@@ -304,6 +328,10 @@ async function handleCreateComponent(p: {
     description: component.description,
     width: component.width,
     height: component.height,
+    // Original frame dimensions before auto-layout conversion.
+    // Compare with width/height above to detect dimension drift.
+    originalWidth: origWidth,
+    originalHeight: origHeight,
     childCount: component.children.length,
     layoutMode: component.layoutMode,
     autoLayoutApplied,

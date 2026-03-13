@@ -117,9 +117,10 @@ Skipping these steps for external sites will result in a capture with only the h
 
 1. `bridge_list_layers()` → find captured frames, identify component candidates
 2. `bridge_create_component({ nodeId, name })` × N → promote each to master component using `Category / Variant` naming (e.g., "Button / Default", "Badge / Secondary")
-3. Arrange components in a grid layout (see Layout Convention below)
-4. `bridge_delete_node()` → remove raw capture page
-5. `bridge_save_connections()` → persist code-to-Figma mappings
+3. **Verify dimensions** — after each `bridge_create_component`, check the response: if `width !== originalWidth` or `height !== originalHeight`, immediately fix with `bridge_update_node({ nodeId, properties: { width: originalWidth } })`. Spot-check 2–3 components via `bridge_read_node` to confirm no drift.
+4. Arrange components in a grid layout (see Layout Convention below)
+5. `bridge_delete_node()` → remove raw capture page
+6. `bridge_save_connections()` → persist code-to-Figma mappings
 
 **Naming convention:** Use ` / ` (space-slash-space) to create variant groups in Figma's Assets panel:
 ```
@@ -277,7 +278,8 @@ Direct manipulation of Figma layers from Copilot.
 | `x`/`y` update silently ignored | `bridge_update_node` may return empty `"updated"` for position. Retry, or verify with `bridge_read_node` and re-issue |
 | `x`/`y` update ignored (root cause) | Plugin used `'x' in node` which fails on Figma Proxy objects. Fixed to use type-based allowlist. Never use `in` operator for x/y — use `node.type` check instead |
 | "Cannot convert TEXT" | Wrap text in a frame first, then convert the frame |
-| Button/badge padding looks off after capture | This is auto-fixed by the plugin. `create-component` detects frames with `layoutMode:'NONE'` + padding >4px and enables auto-layout (HUG primary axis, FIXED counter axis, CENTER alignment). No manual fix needed — just re-componentize |
+| Button/badge padding looks off after capture | Fixed in plugin. `create-component` saves original dimensions before setting `layoutMode` (which triggers relayout), then restores with `resize()` after all auto-layout props are applied. For `layoutMode:'NONE'` frames with padding >4px, it also enables auto-layout with HUG + FIXED and restores the counter-axis dimension. Check `originalWidth`/`originalHeight` in the response for drift |
+| Component width shrank after create-component | Dimension drift — compare response `width` vs `originalWidth`. If different, fix with `bridge_update_node({ nodeId, properties: { width: originalWidth } })`. Root cause: `layoutMode` assignment triggers relayout before padding is applied |
 | Changes to code.ts / mcp-server.ts not taking effect | Must restart BOTH: reload the Figma plugin AND restart the bridge (`npm run bridge`). The bridge loads code at startup |
 
 ---
@@ -308,17 +310,37 @@ This groups variants together — matching how design systems organize them.
 
 Figma's HTML-to-Design capture stores CSS padding as frame metadata but leaves `layoutMode: 'NONE'`. This means padding is **not visually applied** — the frame width equals content width only.
 
-The plugin's `handleCreateComponent` automatically fixes this:
-- Detects frames with `layoutMode: 'NONE'` and total padding > 4px
-- Enables auto-layout (direction inferred from children arrangement)
-- Sets **primary axis = HUG** (width expands to content + padding)
-- Sets **counter axis = FIXED** (preserves explicit height, e.g., `h-10 = 40px`)
-- Sets **counter-axis alignment = CENTER** (vertically centers content)
-- Infers `itemSpacing` from gaps between children (for icon+text buttons)
+#### Root Cause — Dimension Shrinkage
 
-This means `bridge_create_component` produces correctly-sized components out of the box — no post-fix needed.
+Setting `component.layoutMode` triggers an **immediate Figma relayout**. At that instant, padding/sizing properties haven't been copied yet (they're still at 0), so Figma recalculates the frame size based on bare content — shrinking it. This affects both branches:
 
-**Threshold:** Only applied when `paddingLeft + paddingRight > 4` or `paddingTop + paddingBottom > 4`. Low-padding frames (e.g., cards with 1px border padding) are left untouched.
+#### Branch A — Frame Already Has Auto-Layout
+
+When the original frame has `layoutMode: 'HORIZONTAL'` or `'VERTICAL'` (common for captured buttons/badges that already had auto-layout in HTML):
+
+1. **Save** `savedWidth = frame.width` and `savedHeight = frame.height` *before* setting `component.layoutMode`
+2. Copy `layoutMode`, then all auto-layout props (padding, spacing, sizing modes, alignment)
+3. **Restore** with `component.resize(savedWidth, savedHeight)` *after* all props are set
+
+This ensures the component keeps its exact original dimensions despite the intermediate relayout.
+
+#### Branch B — Captured Frame With `layoutMode: 'NONE'` + Padding > 4px
+
+When the capture stored CSS padding but didn't enable auto-layout:
+
+1. Infer layout direction from children positions (`inferLayoutDirection`)
+2. Enable auto-layout: `primaryAxisSizingMode = 'AUTO'` (HUG), `counterAxisSizingMode = 'FIXED'`
+3. Copy padding values, set `counterAxisAlignItems = 'CENTER'`
+4. Infer `itemSpacing` from gaps between children
+5. **Safety net resize**: Restore the counter-axis dimension with `component.resize()` — this prevents the relayout from shrinking the non-flow dimension (e.g., button height for horizontal layout)
+
+**Threshold:** Only applied when `paddingLeft + paddingRight > 4` or `paddingTop + paddingBottom > 4`. Low-padding frames are left untouched.
+
+#### Response Fields for Drift Detection
+
+`bridge_create_component` returns `originalWidth` and `originalHeight` alongside `width` and `height`. Compare them to detect drift:
+- `width === originalWidth` → no shrinkage on width ✅
+- `width < originalWidth` → dimension drift detected, issue `bridge_update_node({ width: originalWidth })` to correct
 
 ### Plugin Code — Never Use `in` Operator for Position
 
