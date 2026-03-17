@@ -86,15 +86,15 @@ graph LR
 
 | File | Purpose |
 |---|---|
-| `src/protocol.ts` | Shared TypeScript types for messages (24 bridge commands) |
-| `src/server.ts` | WebSocket bridge server — routes local vs plugin commands |
-| `src/bridge-client.ts` | WebSocket client — used by MCP server to connect to bridge without starting a second server |
-| `src/local-handlers.ts` | Local filesystem handlers (config, connections, scan, layer map, component source) |
-| `src/mcp-server.ts` | MCP server exposing 21 tools to Copilot |
-| `figma-plugin/manifest.json` | Figma plugin manifest |
-| `figma-plugin/code.ts` | Plugin main thread — 14 command handlers (read, create, update, delete, reorder) |
-| `figma-plugin/ui.html` | Plugin UI — WebSocket + status dashboard |
-| `figma.config.json` | Project config (created via Settings page) |
-| `.figma-sync/connections.json` | Component links — code component ↔ Figma master component |
-| `.figma-sync/layer-map.json` | Layer links — sub-components ↔ Figma layers inside parent frames |
+| `Figma/bridge/src/protocol.ts` | Shared TypeScript types for messages (24 bridge commands) |
+| `Figma/bridge/src/server.ts` | WebSocket bridge server — routes local vs plugin commands |
+| `Figma/bridge/src/bridge-client.ts` | WebSocket client — used by MCP server to connect to bridge without starting a second server |
+| `Figma/bridge/src/local-handlers.ts` | Local filesystem handlers (config, connections, scan, layer map, component source) |
+| `Figma/bridge/src/mcp-server.ts` | MCP server exposing 21 tools to Copilot |
+| `Figma/plugin/manifest.json` | Figma plugin manifest |
+| `Figma/plugin/code.ts` | Plugin main thread — 14 command handlers (read, create, update, delete, reorder) |
+| `Figma/plugin/ui.html` | Plugin UI — WebSocket + status dashboard |
+| `Figma/config/figma.config.json` | Project config (created via Settings page) |
+| `Figma/config/.figma-sync/connections.json` | Component links — code component ↔ Figma master component |
+| `Figma/config/.figma-sync/layer-map.json` | Layer links — sub-components ↔ Figma layers inside parent frames |
 | `.vscode/mcp.json` | MCP server registration |

@@ -6,13 +6,13 @@
     "strict": true,
     "skipLibCheck": true,
     "typeRoots": [
-      "../node_modules/@figma/plugin-typings",
-      "../node_modules/@types"
+      "../../node_modules/@figma/plugin-typings",
+      "../../node_modules/@types"
     ],
     "types": [],
     "outDir": ".",
     "rootDir": "."
   },
-  "files": ["../node_modules/@figma/plugin-typings/index.d.ts", "code.ts"],
+  "files": ["../../node_modules/@figma/plugin-typings/index.d.ts", "code.ts"],
   "exclude": ["node_modules"]
 }

@@ -12,6 +12,7 @@
     "label": "React",
     "language": "tsx"
   },
-  "figmaFileKey": "HMlw7bll0vY3kMRDw60sGJ",
-  "rootDir": "demo-2"
+  "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
+  "rootDir": ".",
+  "componentSpecDir": "Figma/config/components"
 }

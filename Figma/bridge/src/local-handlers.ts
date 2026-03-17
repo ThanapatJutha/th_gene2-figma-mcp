@@ -3,8 +3,8 @@
  * These run on the bridge server — no Figma plugin round-trip needed.
  *
  * Aligned with Figma Code Connect conventions:
- * - Config:       figma.config.json  (project root)
- * - Connections:  .figma-sync/connections.json  (local DB)
+ * - Config:       Figma/config/figma.config.json
+ * - Connections:  Figma/config/.figma-sync/connections.json
  */
 
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
@@ -23,10 +23,14 @@ import type {
 // ── Paths ──────────────────────────────────────────────────────────────
 
 const PROJECT_ROOT = resolve(process.cwd());
-const CONFIG_PATH = resolve(PROJECT_ROOT, 'figma.config.json');
-const DB_DIR = resolve(PROJECT_ROOT, '.figma-sync');
+const FIGMA_HOME = resolve(PROJECT_ROOT, 'Figma');
+const CONFIG_PATH = existsSync(resolve(FIGMA_HOME, 'config', 'figma.config.json'))
+  ? resolve(FIGMA_HOME, 'config', 'figma.config.json')
+  : resolve(PROJECT_ROOT, 'figma.config.json');
+const DB_DIR = resolve(FIGMA_HOME, 'config', '.figma-sync');
 const CONNECTIONS_PATH = resolve(DB_DIR, 'connections.json');
 const LAYER_MAP_PATH = resolve(DB_DIR, 'layer-map.json');
+const DEFAULT_COMPONENT_SPEC_DIR = 'Figma/config/components';
 
 // ── Config ─────────────────────────────────────────────────────────────
 
@@ -104,7 +108,7 @@ export async function validateRootDir(dirPath: string): Promise<RootDirInfo> {
  */
 export async function listDirectories(): Promise<string[]> {
   const dirs: string[] = ['.'];
-  const SKIP = new Set(['.git', '.figma-sync', 'node_modules', 'dist', '.docusaurus', 'build', '.next', '.cache']);
+  const SKIP = new Set(['.git', '.figma-sync', 'Figma', 'node_modules', 'dist', '.docusaurus', 'build', '.next', '.cache']);
 
   try {
     const entries = await readdir(PROJECT_ROOT, { withFileTypes: true });
@@ -148,7 +152,7 @@ export async function listDirectories(): Promise<string[]> {
 export async function listProjectComponents(): Promise<ProjectComponent[]> {
   const config = await readConfig();
   if (!config) {
-    throw new Error('No figma.config.json found. Please configure the project first.');
+    throw new Error('No Figma/config/figma.config.json found. Please configure the project first.');
   }
 
   const rootDir = resolve(PROJECT_ROOT, config.rootDir || '.');
@@ -278,6 +282,13 @@ export interface ReadComponentSourceResult {
   subComponents: ComponentSource[];
 }
 
+export interface ReadComponentSpecResult {
+  name: string;
+  file: string;
+  exists: boolean;
+  content?: string;
+}
+
 /**
  * Read a component's source code by name.
  * Resolves the file from connections.json, or falls back to scanning project files.
@@ -288,7 +299,7 @@ export async function readComponentSource(
 ): Promise<ReadComponentSourceResult> {
   const config = await readConfig();
   if (!config) {
-    throw new Error('No figma.config.json found. Please configure the project first.');
+    throw new Error('No Figma/config/figma.config.json found. Please configure the project first.');
   }
 
   const rootDir = resolve(PROJECT_ROOT, config.rootDir || '.');
@@ -391,4 +402,69 @@ export async function readComponentSource(
   }
 
   return { component, subComponents };
+}
+
+// ── Figma component spec files (.figma.ts) ───────────────────────────
+
+function normalizeSpecName(name: string): string {
+  return name
+    .trim()
+    .replace(/\.figma\.ts$/i, '')
+    .replace(/^\/+/, '')
+    .replace(/[^a-zA-Z0-9_/-]/g, '');
+}
+
+async function resolveComponentSpecDir(): Promise<string> {
+  const config = await readConfig();
+  const specDir = config?.componentSpecDir || DEFAULT_COMPONENT_SPEC_DIR;
+  return resolve(PROJECT_ROOT, specDir);
+}
+
+async function resolveSpecFilePath(name: string): Promise<{ normalizedName: string; filePath: string; relFile: string }> {
+  const normalizedName = normalizeSpecName(name);
+  if (!normalizedName) {
+    throw new Error('Spec name is required. Example: "Button"');
+  }
+
+  const specDir = await resolveComponentSpecDir();
+  const filePath = resolve(specDir, `${normalizedName}.figma.ts`);
+  const safePrefix = specDir.endsWith('/') ? specDir : `${specDir}/`;
+
+  // Guard against path traversal
+  if (!filePath.startsWith(safePrefix) && filePath !== specDir) {
+    throw new Error('Invalid spec name/path.');
+  }
+
+  const relFile = relative(PROJECT_ROOT, filePath);
+  return { normalizedName, filePath, relFile };
+}
+
+export async function readComponentSpec(name: string): Promise<ReadComponentSpecResult> {
+  const { normalizedName, filePath, relFile } = await resolveSpecFilePath(name);
+
+  if (!existsSync(filePath)) {
+    return { name: normalizedName, file: relFile, exists: false };
+  }
+
+  const content = await readFile(filePath, 'utf8');
+  return { name: normalizedName, file: relFile, exists: true, content };
+}
+
+export async function saveComponentSpec(name: string, content: string): Promise<ReadComponentSpecResult> {
+  const { normalizedName, filePath, relFile } = await resolveSpecFilePath(name);
+
+  await mkdir(dirname(filePath), { recursive: true });
+  await writeFile(filePath, content.endsWith('\n') ? content : `${content}\n`, 'utf8');
+
+  return { name: normalizedName, file: relFile, exists: true, content };
+}
+
+export async function listComponentSpecs(): Promise<string[]> {
+  const specDir = await resolveComponentSpecDir();
+  if (!existsSync(specDir)) {
+    return [];
+  }
+
+  const files = await glob('**/*.figma.ts', { cwd: specDir });
+  return files.sort();
 }

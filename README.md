@@ -42,12 +42,11 @@ The repo ships with `.vscode/mcp.json` which connects Copilot to Figma:
 
 When you first use a Figma tool, a browser window opens for OAuth.
 
-### 3. Run the demo app
+### 3. Run your app
 
 ```bash
-cd demo
-npm install
-./node_modules/.bin/vite --port 5173
+# Run your project app from root src setup (example command)
+npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173).
@@ -68,32 +67,34 @@ Open the documentation site and go to the **Settings** page:
 npm run docs:dev     # Dev server on http://localhost:4000/figma-sync/
 ```
 
-Navigate to **Settings**, connect to the bridge, and save your project config. This creates `figma.config.json`.
+Navigate to **Settings**, connect to the bridge, and save your project config. This creates `Figma/config/figma.config.json`.
 
 ### 6. Link components
 
-Go to the **Dashboard** → **Components** section to link code components with Figma components. Links persist in `.figma-sync/connections.json`.
+Go to the **Dashboard** → **Components** section to link code components with Figma components. Links persist in `Figma/config/.figma-sync/connections.json`.
 
 ## Project Structure
 
 ```
 figma-sync/
-  demo/                     ← Sample React app (Vite + React 18)
-    src/components/         ← HeaderCard, CounterCard, ToggleSwitch
-  src/                      ← Bridge server & MCP tools
-    server.ts               ← WebSocket server (local + plugin commands)
-    local-handlers.ts       ← Filesystem handlers (config, connections, scan)
-    mcp-server.ts           ← MCP server for Copilot integration
-    protocol.ts             ← Shared message types
-  figma-plugin/             ← Figma Plugin (runs inside Figma app)
-    code.ts                 ← Plugin command handlers
-    ui.html                 ← Plugin UI + WebSocket client
-  docs/                     ← Documentation site (Docusaurus)
-    src/pages/dashboard.tsx ← Dashboard — Discover + Components
-    src/pages/settings.tsx  ← Settings — project configuration
-  figma.config.json         ← Project config (created via Settings page)
-  .figma-sync/              ← Local DB — gitignored
-    connections.json        ← Component links (created via Dashboard)
+  src/                      ← Real product/app source (your project)
+  Figma/
+    bridge/
+      src/                  ← Bridge server & MCP tools
+        server.ts           ← WebSocket server (local + plugin commands)
+        local-handlers.ts   ← Filesystem handlers (config, connections, scan)
+        mcp-server.ts       ← MCP server for Copilot integration
+        protocol.ts         ← Shared message types
+    plugin/                 ← Figma Plugin (runs inside Figma app)
+      code.ts               ← Plugin command handlers
+      ui.html               ← Plugin UI + WebSocket client
+    docs/                   ← Documentation site (Docusaurus)
+      src/pages/dashboard.tsx ← Dashboard — Discover + Components
+      src/pages/settings.tsx  ← Settings — project configuration
+    config/
+      figma.config.json     ← Project config (created/edited via Settings)
+      .figma-sync/          ← Local DB (connections, layer map)
+      components/           ← Local .figma.ts component specs
   .vscode/mcp.json          ← MCP server configuration
 ```
 

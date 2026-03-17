@@ -55,7 +55,11 @@ export type BridgeCommand =
   | 'read-layer-map'
   | 'save-layer-map'
   // ── Component source reader ──
-  | 'read-component-source';
+  | 'read-component-source'
+  // ── Figma component spec files (.figma.ts) ──
+  | 'read-component-spec'
+  | 'save-component-spec'
+  | 'list-component-specs';
 
 // ── Payload types per command ──────────────────────────────────────────
 
@@ -139,6 +143,15 @@ export interface ReadComponentSourcePayload {
   name: string;              // Component name to look up
 }
 
+export interface ReadComponentSpecPayload {
+  name: string;              // Spec name without extension, e.g. "Button"
+}
+
+export interface SaveComponentSpecPayload {
+  name: string;              // Spec name without extension, e.g. "Button"
+  content: string;           // Full TypeScript file content
+}
+
 export interface DeleteNodePayload {
   nodeId: string;            // Figma node ID to delete
 }
@@ -208,6 +221,7 @@ export interface FigmaSyncConfig {
   };
   figmaFileKey: string;      // default Figma file key
   rootDir: string;           // project root (relative to config file)
+  componentSpecDir?: string; // local design-contract path (default: Figma/config/components)
 }
 
 export interface SaveConfigPayload {
@@ -263,5 +277,48 @@ export interface LayerMapStore {
 export interface SaveLayerMapPayload {
   parentNodeId: string;      // Figma parent node ID
   frame: LayerFrame;         // The frame data to save/update
+}
+
+// ── Figma component spec layer types ──────────────────────────────────
+
+export interface FigmaComponentTypography {
+  fontSize?: number;
+  fontName?: { family: string; style: string };
+  lineHeight?: unknown;
+  letterSpacing?: unknown;
+}
+
+export interface FigmaComponentStyle {
+  fills?: unknown[];
+  strokes?: unknown[];
+  strokeWeight?: number;
+  cornerRadius?: number;
+  opacity?: number;
+  paddingLeft?: number;
+  paddingRight?: number;
+  paddingTop?: number;
+  paddingBottom?: number;
+  typography?: FigmaComponentTypography;
+}
+
+export interface FigmaComponentSpecNode {
+  id: string;
+  name: string;
+  type: string;
+  width?: number;
+  height?: number;
+  style?: FigmaComponentStyle;
+  children?: FigmaComponentSpecNode[];
+}
+
+export interface FigmaComponentSpec {
+  specVersion: 1;
+  figmaNodeId: string;
+  figmaComponentName: string;
+  codeComponent: string;
+  file: string;
+  linkedAt: string;
+  source: 'figma-sync';
+  root: FigmaComponentSpecNode;
 }
 

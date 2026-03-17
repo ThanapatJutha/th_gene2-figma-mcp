@@ -141,7 +141,7 @@ export default function SettingsPage(): React.JSX.Element {
       await send('save-config', { config: newConfig });
       setConfig(newConfig);
       setDirty(false);
-      setSuccess('Configuration saved to figma.config.json');
+      setSuccess('Configuration saved to Figma/config/figma.config.json');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save config');
@@ -343,7 +343,7 @@ export default function SettingsPage(): React.JSX.Element {
                   )}
                   <p className={styles.formHint}>
                     Path to the <strong>target project</strong> you want to sync with Figma.
-                    Can be a relative path (e.g. <code>../my-app</code>, <code>demo</code>) resolved from the figma-sync root,
+                    Can be a relative path (e.g. <code>../my-app</code>, <code>.</code>) resolved from the figma-sync root,
                     or an absolute path (e.g. <code>/Users/you/projects/my-app</code>).
                     Include/exclude patterns below are resolved relative to this directory.
                   </p>
@@ -497,8 +497,8 @@ export default function SettingsPage(): React.JSX.Element {
 
             {/* ── Config file info ── */}
             <div className={styles.infoBar}>
-              <span>📄 Config file: <code>figma.config.json</code></span>
-              <span>🗃️ Connections DB: <code>.figma-sync/connections.json</code></span>
+              <span>📄 Config file: <code>Figma/config/figma.config.json</code></span>
+              <span>🗃️ Connections DB: <code>Figma/config/.figma-sync/connections.json</code></span>
             </div>
           </>
         )}

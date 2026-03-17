@@ -7,7 +7,7 @@
     "figma-bridge": {
       "type": "stdio",
       "command": "/Users/thanapatjuthavantana/.nvm/versions/node/v20.11.1/bin/node",
-      "args": ["./node_modules/.bin/tsx", "src/mcp-server.ts"],
+      "args": ["./node_modules/.bin/tsx", "Figma/bridge/src/mcp-server.ts"],
       "cwd": "${workspaceFolder}"
     }
   }

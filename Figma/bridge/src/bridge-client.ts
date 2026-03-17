@@ -22,6 +22,9 @@ import {
   readLayerMap,
   saveLayerMap,
   readComponentSource,
+  readComponentSpec,
+  saveComponentSpec,
+  listComponentSpecs,
 } from './local-handlers.js';
 
 const BRIDGE_URL = `ws://localhost:${process.env.BRIDGE_PORT ?? 9001}`;
@@ -39,6 +42,9 @@ const LOCAL_COMMANDS = new Set([
   'read-layer-map',
   'save-layer-map',
   'read-component-source',
+  'read-component-spec',
+  'save-component-spec',
+  'list-component-specs',
 ]);
 
 async function handleLocalCommand(req: BridgeRequest): Promise<BridgeResponse> {
@@ -85,6 +91,21 @@ async function handleLocalCommand(req: BridgeRequest): Promise<BridgeResponse> {
       case 'read-component-source': {
         const result = await readComponentSource(req.payload.name as string);
         return { id: req.id, type: 'response', success: true, data: result };
+      }
+      case 'read-component-spec': {
+        const result = await readComponentSpec(req.payload.name as string);
+        return { id: req.id, type: 'response', success: true, data: result };
+      }
+      case 'save-component-spec': {
+        const result = await saveComponentSpec(
+          req.payload.name as string,
+          req.payload.content as string,
+        );
+        return { id: req.id, type: 'response', success: true, data: result };
+      }
+      case 'list-component-specs': {
+        const files = await listComponentSpecs();
+        return { id: req.id, type: 'response', success: true, data: { files } };
       }
       default:
         return { id: req.id, type: 'response', success: false, error: `Unknown local command: ${req.command}` };
