@@ -3,8 +3,8 @@
  * These run on the bridge server — no Figma plugin round-trip needed.
  *
  * Aligned with Figma Code Connect conventions:
- * - Config:       Figma/app/figma.config.json
- * - Connections:  Figma/app/.figma-sync/connections.json
+ * - Config:       figma/app/figma.config.json
+ * - Connections:  figma/app/.figma-sync/connections.json
  */
 
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
@@ -23,14 +23,14 @@ import type {
 // ── Paths ──────────────────────────────────────────────────────────────
 
 const PROJECT_ROOT = resolve(process.cwd());
-const FIGMA_HOME = resolve(PROJECT_ROOT, 'Figma');
-const CONFIG_PATH = existsSync(resolve(FIGMA_HOME, 'app', 'figma.config.json'))
-  ? resolve(FIGMA_HOME, 'app', 'figma.config.json')
+const FIGMA_DIR = resolve(PROJECT_ROOT, 'figma');
+const CONFIG_PATH = existsSync(resolve(FIGMA_DIR, 'app', 'figma.config.json'))
+  ? resolve(FIGMA_DIR, 'app', 'figma.config.json')
   : resolve(PROJECT_ROOT, 'figma.config.json');
-const DB_DIR = resolve(FIGMA_HOME, 'app', '.figma-sync');
+const DB_DIR = resolve(FIGMA_DIR, 'app', '.figma-sync');
 const CONNECTIONS_PATH = resolve(DB_DIR, 'connections.json');
 const LAYER_MAP_PATH = resolve(DB_DIR, 'layer-map.json');
-const DEFAULT_COMPONENT_SPEC_DIR = 'Figma/app/components';
+const DEFAULT_COMPONENT_SPEC_DIR = 'figma/components';
 
 // ── Config ─────────────────────────────────────────────────────────────
 
@@ -108,7 +108,7 @@ export async function validateRootDir(dirPath: string): Promise<RootDirInfo> {
  */
 export async function listDirectories(): Promise<string[]> {
   const dirs: string[] = ['.'];
-  const SKIP = new Set(['.git', '.figma-sync', 'Figma', 'node_modules', 'dist', '.docusaurus', 'build', '.next', '.cache']);
+  const SKIP = new Set(['.git', '.figma-sync', '.figma.config', 'figma', 'node_modules', 'dist', '.docusaurus', 'build', '.next', '.cache']);
 
   try {
     const entries = await readdir(PROJECT_ROOT, { withFileTypes: true });
@@ -116,7 +116,7 @@ export async function listDirectories(): Promise<string[]> {
       if (!entry.isDirectory() || entry.name.startsWith('.') || SKIP.has(entry.name)) continue;
       dirs.push(entry.name);
 
-      // Also scan one level deeper for common patterns like demo/src
+      // Also scan one level deeper for common nested project roots
       try {
         const subPath = resolve(PROJECT_ROOT, entry.name);
         const subEntries = await readdir(subPath, { withFileTypes: true });
@@ -152,7 +152,7 @@ export async function listDirectories(): Promise<string[]> {
 export async function listProjectComponents(): Promise<ProjectComponent[]> {
   const config = await readConfig();
   if (!config) {
-    throw new Error('No Figma/app/figma.config.json found. Please configure the project first.');
+    throw new Error('No figma/app/figma.config.json found. Please configure the project first.');
   }
 
   const rootDir = resolve(PROJECT_ROOT, config.rootDir || '.');
@@ -299,7 +299,7 @@ export async function readComponentSource(
 ): Promise<ReadComponentSourceResult> {
   const config = await readConfig();
   if (!config) {
-    throw new Error('No Figma/app/figma.config.json found. Please configure the project first.');
+    throw new Error('No figma/app/figma.config.json found. Please configure the project first.');
   }
 
   const rootDir = resolve(PROJECT_ROOT, config.rootDir || '.');

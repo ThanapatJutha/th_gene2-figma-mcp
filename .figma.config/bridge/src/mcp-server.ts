@@ -193,7 +193,7 @@ server.registerTool(
 server.registerTool(
   'bridge_read_config',
   {
-    description: 'Read the Figma/app/figma.config.json project configuration. Returns rootDir, figmaFileKey, include/exclude globs.',
+    description: 'Read the figma/app/figma.config.json project configuration. Returns rootDir, figmaFileKey, include/exclude globs.',
   },
   async () => callPlugin('read-config'),
 );
@@ -202,7 +202,7 @@ server.registerTool(
 server.registerTool(
   'bridge_read_connections',
   {
-    description: 'Read all Code Connect links from Figma/app/.figma-sync/connections.json. Each connection maps a code component to a Figma master component node ID.',
+    description: 'Read all Code Connect links from figma/app/.figma-sync/connections.json. Each connection maps a code component to a Figma master component node ID.',
   },
   async () => callPlugin('read-connections'),
 );
@@ -211,7 +211,7 @@ server.registerTool(
 server.registerTool(
   'bridge_save_connections',
   {
-    description: 'Save Code Connect links to Figma/app/.figma-sync/connections.json. Replaces the entire connections list.',
+    description: 'Save Code Connect links to figma/app/.figma-sync/connections.json. Replaces the entire connections list.',
     inputSchema: {
       connections: z.array(z.object({
         figmaNodeId: z.string().describe('Figma node ID of the master component'),
@@ -229,7 +229,7 @@ server.registerTool(
 server.registerTool(
   'bridge_list_project_components',
   {
-    description: 'Scan project files and list exported code components. Uses include/exclude globs from Figma/app/figma.config.json.',
+    description: 'Scan project files and list exported code components. Uses include/exclude globs from figma/app/figma.config.json.',
   },
   async () => callPlugin('list-project-components'),
 );
@@ -238,7 +238,7 @@ server.registerTool(
 server.registerTool(
   'bridge_read_layer_map',
   {
-    description: 'Read the layer map from Figma/app/.figma-sync/layer-map.json. Maps sub-components in code to specific Figma child nodes inside parent frames.',
+    description: 'Read the layer map from figma/app/.figma-sync/layer-map.json. Maps sub-components in code to specific Figma child nodes inside parent frames.',
   },
   async () => callPlugin('read-layer-map'),
 );
@@ -281,7 +281,7 @@ server.registerTool(
 server.registerTool(
   'bridge_list_component_specs',
   {
-    description: 'List local design-contract files from componentSpecDir (default: Figma/app/components). Returns .figma.ts paths.',
+    description: 'List local design-contract files from componentSpecDir (default: figma/components). Returns .figma.ts paths.',
   },
   async () => callPlugin('list-component-specs'),
 );
@@ -290,7 +290,7 @@ server.registerTool(
 server.registerTool(
   'bridge_read_component_spec',
   {
-    description: 'Read a local figma component spec file (.figma.ts) by name. Example name: "Button" → Figma/app/components/Button.figma.ts.',
+    description: 'Read a local figma component spec file (.figma.ts) by name. Example name: "Button" → figma/components/Button.figma.ts.',
     inputSchema: {
       name: z.string().describe('Spec name without extension, e.g. "Button" or "forms/Button"'),
     },

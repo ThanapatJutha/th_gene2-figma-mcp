@@ -221,7 +221,7 @@ export interface FigmaSyncConfig {
   };
   figmaFileKey: string;      // default Figma file key
   rootDir: string;           // project root (relative to config file)
-  componentSpecDir?: string; // local design-contract path (default: Figma/app/components)
+  componentSpecDir?: string; // local design-contract path (default: figma/components)
 }
 
 export interface SaveConfigPayload {

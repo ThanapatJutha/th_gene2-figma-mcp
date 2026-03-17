@@ -36,14 +36,14 @@ While Copilot is actively executing commands through the bridge, **do not switch
 
 If you want to build a Figma component library for a UI library (e.g., shadcn/ui, MUI, Chakra UI), the best approach is to **render real components** in a local app and capture them — not draw them by hand.
 
-This project includes a ready-made template in the `demo/` folder. Paste this into Copilot:
+This project includes a ready-made template in `figma/pages/showcase/`. Paste this into Copilot:
 
 :::note 💬 Prompt
-I want to create a Figma component library for [your library, e.g. shadcn/ui]. Use the `demo/` folder as a template — scaffold a Vite + React showcase app that renders every component variant (buttons, badges, cards, alerts, etc.) in a clean grid with white background and clear labels. Install the components, then serve it on localhost:5173.
+I want to create a Figma component library for [your library, e.g. shadcn/ui]. Use `figma/pages/showcase/` as a template — scaffold a Vite + React showcase app that renders every component variant (buttons, badges, cards, alerts, etc.) in a clean grid with white background and clear labels. Install the components, then serve it on localhost:5173.
 :::
 
 **What happens:**
-- Copilot scaffolds (or updates) a Vite + React app in `demo/`
+- Copilot scaffolds (or updates) a Vite + React app in `figma/pages/showcase/`
 - Installs the target component library and its dependencies
 - Creates a showcase page (`App.tsx`) that renders every variant side by side
 - Starts the dev server at `http://localhost:5173`
@@ -115,7 +115,7 @@ You should see master components organized in Figma's Assets panel by category:
 
 | # | Prompt | What it does |
 |---|--------|-------------|
-| 1 | *"Build a showcase app for shadcn/ui using the `demo/` template. Render all variants. Serve on localhost:5173."* | Scaffolds app, installs library, starts dev server |
+| 1 | *"Build a showcase app for shadcn/ui using `figma/pages/showcase/`. Render all variants. Serve on localhost:5173."* | Scaffolds app, installs library, starts dev server |
 | 2 | *"Capture `http://localhost:5173` into my Figma file (key: `ABC123`). Use Playwright. Poll until complete."* | Full-page capture → Figma page |
 | 3 | *"Find all components in the capture. Promote each to a master component with `Category / Variant` naming. Arrange in a grid. Delete the capture page."* | Components organized & promoted |
 

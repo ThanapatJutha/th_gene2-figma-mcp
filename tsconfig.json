@@ -4,11 +4,11 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "outDir": "dist",
-    "rootDir": "Figma/bridge/src",
+    "rootDir": ".figma.config/bridge/src",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["Figma/bridge/src/**/*.ts"]
+  "include": [".figma.config/bridge/src/**/*.ts"]
 }

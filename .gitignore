@@ -4,10 +4,10 @@ dist/
 .DS_Store
 
 # Local Figma Sync DB
-Figma/config/.figma-sync/
+figma/app/.figma-sync/
 
 # Compiled Figma plugin
-Figma/plugin/code.js
+.figma.config/plugin/code.js
 
 # Temporary helper scripts (one-off capture/build scripts)
 *.cjs

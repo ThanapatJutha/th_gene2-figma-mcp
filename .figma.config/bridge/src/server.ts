@@ -2,7 +2,7 @@
  * Bridge WebSocket server — relays commands between
  * MCP Server / Copilot and the Figma Plugin.
  *
- * Usage:  node --loader ts-node/esm Figma/bridge/src/server.ts
+ * Usage:  node --loader ts-node/esm .figma.config/bridge/src/server.ts
  *    or:  npm run bridge
  */
 

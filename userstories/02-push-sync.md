@@ -70,7 +70,7 @@ Push sync is **MCP-first and conversational**. Instead of a CLI command, the dev
 **Step 1 — Copilot gathers context** (automatic):
 
 ```
-→ bridge_read_config          → { rootDir: "demo", figmaFileKey: "ghw..." }
+→ bridge_read_config          → { rootDir: ".", figmaFileKey: "ghw..." }
 → bridge_read_connections     → HeaderCard linked to Figma node "8:2"
 → bridge_read_component_source({ name: "HeaderCard" })
     → returns HeaderCard.tsx source (no sub-components)

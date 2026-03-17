@@ -67,18 +67,18 @@ Open the documentation site and go to the **Settings** page:
 npm run docs:dev     # Dev server on http://localhost:4000/figma-sync/
 ```
 
-Navigate to **Settings**, connect to the bridge, and save your project config. This creates `Figma/config/figma.config.json`.
+Navigate to **Settings**, connect to the bridge, and save your project config. This creates `figma/app/figma.config.json`.
 
 ### 6. Link components
 
-Go to the **Dashboard** → **Components** section to link code components with Figma components. Links persist in `Figma/config/.figma-sync/connections.json`.
+Go to the **Dashboard** → **Components** section to link code components with Figma components. Links persist in `figma/app/.figma-sync/connections.json`.
 
 ## Project Structure
 
 ```
 figma-sync/
   src/                      ← Real product/app source (your project)
-  Figma/
+  .figma.config/
     bridge/
       src/                  ← Bridge server & MCP tools
         server.ts           ← WebSocket server (local + plugin commands)
@@ -91,10 +91,13 @@ figma-sync/
     docs/                   ← Documentation site (Docusaurus)
       src/pages/dashboard.tsx ← Dashboard — Discover + Components
       src/pages/settings.tsx  ← Settings — project configuration
-    config/
+  figma/
+    pages/
+      showcase/             ← Temporary capture showcase app
+    app/
       figma.config.json     ← Project config (created/edited via Settings)
       .figma-sync/          ← Local DB (connections, layer map)
-      components/           ← Local .figma.ts component specs
+    components/             ← Local .figma.ts component specs
   .vscode/mcp.json          ← MCP server configuration
 ```
 

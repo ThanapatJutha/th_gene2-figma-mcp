@@ -5,15 +5,15 @@
   "description": "Copilot-driven bidirectional sync between React code and Figma.",
   "type": "module",
   "scripts": {
-    "bridge": "tsx Figma/bridge/src/server.ts",
-    "bridge:mcp": "tsx Figma/bridge/src/mcp-server.ts",
-    "plugin:build": "tsc -p Figma/plugin/tsconfig.json",
+    "bridge": "tsx .figma.config/bridge/src/server.ts",
+    "bridge:mcp": "tsx .figma.config/bridge/src/mcp-server.ts",
+    "plugin:build": "tsc -p .figma.config/plugin/tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "fmt": "prettier -w .",
     "lint": "eslint .",
-    "docs:dev": "cd Figma/docs && npm start -- --port 4000",
-    "docs:build": "cd Figma/docs && npm run build",
-    "docs:serve": "cd Figma/docs && npm run serve -- --port 4000"
+    "docs:dev": "cd .figma.config/docs && npm start -- --port 4000",
+    "docs:build": "cd .figma.config/docs && npm run build",
+    "docs:serve": "cd .figma.config/docs && npm run serve -- --port 4000"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

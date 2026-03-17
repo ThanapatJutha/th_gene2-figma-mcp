@@ -36,7 +36,7 @@ The project includes `.vscode/mcp.json` which connects Copilot to both the **off
     "figma-bridge": {
       "type": "stdio",
       "command": "npx",
-      "args": ["./node_modules/.bin/tsx", "Figma/bridge/src/mcp-server.ts"],
+      "args": ["./node_modules/.bin/tsx", ".figma.config/bridge/src/mcp-server.ts"],
       "cwd": "${workspaceFolder}"
     }
   }
@@ -58,7 +58,7 @@ The plugin is written in TypeScript and needs to be compiled before Figma can lo
 npm run plugin:build
 ```
 
-This compiles `Figma/plugin/code.ts` → `Figma/plugin/code.js`.
+This compiles `.figma.config/plugin/code.ts` → `.figma.config/plugin/code.js`.
 
 ## Step 4: Start the Bridge Server
 
@@ -89,7 +89,7 @@ The bridge handles two types of commands:
 3. Go to the menu: **Plugins → Development → Import plugin from manifest…**
 4. Navigate to your repo folder and select:
    ```
-  figma-sync/Figma/plugin/manifest.json
+  figma-sync/.figma.config/plugin/manifest.json
    ```
 5. The plugin **"Figma Sync Bridge"** will appear under **Plugins → Development**
 
@@ -132,7 +132,7 @@ Open the [Settings](/settings) page in the documentation site and:
 1. Click **Connect** to connect to the bridge
 2. Enter your Figma File Key
 3. Select a root directory and review include/exclude patterns
-4. Click **Save Configuration** — this creates `Figma/app/figma.config.json`
+4. Click **Save Configuration** — this creates `figma/app/figma.config.json`
 
 ## Step 8: Run Your App (optional)
 
@@ -171,20 +171,20 @@ Now that everything is connected, try these prompts in Copilot Agent Mode:
 ## Setup Checklist
 
 - [ ] `npm install` completed
-- [ ] `npm run plugin:build` produces `Figma/plugin/code.js`
+- [ ] `npm run plugin:build` produces `.figma.config/plugin/code.js`
 - [ ] `npm run bridge` shows `WebSocket server listening on ws://localhost:9001`
 - [ ] Plugin loaded in Figma via **Import plugin from manifest**
 - [ ] Plugin UI shows 🟢 **Connected**
 - [ ] Bridge terminal shows `✅ Figma plugin connected`
 - [ ] Copilot `bridge_ping` returns `"pong"`
-- [ ] `Figma/app/figma.config.json` created via Settings page
+- [ ] `figma/app/figma.config.json` created via Settings page
 
 ## Project Structure
 
 ```
 figma-sync/
   src/                      ← Real product/app source
-  Figma/
+  .figma.config/
     bridge/
       src/
         server.ts           ← WebSocket server (local + plugin commands)
@@ -197,11 +197,14 @@ figma-sync/
     docs/                   ← Documentation site (Docusaurus)
       src/pages/dashboard.tsx ← Dashboard — Discover + Components
       src/pages/settings.tsx  ← Settings — project configuration
-    config/
+  figma/
+    pages/
+      showcase/             ← Temporary capture showcase app
+    app/
       figma.config.json     ← Project config (created via Settings)
       .figma-sync/
         connections.json    ← Component links (created via Dashboard)
-      components/           ← Local .figma.ts specs
+    components/             ← Local .figma.ts specs
   .vscode/mcp.json          ← MCP server configuration
 ```
 

@@ -43,7 +43,7 @@ Created via the **Settings** page in the Dashboard UI. Tells the system where to
     "language": "tsx"
   },
   "figmaFileKey": "ghwHnqX2WZXFtfmsrbRLTg",
-  "rootDir": "demo"
+  "rootDir": "."
 }
 ```
 
@@ -55,7 +55,7 @@ Created via the **Settings** page in the Dashboard UI. Tells the system where to
 | `codeConnect.label` | string | Label shown in Figma Dev Mode |
 | `codeConnect.language` | string | Syntax highlighting language |
 | `figmaFileKey` | string | Default Figma file key |
-| `rootDir` | string | Path to the target project — relative to figma-sync root (e.g. `demo`, `../my-app`) or absolute |
+| `rootDir` | string | Path to the target project — relative to figma-sync root (e.g. `.`, `../my-app`) or absolute |
 
 ### 2. `.figma-sync/connections.json` — Component Link Database
 
