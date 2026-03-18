@@ -61,16 +61,6 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          to: '/dashboard',
-          label: 'Dashboard',
-          position: 'left',
-        },
-        {
-          to: '/settings',
-          label: 'Settings',
-          position: 'left',
-        },
-        {
           href: 'https://github.com/ThanapatJutha/gene2-figma-mcp',
           label: 'GitHub',
           position: 'right',

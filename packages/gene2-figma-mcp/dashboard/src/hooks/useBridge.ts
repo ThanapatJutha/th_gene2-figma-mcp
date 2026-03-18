@@ -1,6 +1,6 @@
 /**
  * React hook for communicating with the Figma Bridge WebSocket server.
- * Used by Discover and Components pages to talk to the plugin in real time.
+ * Portable — no framework dependencies beyond React.
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 
@@ -34,7 +34,6 @@ export function useBridge() {
     ws.onclose = () => {
       setStatus('disconnected');
       wsRef.current = null;
-      // Reject any pending requests
       pendingRef.current.forEach((p) => p.reject(new Error('Connection closed')));
       pendingRef.current.clear();
     };

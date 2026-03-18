@@ -15,6 +15,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "fmt": "prettier -w .",
     "lint": "eslint .",
+    "dashboard:dev": "cd packages/gene2-figma-mcp/dashboard && npm run dev",
+    "dashboard:build": "cd packages/gene2-figma-mcp/dashboard && npm run build",
     "docs:dev": "cd figma-docs/docs && npm start -- --port 4000",
     "docs:build": "cd figma-docs/docs && npm run build",
     "docs:serve": "cd figma-docs/docs && npm run serve -- --port 4000"

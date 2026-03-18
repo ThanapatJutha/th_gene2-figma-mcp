@@ -156,7 +156,7 @@ Now that everything is connected, try these prompts in Copilot Agent Mode:
 | Read design tokens | *"Read all the design variables from Figma using the bridge"* |
 | Create a design token | *"Create a color variable called 'brand-primary' with value #0D99FF"* |
 | Update text | *"Update the text in Figma node 3:12 to say 'Welcome to Figma Sync'"* |
-| View component mappings | Browse the [Dashboard](/dashboard) page |
+| View component mappings | Open the [Dashboard](http://localhost:9001/ui/) (requires bridge) |
 
 ## Troubleshooting
 
@@ -195,8 +195,8 @@ figma-sync/
       code.ts               ← Plugin command handlers
       ui.html               ← Plugin UI + WebSocket client
     docs/                   ← Documentation site (Docusaurus)
-      src/pages/dashboard.tsx ← Dashboard — Discover + Components
-      src/pages/settings.tsx  ← Settings — project configuration
+    dashboard/              ← Standalone dashboard UI (Vite + React)
+      dist/                 ← Pre-built — served by bridge at /ui/
   figma/
     config/
       figma.config.json     ← Project config (persistent, never deleted)
@@ -211,7 +211,7 @@ figma-sync/
 
 ## Next Steps
 
-- Link components in the [Dashboard](/dashboard)
+- Link components in the [Dashboard](http://localhost:9001/ui/)
 - Read the [Architecture](/docs/architecture) for the system overview
 - Learn about the [Bridge](/docs/bridge/overview) for write access to Figma
 - Understand the [Local Mapping](/docs/approach/local-mapping) approach for component linking

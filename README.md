@@ -35,6 +35,8 @@ npx gene2-figma-mcp bridge
 
 The bridge runs on `ws://localhost:9001` and relays commands between Copilot (via MCP) and the Figma Plugin.
 
+The built-in dashboard UI is available at **http://localhost:9001/ui/** — use it to discover layers, convert them to components, manage code mappings, and configure settings.
+
 ### 4. Open VS Code in Agent Mode
 
 With the bridge running and the [Gene2 Figma MCP plugin](https://www.figma.com/community) installed in Figma Desktop, use Copilot to:

@@ -2,10 +2,17 @@
  * Bridge WebSocket server — relays commands between
  * MCP Server / Copilot and the Figma Plugin.
  *
+ * Also serves the dashboard UI as static files on the same port:
+ *   http://localhost:9001/ui/
+ *
  * Usage:  npx gene2-figma-mcp bridge
  *    or:  npm run bridge
  */
 
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { readFileSync, existsSync, statSync } from 'node:fs';
+import { resolve, extname, dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 import type { BridgeRequest, BridgeResponse, BridgeMessage } from './protocol.js';
 import {
@@ -23,6 +30,108 @@ import {
 
 const PORT = Number(process.env.BRIDGE_PORT ?? 9001);
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// ── Dashboard static file serving ──────────────────────────────────────
+
+const MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
+};
+
+/** Resolve the dashboard dist directory. Tries multiple locations. */
+function findDashboardDir(): string | null {
+  const candidates = [
+    resolve(__dirname, '..', '..', 'dashboard', 'dist'),       // from src/bridge/ → dashboard/dist
+    resolve(__dirname, '..', 'dashboard', 'dist'),              // from dist/ → dashboard/dist
+  ];
+  for (const dir of candidates) {
+    if (existsSync(join(dir, 'index.html'))) return dir;
+  }
+  return null;
+}
+
+function serveDashboard(req: IncomingMessage, res: ServerResponse): void {
+  const dashboardDir = findDashboardDir();
+
+  // If dashboard is not built, show a helpful message
+  if (!dashboardDir) {
+    if (req.url === '/ui/' || req.url === '/ui') {
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(`<!doctype html><html><head><title>Dashboard not built</title></head><body style="font-family:system-ui;padding:48px;text-align:center;background:#121212;color:#e3e3e3">
+        <h1>⚡ Dashboard not built yet</h1>
+        <p>Run <code style="background:#2a2a2a;padding:4px 8px;border-radius:4px">cd packages/gene2-figma-mcp/dashboard && npm run build</code> to build the dashboard.</p>
+        <p style="color:#888;margin-top:24px">Bridge WebSocket is running on this port.</p>
+      </body></html>`);
+      return;
+    }
+    res.writeHead(404);
+    res.end('Not found');
+    return;
+  }
+
+  // Strip /ui prefix and resolve file
+  let urlPath = (req.url || '/').replace(/\?.*$/, ''); // remove query string
+  urlPath = urlPath.replace(/^\/ui\/?/, '/');
+  if (urlPath === '/' || urlPath === '') urlPath = '/index.html';
+
+  const filePath = resolve(dashboardDir, '.' + urlPath);
+
+  // Security: prevent path traversal
+  if (!filePath.startsWith(dashboardDir)) {
+    res.writeHead(403);
+    res.end('Forbidden');
+    return;
+  }
+
+  // Try exact file, then fallback to index.html (SPA routing)
+  let target = filePath;
+  if (!existsSync(target) || !statSync(target).isFile()) {
+    target = resolve(dashboardDir, 'index.html');
+  }
+
+  try {
+    const data = readFileSync(target);
+    const ext = extname(target).toLowerCase();
+    const mime = MIME_TYPES[ext] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': mime });
+    res.end(data);
+  } catch {
+    res.writeHead(500);
+    res.end('Internal server error');
+  }
+}
+
+function handleHttpRequest(req: IncomingMessage, res: ServerResponse): void {
+  const url = req.url || '/';
+
+  // CORS headers for dashboard WebSocket
+  res.setHeader('Access-Control-Allow-Origin', '*');
+
+  // Serve dashboard at /ui/*
+  if (url.startsWith('/ui')) {
+    serveDashboard(req, res);
+    return;
+  }
+
+  // Root redirect to /ui/
+  if (url === '/' || url === '') {
+    res.writeHead(302, { Location: '/ui/' });
+    res.end();
+    return;
+  }
+
+  res.writeHead(404);
+  res.end('Not found');
+}
+
 // ── State ──────────────────────────────────────────────────────────────
 
 let pluginSocket: WebSocket | null = null;
@@ -34,9 +143,13 @@ const commandQueue: BridgeRequest[] = [];
 
 // ── Server ─────────────────────────────────────────────────────────────
 
-const wss = new WebSocketServer({ port: PORT });
+const httpServer = createServer(handleHttpRequest);
+const wss = new WebSocketServer({ server: httpServer });
 
-console.log(`[bridge] WebSocket server listening on ws://localhost:${PORT}`);
+httpServer.listen(PORT, () => {
+  console.log(`[bridge] WebSocket server listening on ws://localhost:${PORT}`);
+  console.log(`[bridge] Dashboard UI available at http://localhost:${PORT}/ui/`);
+});
 
 wss.on('connection', (ws, req) => {
   const origin = req.headers.origin ?? 'unknown';

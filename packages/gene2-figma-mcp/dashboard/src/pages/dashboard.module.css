@@ -14,7 +14,7 @@
 }
 
 .hero p {
-  color: var(--ifm-color-emphasis-700);
+  color: var(--color-emphasis-700);
   font-size: 1.1rem;
 }
 
@@ -26,7 +26,7 @@
   justify-content: space-between;
   padding: 12px 16px;
   border-radius: 8px;
-  background: var(--ifm-color-emphasis-100);
+  background: var(--color-emphasis-100);
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 12px;
@@ -47,7 +47,7 @@
 /* ── Collapsible sections ── */
 
 .section {
-  border: 1px solid var(--ifm-color-emphasis-200);
+  border: 1px solid var(--color-emphasis-200);
   border-radius: 10px;
   margin-bottom: 20px;
   overflow: hidden;
@@ -60,22 +60,22 @@
   gap: 10px;
   padding: 16px 20px;
   border: none;
-  background: var(--ifm-color-emphasis-50);
+  background: var(--color-emphasis-50);
   cursor: pointer;
   text-align: left;
   font-size: 18px;
   font-weight: 700;
-  color: var(--ifm-font-color-base);
+  color: var(--color-text);
   transition: background 0.15s;
 }
 
 .sectionHeader:hover {
-  background: var(--ifm-color-emphasis-100);
+  background: var(--color-emphasis-100);
 }
 
 .sectionToggle {
   font-size: 14px;
-  color: var(--ifm-color-emphasis-500);
+  color: var(--color-emphasis-500);
   width: 16px;
 }
 
@@ -98,45 +98,21 @@
 
 .sectionBody {
   padding: 20px;
-  border-top: 1px solid var(--ifm-color-emphasis-200);
+  border-top: 1px solid var(--color-emphasis-200);
 }
 
 .sectionDesc {
-  color: var(--ifm-color-emphasis-700);
+  color: var(--color-emphasis-700);
   margin-bottom: 16px;
   font-size: 14px;
 }
 
-/* ── Sub-sections ── */
-
-.subSection {
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--ifm-color-emphasis-200);
-}
-
-.subSection:first-child {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
-}
-
-.subTitle {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-
-.subDesc {
-  font-size: 13px;
-  color: var(--ifm-color-emphasis-600);
-  margin-bottom: 12px;
-}
+/* ── Timestamp ── */
 
 .timestamp {
   font-weight: 400;
   font-size: 12px;
-  color: var(--ifm-color-emphasis-600);
+  color: var(--color-emphasis-600);
 }
 
 /* ── Action bar ── */
@@ -153,7 +129,7 @@
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
-  background: var(--ifm-color-primary);
+  background: var(--color-primary);
   color: #fff;
   font-weight: 600;
   cursor: pointer;
@@ -164,10 +140,10 @@
 
 .btnSecondary {
   padding: 8px 16px;
-  border: 1px solid var(--ifm-color-emphasis-300);
+  border: 1px solid var(--color-emphasis-300);
   border-radius: 6px;
   background: transparent;
-  color: var(--ifm-color-emphasis-700);
+  color: var(--color-emphasis-700);
   font-weight: 500;
   cursor: pointer;
   font-size: 14px;
@@ -175,12 +151,12 @@
 
 .btnSmall {
   padding: 4px 10px;
-  border: 1px solid var(--ifm-color-emphasis-300);
+  border: 1px solid var(--color-emphasis-300);
   border-radius: 4px;
   background: transparent;
   font-size: 12px;
   cursor: pointer;
-  color: var(--ifm-color-emphasis-700);
+  color: var(--color-emphasis-700);
 }
 
 .btnConvert {
@@ -201,17 +177,11 @@
 .errorBanner {
   padding: 12px 16px;
   border-radius: 6px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
+  background: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger);
   margin-bottom: 16px;
   font-weight: 500;
-}
-
-[data-theme='dark'] .errorBanner {
-  background: #450a0a;
-  border-color: #991b1b;
-  color: #fca5a5;
 }
 
 /* ── Toolbar & filters ── */
@@ -238,7 +208,7 @@
 }
 
 .count {
-  color: var(--ifm-color-emphasis-600);
+  color: var(--color-emphasis-600);
   font-size: 13px;
 }
 
@@ -249,18 +219,18 @@
 
 .filterBtn {
   padding: 4px 10px;
-  border: 1px solid var(--ifm-color-emphasis-300);
+  border: 1px solid var(--color-emphasis-300);
   border-radius: 4px;
   background: transparent;
   font-size: 12px;
   cursor: pointer;
-  color: var(--ifm-color-emphasis-700);
+  color: var(--color-emphasis-700);
 }
 
 .filterActive {
-  background: var(--ifm-color-primary);
+  background: var(--color-primary);
   color: #fff;
-  border-color: var(--ifm-color-primary);
+  border-color: var(--color-primary);
 }
 
 .selectActions {
@@ -278,23 +248,14 @@
   font-weight: 600;
 }
 
-.fileKeyLabel {
-  font-size: 13px;
-  color: var(--ifm-color-emphasis-600);
-}
-
-.fileKeyLabel code {
-  font-size: 12px;
-}
-
 .search {
   padding: 8px 12px;
-  border: 1px solid var(--ifm-color-emphasis-300);
+  border: 1px solid var(--color-emphasis-300);
   border-radius: 6px;
   font-size: 14px;
   width: 240px;
-  background: var(--ifm-background-color);
-  color: var(--ifm-font-color-base);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 /* ── Results panel ── */
@@ -302,7 +263,7 @@
 .resultsPanel {
   padding: 16px;
   border-radius: 8px;
-  background: var(--ifm-color-emphasis-100);
+  background: var(--color-emphasis-100);
   margin-bottom: 16px;
 }
 
@@ -313,27 +274,24 @@
 
 .resultOk {
   padding: 4px 0;
-  color: #16a34a;
+  color: var(--color-success);
   font-size: 13px;
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .resultErr {
   padding: 4px 0;
-  color: #dc2626;
+  color: var(--color-danger);
   font-size: 13px;
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
-
-[data-theme='dark'] .resultOk { color: #4ade80; }
-[data-theme='dark'] .resultErr { color: #f87171; }
 
 /* ── Table ── */
 
 .tableWrap {
   overflow-x: auto;
   border-radius: 8px;
-  border: 1px solid var(--ifm-color-emphasis-200);
+  border: 1px solid var(--color-emphasis-200);
 }
 
 .table {
@@ -345,23 +303,23 @@
 .table th {
   text-align: left;
   padding: 10px 12px;
-  background: var(--ifm-color-emphasis-100);
+  background: var(--color-emphasis-100);
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--ifm-color-emphasis-600);
-  border-bottom: 2px solid var(--ifm-color-emphasis-200);
+  color: var(--color-emphasis-600);
+  border-bottom: 2px solid var(--color-emphasis-200);
 }
 
 .table td {
   padding: 8px 12px;
-  border-bottom: 1px solid var(--ifm-color-emphasis-100);
+  border-bottom: 1px solid var(--color-emphasis-100);
   vertical-align: middle;
 }
 
 .table tbody tr:hover {
-  background: var(--ifm-color-emphasis-50);
+  background: var(--color-emphasis-50);
 }
 
 .rowComponent {
@@ -375,11 +333,11 @@
 .nameInput {
   width: 100%;
   padding: 4px 8px;
-  border: 1px solid var(--ifm-color-emphasis-300);
+  border: 1px solid var(--color-emphasis-300);
   border-radius: 4px;
   font-size: 13px;
-  background: var(--ifm-background-color);
-  color: var(--ifm-font-color-base);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 /* ── Card grid ── */
@@ -391,7 +349,7 @@
 }
 
 .card {
-  border: 1px solid var(--ifm-color-emphasis-200);
+  border: 1px solid var(--color-emphasis-200);
   border-radius: 10px;
   overflow: hidden;
   transition: box-shadow 0.2s, border-color 0.2s;
@@ -407,8 +365,8 @@
   align-items: center;
   gap: 8px;
   padding: 14px 16px;
-  background: var(--ifm-color-emphasis-50);
-  border-bottom: 1px solid var(--ifm-color-emphasis-100);
+  background: var(--color-emphasis-50);
+  border-bottom: 1px solid var(--color-emphasis-100);
 }
 
 .componentIcon {
@@ -419,15 +377,7 @@
 .componentName {
   font-weight: 700;
   font-size: 16px;
-  color: var(--ifm-color-primary);
-}
-
-.nodeIdBadge {
-  font-size: 0.8rem;
-  background: var(--ifm-color-emphasis-100);
-  padding: 0.15rem 0.5rem;
-  border-radius: 6px;
-  margin-left: auto;
+  color: var(--color-primary);
 }
 
 .cardBody {
@@ -443,7 +393,7 @@
 }
 
 .label {
-  color: var(--ifm-color-emphasis-600);
+  color: var(--color-emphasis-600);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -452,19 +402,14 @@
 
 .description {
   font-style: italic;
-  color: var(--ifm-color-emphasis-700);
+  color: var(--color-emphasis-700);
   max-width: 200px;
   text-align: right;
 }
 
-.path {
-  font-size: 0.8rem;
-  word-break: break-all;
-}
-
 .cardFooter {
   padding: 10px 16px;
-  border-top: 1px solid var(--ifm-color-emphasis-100);
+  border-top: 1px solid var(--color-emphasis-100);
   display: flex;
   gap: 12px;
 }
@@ -478,8 +423,8 @@
   letter-spacing: 0.5px;
   padding: 2px 6px;
   border-radius: 4px;
-  background: var(--ifm-color-emphasis-100);
-  color: var(--ifm-color-emphasis-600);
+  background: var(--color-emphasis-100);
+  color: var(--color-emphasis-600);
 }
 
 .linkedBadge {
@@ -488,14 +433,9 @@
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 10px;
-  background: #dcfce7;
-  color: #16a34a;
+  background: var(--color-success-bg);
+  color: var(--color-success);
   white-space: nowrap;
-}
-
-[data-theme='dark'] .linkedBadge {
-  background: #14532d;
-  color: #4ade80;
 }
 
 .unlinkedBadge {
@@ -504,19 +444,15 @@
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 10px;
-  background: var(--ifm-color-emphasis-100);
-  color: var(--ifm-color-emphasis-500);
+  background: var(--color-emphasis-100);
+  color: var(--color-emphasis-500);
   white-space: nowrap;
 }
 
 /* ── Linked card highlight ── */
 
 .cardLinked {
-  border-color: #16a34a40;
-}
-
-[data-theme='dark'] .cardLinked {
-  border-color: #4ade8040;
+  border-color: rgba(22, 163, 74, 0.25);
 }
 
 /* ── Code link block inside card ── */
@@ -524,7 +460,7 @@
 .linkBlock {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px dashed var(--ifm-color-emphasis-200);
+  border-top: 1px dashed var(--color-emphasis-200);
 }
 
 .linkTitle {
@@ -545,11 +481,11 @@
 .linkSelect {
   flex: 1;
   padding: 6px 10px;
-  border: 1px solid var(--ifm-color-emphasis-300);
+  border: 1px solid var(--color-emphasis-300);
   border-radius: 6px;
   font-size: 13px;
-  background: var(--ifm-background-color);
-  color: var(--ifm-font-color-base);
+  background: var(--color-bg);
+  color: var(--color-text);
   cursor: pointer;
 }
 
@@ -576,22 +512,20 @@
 .btnUnlink {
   margin-top: 6px;
   padding: 4px 10px;
-  border: 1px solid #dc262640;
+  border: 1px solid rgba(220, 38, 38, 0.25);
   border-radius: 4px;
   background: transparent;
-  color: #dc2626;
+  color: var(--color-danger);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
-.btnUnlink:hover { background: #fef2f2; }
-
-[data-theme='dark'] .btnUnlink:hover { background: #450a0a; }
+.btnUnlink:hover { background: var(--color-danger-bg); }
 
 /* ── Instance section ── */
 
 .instanceSection {
-  border-top: 1px solid var(--ifm-color-emphasis-100);
+  border-top: 1px solid var(--color-emphasis-100);
 }
 
 .instanceToggle {
@@ -605,13 +539,13 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
-  color: var(--ifm-color-emphasis-600);
+  color: var(--color-emphasis-600);
   text-align: left;
   transition: background 0.15s;
 }
 
 .instanceToggle:hover {
-  background: var(--ifm-color-emphasis-50);
+  background: var(--color-emphasis-50);
 }
 
 .instanceList {
@@ -632,18 +566,18 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--ifm-color-emphasis-500);
-  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  color: var(--color-emphasis-500);
+  border-bottom: 1px solid var(--color-emphasis-200);
 }
 
 .instanceTable td {
   padding: 4px 8px;
-  border-bottom: 1px solid var(--ifm-color-emphasis-100);
-  color: var(--ifm-color-emphasis-700);
+  border-bottom: 1px solid var(--color-emphasis-100);
+  color: var(--color-emphasis-700);
 }
 
 .instanceTable tbody tr:hover {
-  background: var(--ifm-color-emphasis-50);
+  background: var(--color-emphasis-50);
 }
 
 .figmaLink {
@@ -653,12 +587,12 @@
   text-decoration: none;
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
-  background: #a259ff20;
+  background: rgba(162, 89, 255, 0.12);
   transition: background 0.2s;
 }
 
 .figmaLink:hover {
-  background: #a259ff30;
+  background: rgba(162, 89, 255, 0.2);
   color: #7c3aed;
   text-decoration: none;
 }
@@ -669,13 +603,13 @@
   text-decoration: none;
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
-  background: var(--ifm-color-emphasis-100);
-  color: var(--ifm-color-emphasis-700);
+  background: var(--color-emphasis-100);
+  color: var(--color-emphasis-700);
   transition: background 0.2s;
 }
 
 .githubLink:hover {
-  background: var(--ifm-color-emphasis-200);
+  background: var(--color-emphasis-200);
   text-decoration: none;
 }
 
@@ -684,7 +618,7 @@
 .empty {
   text-align: center;
   padding: 24px;
-  color: var(--ifm-color-emphasis-600);
+  color: var(--color-emphasis-600);
 }
 
 .emptyState {
@@ -701,14 +635,14 @@
 .inlineEmpty {
   text-align: center;
   padding: 24px;
-  color: var(--ifm-color-emphasis-600);
-  background: var(--ifm-color-emphasis-50);
+  color: var(--color-emphasis-600);
+  background: var(--color-emphasis-50);
   border-radius: 8px;
 }
 
 .hint {
   font-size: 13px;
-  color: var(--ifm-color-emphasis-600);
+  color: var(--color-emphasis-600);
   margin-top: 12px;
 }
 

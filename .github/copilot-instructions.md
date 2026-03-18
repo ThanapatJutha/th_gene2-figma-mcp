@@ -38,7 +38,8 @@ Many operations need the target Figma file key. To find it:
 | `figma/config/figma.config.json` | Project config (file key, component spec dir, etc.) — **persistent, never deleted** |
 | `figma/app/.figma-sync/connections.json` | Code ↔ Figma mappings (written by bridge) |
 | `figma/pages/showcase/` | **Temporary** capture helper — NOT a deliverable |
-| `packages/gene2-figma-mcp/src/bridge/` | Bridge implementation |
+| `packages/gene2-figma-mcp/src/bridge/` | Bridge implementation (serves WS + dashboard on port 9001) |
+| `packages/gene2-figma-mcp/dashboard/` | Standalone Vite + React dashboard UI — served at `http://localhost:9001/ui/` |
 | `figma-docs/plugin/` | Plugin implementation |
 
 **Rule:** `figma/components/*.figma.tsx` files are **real, renderable React components** that wrap the project's UI library. They contain only visual/style code — never business logic.

@@ -22,12 +22,14 @@ function HomepageHeader() {
             to="/docs/getting-started">
             Get Started →
           </Link>
-          <Link
+          <a
             className="button button--secondary button--lg"
-            to="/dashboard"
+            href="http://localhost:9001/ui/"
+            target="_blank"
+            rel="noopener noreferrer"
             style={{marginLeft: '1rem'}}>
-            ⚡ Dashboard
-          </Link>
+            ⚡ Dashboard (localhost)
+          </a>
         </div>
       </div>
     </header>

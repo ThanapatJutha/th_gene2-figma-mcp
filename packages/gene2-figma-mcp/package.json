@@ -9,7 +9,10 @@
   "scripts": {
     "bridge": "tsx src/bridge/server.ts",
     "bridge:mcp": "tsx src/bridge/mcp-server.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dashboard:build": "cd dashboard && npm run build",
+    "dashboard:dev": "cd dashboard && npm run dev",
+    "prepublishOnly": "cd dashboard && npm install && npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
@@ -29,7 +32,8 @@
   "files": [
     "bin/",
     "src/",
-    "templates/"
+    "templates/",
+    "dashboard/dist/"
   ],
   "keywords": [
     "figma",

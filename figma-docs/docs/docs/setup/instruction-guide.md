@@ -111,7 +111,7 @@ Suggest conversion for frames/groups that:
 
 ### Via Dashboard UI
 
-Users can also use the web dashboard at `/dashboard`:
+Users can also use the web dashboard at `http://localhost:9001/ui/` (served by the bridge):
 1. **Connect** → **Scan Layers** → reviews candidates with checkboxes
 2. Select/rename → click **Convert N to Components**
 3. View all components in the Components section

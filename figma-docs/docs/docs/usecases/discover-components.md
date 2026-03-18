@@ -18,7 +18,7 @@ from Figma             should be components    selected layers        on Compone
 
 ### Step 1 — Scan all layers
 
-Open the [Dashboard](/figma-sync/dashboard) and click **Connect**, then **🔍 Scan Layers**.
+Open the [Dashboard](http://localhost:9001/ui/) (requires bridge running) and click **Connect**, then **🔍 Scan Layers**.
 
 The plugin reads every layer on the current Figma page and sends the full list to the browser. Each layer includes:
 
@@ -59,7 +59,7 @@ After conversion, the layer list refreshes automatically.
 
 ### Step 4 — View components
 
-Check the **Components** section on the [Dashboard](/figma-sync/dashboard) to see all existing components on the current Figma page:
+Check the **Components** section on the [Dashboard](http://localhost:9001/ui/) to see all existing components on the current Figma page:
 
 - Live data fetched from Figma via the bridge
 - Card grid with name, node ID, size, description
@@ -106,5 +106,5 @@ Figma File (live updates)
 The browser connects to the bridge as a **client** (same as MCP/Copilot). The bridge routes `list-layers` / `list-components` / `create-component` commands to the plugin and returns responses.
 
 :::info Local only
-These pages only work when the bridge is running locally. The deployed docs site at `https://ThanapatJutha.github.io/gene2-figma-mcp/` will show a "Bridge not connected" state — this is expected. The pages are developer tools, not production dashboards.
+The dashboard runs locally as part of the bridge server at `http://localhost:9001/ui/`. Start the bridge with `npx gene2-figma-mcp bridge` to access it.
 :::
