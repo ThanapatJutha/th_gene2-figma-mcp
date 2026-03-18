@@ -17,7 +17,7 @@ slug: /getting-started
 ## Step 1: Clone & Install
 
 ```bash
-git clone https://github.com/ThanapatJutha/gene2-figma-mcp.git
+git clone https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp.git
 cd gene2-figma-mcp
 npm install
 ```

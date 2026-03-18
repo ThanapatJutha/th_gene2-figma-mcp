@@ -72,7 +72,7 @@ Everything runs through **GitHub Copilot Agent Mode** in VS Code, powered by two
 ## Documentation
 
 Full documentation is available at:  
-**[https://ThanapatJutha.github.io/gene2-figma-mcp/](https://ThanapatJutha.github.io/gene2-figma-mcp/)**
+**[https://GLOBAL-PALO-IT.github.io/th_gene2-figma-mcp/](https://GLOBAL-PALO-IT.github.io/th_gene2-figma-mcp/)**
 
 Covers architecture, setup, usecases, bridge protocol, and troubleshooting.
 

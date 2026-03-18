@@ -17,11 +17,11 @@ const config: Config = {
 
   themes: ['@docusaurus/theme-mermaid'],
 
-  url: 'https://ThanapatJutha.github.io',
-  baseUrl: '/gene2-figma-mcp/',
+  url: 'https://GLOBAL-PALO-IT.github.io',
+  baseUrl: '/th_gene2-figma-mcp/',
 
-  organizationName: 'ThanapatJutha',
-  projectName: 'gene2-figma-mcp',
+  organizationName: 'GLOBAL-PALO-IT',
+  projectName: 'th_gene2-figma-mcp',
 
   onBrokenLinks: 'throw',
 
@@ -36,7 +36,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/ThanapatJutha/gene2-figma-mcp/tree/main/docs/',
+          editUrl: 'https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/tree/main/docs/',
         },
         blog: false,
         theme: {
@@ -61,7 +61,7 @@ const config: Config = {
           label: 'Docs',
         },
         {
-          href: 'https://github.com/ThanapatJutha/gene2-figma-mcp',
+          href: 'https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp',
           label: 'GitHub',
           position: 'right',
         },
@@ -93,7 +93,7 @@ const config: Config = {
         {
           title: 'Links',
           items: [
-            { label: 'GitHub', href: 'https://github.com/ThanapatJutha/gene2-figma-mcp' },
+            { label: 'GitHub', href: 'https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp' },
             { label: 'Figma File', href: 'https://www.figma.com/design/ghwHnqX2WZXFtfmsrbRLTg' },
           ],
         },

@@ -59,7 +59,7 @@ The repo contains five distinct concerns mixed into one flat structure:
    If the bridge protocol changes, there's no way to detect that a consumer's `copilot-instructions.md` is stale.
 
 8. **GitHub URL is hardcoded in dashboard**
-   `githubFileUrl()` in `dashboard.tsx` points to `patja60/figma-sync`. Consumer projects need their own repo URL.
+   `githubFileUrl()` in `dashboard.tsx` points to `GLOBAL-PALO-IT/th_gene2-figma-mcp`. Consumer projects need their own repo URL.
 
 ---
 
@@ -136,7 +136,7 @@ The dashboard is NOT responsible for first-time setup. It:
 
 ### Docs stay central
 
-Documentation (Docusaurus site) stays in this repo and is deployed to GitHub Pages. Consumer projects don't need docs source — they read docs online at `https://patja60.github.io/figma-sync/`.
+Documentation (Docusaurus site) stays in this repo and is deployed to GitHub Pages. Consumer projects don't need docs source — they read docs online at `https://GLOBAL-PALO-IT.github.io/th_gene2-figma-mcp/`.
 
 ---
 
@@ -723,7 +723,7 @@ Day 5-6:
 
 3. **`useBridge.ts` hardcodes `ws://localhost:9001`** — Should read from environment or accept a parameter for port configurability.
 
-4. **`dashboard.tsx` hardcodes GitHub org URL** — `githubFileUrl()` points to `patja60/figma-sync`. This should be configurable or removed for consumer version.
+4. **`dashboard.tsx` hardcodes GitHub org URL** — `githubFileUrl()` points to `GLOBAL-PALO-IT/th_gene2-figma-mcp`. This should be configurable or removed for consumer version.
 
 5. **`docusaurus.config.ts` hardcodes `baseUrl: '/figma-sync/'`** — Fine for central docs, but dashboard links from consumer projects would break if they assume this URL structure.
 

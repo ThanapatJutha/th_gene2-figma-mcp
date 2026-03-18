@@ -175,7 +175,7 @@ export default function SettingsPage(): React.JSX.Element {
         <p>
           Configure your project for Figma ↔ Code sync.
           Powered by{' '}
-          <a href="https://github.com/ThanapatJutha/gene2-figma-mcp" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp" target="_blank" rel="noopener noreferrer">
             Gene2 Figma MCP
           </a>.
         </p>
