@@ -186,15 +186,12 @@ export default function SettingsPage(): React.JSX.Element {
           <h1>⚙️ Settings</h1>
           <p>
             Configure your project for Figma ↔ Code sync.
-            Aligned with{' '}
-            <a href="https://github.com/figma/code-connect" target="_blank" rel="noopener noreferrer">
-              Figma Code Connect
-            </a>{' '}
-            conventions.
+            Powered by{' '}
+            <a href="https://github.com/ThanapatJutha/gene2-figma-mcp" target="_blank" rel="noopener noreferrer">
+              Gene2 Figma MCP
+            </a>.
           </p>
         </div>
-
-        {/* Connection Bar */}
         <div className={styles.connectionBar}>
           <div className={styles.connectionStatus}>
             {statusDot(status)}

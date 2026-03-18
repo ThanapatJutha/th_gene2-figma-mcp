@@ -80,7 +80,7 @@ function figmaNodeUrl(nodeId: string, fileKey: string): string {
 }
 
 function githubFileUrl(filePath: string): string {
-  return `https://github.com/patja60/figma-sync/blob/main/${filePath}`;
+  return `https://github.com/ThanapatJutha/gene2-figma-mcp/blob/main/${filePath}`;
 }
 
 function suggestAsComponent(layer: LayerInfo): boolean {
@@ -391,7 +391,7 @@ export default function DashboardPage(): React.JSX.Element {
     <Layout title="Dashboard" description="Discover, manage and map Figma components">
       <main className={styles.container}>
         <div className={styles.hero}>
-          <h1>⚡ Figma Sync Dashboard</h1>
+          <h1>⚡ Gene2 Figma MCP Dashboard</h1>
           <p>Discover layers, convert them to components, view live components, and manage code mappings — all in one place.</p>
         </div>
 
@@ -557,12 +557,12 @@ export default function DashboardPage(): React.JSX.Element {
                 <h2>⚙️ Configuration Required</h2>
                 <p>Set up your project before using the Components section.</p>
                 <ol className={styles.steps}>
-                  <li>Go to <a href="/figma-sync/settings"><strong>⚙️ Settings</strong></a></li>
+                  <li>Go to <a href="/gene2-figma-mcp/settings"><strong>⚙️ Settings</strong></a></li>
                   <li>Set your <strong>Figma File Key</strong></li>
                   <li>Configure <strong>component include patterns</strong> (e.g. <code>src/components/**/*.tsx</code>)</li>
                   <li>Click <strong>Save Configuration</strong></li>
                 </ol>
-                <a href="/figma-sync/settings" className={styles.btnPrimary} style={{ display: 'inline-block', marginTop: 12, textDecoration: 'none' }}>
+                <a href="/gene2-figma-mcp/settings" className={styles.btnPrimary} style={{ display: 'inline-block', marginTop: 12, textDecoration: 'none' }}>
                   Go to Settings →
                 </a>
               </div>
@@ -580,7 +580,7 @@ export default function DashboardPage(): React.JSX.Element {
                   </button>
                   {projectComponents.length === 0 && (
                     <span className={styles.hint}>
-                      ⚠️ No project components discovered. Check your <a href="/figma-sync/settings">include patterns</a>.
+                      ⚠️ No project components discovered. Check your <a href="/gene2-figma-mcp/settings">include patterns</a>.
                     </span>
                   )}
                 </div>
@@ -692,7 +692,7 @@ export default function DashboardPage(): React.JSX.Element {
                                 </div>
                               ) : (
                                 <p className={styles.hint}>
-                                  <a href="/figma-sync/settings">Configure Settings</a> to discover project components.
+                                  <a href="/gene2-figma-mcp/settings">Configure Settings</a> to discover project components.
                                 </p>
                               )}
                             </div>

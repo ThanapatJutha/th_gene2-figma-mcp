@@ -3,7 +3,7 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Figma Sync',
+  title: 'Gene2 Figma MCP',
   tagline: 'Bidirectional sync between code and Figma — code is the source of truth',
   favicon: 'img/favicon.ico',
 
@@ -17,11 +17,11 @@ const config: Config = {
 
   themes: ['@docusaurus/theme-mermaid'],
 
-  url: 'https://patja60.github.io',
-  baseUrl: '/figma-sync/',
+  url: 'https://ThanapatJutha.github.io',
+  baseUrl: '/gene2-figma-mcp/',
 
-  organizationName: 'patja60',
-  projectName: 'figma-sync',
+  organizationName: 'ThanapatJutha',
+  projectName: 'gene2-figma-mcp',
 
   onBrokenLinks: 'throw',
 
@@ -36,7 +36,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          editUrl: 'https://github.com/patja60/figma-sync/tree/main/docs/',
+          editUrl: 'https://github.com/ThanapatJutha/gene2-figma-mcp/tree/main/docs/',
         },
         blog: false,
         theme: {
@@ -52,7 +52,7 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'Figma Sync',
+      title: 'Gene2 Figma MCP',
       items: [
         {
           type: 'docSidebar',
@@ -71,7 +71,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://github.com/patja60/figma-sync',
+          href: 'https://github.com/ThanapatJutha/gene2-figma-mcp',
           label: 'GitHub',
           position: 'right',
         },
@@ -103,12 +103,12 @@ const config: Config = {
         {
           title: 'Links',
           items: [
-            { label: 'GitHub', href: 'https://github.com/patja60/figma-sync' },
+            { label: 'GitHub', href: 'https://github.com/ThanapatJutha/gene2-figma-mcp' },
             { label: 'Figma File', href: 'https://www.figma.com/design/ghwHnqX2WZXFtfmsrbRLTg' },
           ],
         },
       ],
-      copyright: `Figma Sync POC · ${new Date().getFullYear()} · PALO IT Thailand`,
+      copyright: `Gene2 Figma MCP · ${new Date().getFullYear()} · PALO IT Thailand`,
     },
     prism: {
       theme: prismThemes.github,

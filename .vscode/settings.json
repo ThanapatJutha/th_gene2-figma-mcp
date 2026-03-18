@@ -2,7 +2,7 @@
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
   "chat.mcp.serverSampling": {
-    "figma-sync/.vscode/mcp.json: figma-bridge": {
+    "gene2-figma-mcp/.vscode/mcp.json: figma-bridge": {
       "allowedModels": [
         "copilot/gpt-4.1",
         "copilot/auto",

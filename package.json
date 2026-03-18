@@ -1,12 +1,16 @@
 {
-  "name": "figma-sync",
+  "name": "gene2-figma-mcp-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "Copilot-driven bidirectional sync between React code and Figma.",
+  "description": "Gene2 Figma MCP — Copilot-driven bidirectional sync between code and Figma.",
   "type": "module",
+  "workspaces": [
+    "packages/gene2-figma-mcp",
+    "figma-docs/docs"
+  ],
   "scripts": {
-    "bridge": "tsx figma-docs/bridge/src/server.ts",
-    "bridge:mcp": "tsx figma-docs/bridge/src/mcp-server.ts",
+    "bridge": "tsx packages/gene2-figma-mcp/src/bridge/server.ts",
+    "bridge:mcp": "tsx packages/gene2-figma-mcp/src/bridge/mcp-server.ts",
     "plugin:build": "tsc -p figma-docs/plugin/tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "fmt": "prettier -w .",

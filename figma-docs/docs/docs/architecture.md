@@ -100,7 +100,7 @@ The bridge sits at the center — see the [Bridge section](/docs/bridge/overview
 
 | Directory | Purpose |
 |---|---|
-| `figma-docs/bridge/src/` | Bridge server, local handlers, MCP server, protocol types |
+| `packages/gene2-figma-mcp/src/bridge/` | Bridge server, local handlers, MCP server, protocol types |
 | `figma-docs/plugin/` | Figma Plugin (code.ts, ui.html, manifest) |
 | `figma-docs/docs/src/pages/` | Dashboard + Settings UI |
 | `src/components/` | Real project UI components |

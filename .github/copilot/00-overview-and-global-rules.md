@@ -5,7 +5,7 @@
 
 ## Project overview
 
-`figma-sync` bridges VS Code and Figma with two servers:
+`gene2-figma-mcp` bridges VS Code and Figma with two servers:
 - `figma` (official MCP)
 - `figma-bridge` (local bridge)
 
@@ -38,7 +38,7 @@ Changes only in `figma/pages/showcase/` are partial progress.
 
 - Runtime/product code (business logic): `src/`
 - Figma React UI components (visual shell only): `figma/components/*.figma.tsx`
-- Bridge implementation: `figma-docs/bridge/src/`
+- Bridge implementation: `packages/gene2-figma-mcp/src/bridge/`
 - Plugin implementation: `figma-docs/plugin/`
 
 `.figma.tsx` files are **real, renderable React components** that wrap the

@@ -1,0 +1,13 @@
+{
+  "_gene2Version": "{{version}}",
+  "figmaFileKey": "{{figmaFileKey}}",
+  "rootDir": "{{rootDir}}",
+  "componentSpecDir": "figma/components",
+  "codeConnect": {
+    "parser": "react",
+    "include": ["src/**/*.{tsx,jsx}"],
+    "exclude": ["**/*.test.*", "**/*.spec.*", "**/*.figma.*"],
+    "label": "React",
+    "language": "typescript"
+  }
+}

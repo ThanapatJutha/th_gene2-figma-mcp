@@ -11,3 +11,17 @@ figma-docs/plugin/code.js
 
 # Temporary helper scripts (one-off capture/build scripts)
 *.cjs
+tmp-*
+
+# POC / demo folders (experimental, not part of the toolkit)
+poc-react/
+demo/
+demo-*/
+figma-shadcn-showcase/
+
+# Showcase scaffold (temporary per-capture, never a deliverable)
+figma/pages/showcase/
+
+# Docusaurus build artifacts
+figma-docs/docs/.docusaurus/
+figma-docs/docs/build/

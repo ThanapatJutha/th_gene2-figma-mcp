@@ -24,9 +24,7 @@ import type {
 
 const PROJECT_ROOT = resolve(process.cwd());
 const FIGMA_DIR = resolve(PROJECT_ROOT, 'figma');
-const CONFIG_PATH = existsSync(resolve(FIGMA_DIR, 'config', 'figma.config.json'))
-  ? resolve(FIGMA_DIR, 'config', 'figma.config.json')
-  : resolve(PROJECT_ROOT, 'figma.config.json');
+const CONFIG_PATH = resolve(FIGMA_DIR, 'config', 'figma.config.json');
 const DB_DIR = resolve(FIGMA_DIR, 'app', '.figma-sync');
 const CONNECTIONS_PATH = resolve(DB_DIR, 'connections.json');
 const LAYER_MAP_PATH = resolve(DB_DIR, 'layer-map.json');

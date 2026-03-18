@@ -4,11 +4,11 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "outDir": "dist",
-    "rootDir": "figma-docs/bridge/src",
+    "rootDir": "packages/gene2-figma-mcp/src",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["figma-docs/bridge/src/**/*.ts"]
+  "include": ["packages/gene2-figma-mcp/src/**/*.ts"]
 }

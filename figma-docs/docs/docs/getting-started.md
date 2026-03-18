@@ -5,7 +5,7 @@ slug: /getting-started
 
 # Getting Started
 
-**figma-sync** is a Copilot-driven workflow for bidirectional sync between a React codebase and Figma. The code repo is the **single source of truth** for UI — all interactions happen through natural language prompts in VS Code.
+**gene2-figma-mcp** is a Copilot-driven workflow for bidirectional sync between a React codebase and Figma. The code repo is the **single source of truth** for UI — all interactions happen through natural language prompts in VS Code.
 
 ## Prerequisites
 
@@ -17,8 +17,8 @@ slug: /getting-started
 ## Step 1: Clone & Install
 
 ```bash
-git clone https://github.com/patja60/figma-sync.git
-cd figma-sync
+git clone https://github.com/ThanapatJutha/gene2-figma-mcp.git
+cd gene2-figma-mcp
 npm install
 ```
 
@@ -36,7 +36,7 @@ The project includes `.vscode/mcp.json` which connects Copilot to both the **off
     "figma-bridge": {
       "type": "stdio",
       "command": "npx",
-      "args": ["./node_modules/.bin/tsx", "figma-docs/bridge/src/mcp-server.ts"],
+      "args": ["tsx", "packages/gene2-figma-mcp/src/bridge/mcp-server.ts"],
       "cwd": "${workspaceFolder}"
     }
   }

@@ -1,117 +1,97 @@
-# figma-sync
+# gene2-figma-mcp
 
 Copilot-driven bidirectional sync between a React codebase and Figma.  
 **Code is the single source of truth for UI — even for designers.**
 
-## How It Works
-
-There is **no CLI**. Everything runs through **GitHub Copilot Agent Mode** in VS Code, powered by the **Figma MCP server** and a custom **Bridge Server**.
-
-| Action | How |
-|---|---|
-| Push UI to Figma | Prompt Copilot: *"Capture my React app at localhost:5173 and push to Figma"* |
-| Pull design context | Prompt Copilot: *"Get the design context for node 1:5 in Figma file ghwHnqX2WZXFtfmsrbRLTg"* |
-| Configure project | Open **Settings** page → set file key, include patterns → Save |
-| Link components | Open **Dashboard** → Components tab → link code ↔ Figma components |
-| Discover layers | Open **Dashboard** → Discover tab → scan Figma file tree |
-
 ## Quick Start
 
-### 1. Clone & install
+### 1. Install
 
 ```bash
-git clone https://github.com/patja60/figma-sync.git
-cd figma-sync
-npm install
+npm install --save-dev gene2-figma-mcp
 ```
 
-### 2. Figma MCP server
-
-The repo ships with `.vscode/mcp.json` which connects Copilot to Figma:
-
-```json
-{
-  "servers": {
-    "Figma": {
-      "type": "http",
-      "url": "https://mcp.figma.com/mcp"
-    }
-  }
-}
-```
-
-When you first use a Figma tool, a browser window opens for OAuth.
-
-### 3. Run your app
+### 2. Initialize your project
 
 ```bash
-# Run your project app from root src setup (example command)
-npm run dev
+npx gene2-figma-mcp init
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+This seeds the required files into your project:
 
-### 4. Start the bridge server
+| File | Purpose |
+|------|---------|
+| `figma/config/figma.config.json` | Project config — set your Figma file key here |
+| `.vscode/mcp.json` | MCP server wiring for Copilot |
+| `.github/copilot-instructions.md` | Copilot behavioral rules for Figma workflows |
+| `figma/app/.figma-sync/connections.json` | Code ↔ Figma component mappings |
+| `figma/components/` | Directory for `.figma.tsx` component specs |
+
+### 3. Start the bridge server
 
 ```bash
-npm run bridge
+npx gene2-figma-mcp bridge
 ```
 
-The bridge handles **local commands** (config, connections, file scanning) and **plugin commands** (forwarded to the Figma Plugin running inside the desktop app).
+The bridge runs on `ws://localhost:9001` and relays commands between Copilot (via MCP) and the Figma Plugin.
 
-### 5. Configure the project
+### 4. Open VS Code in Agent Mode
 
-Open the documentation site and go to the **Settings** page:
+With the bridge running and the [Gene2 Figma MCP plugin](https://www.figma.com/community) installed in Figma Desktop, use Copilot to:
 
-```bash
-npm run docs:dev     # Dev server on http://localhost:4000/figma-sync/
+| Action | Prompt |
+|--------|--------|
+| Push UI to Figma | *"Capture my React app at localhost:5173 and push to Figma"* |
+| Pull design context | *"Get the design context for this Figma URL"* |
+| Discover components | *"Discover components in my Figma file and create mappings"* |
+
+## CLI Commands
+
+```
+npx gene2-figma-mcp init          # Seed project files
+npx gene2-figma-mcp init --force  # Re-seed (overwrite existing)
+npx gene2-figma-mcp bridge        # Start WebSocket bridge server
+npx gene2-figma-mcp mcp           # Start MCP server (used by VS Code)
+npx gene2-figma-mcp doctor        # Diagnose setup issues
+npx gene2-figma-mcp --version     # Print version
 ```
 
-Navigate to **Settings**, connect to the bridge, and save your project config. This creates `figma/config/figma.config.json`.
+## How It Works
 
-### 6. Link components
+Everything runs through **GitHub Copilot Agent Mode** in VS Code, powered by two MCP servers:
 
-Go to the **Dashboard** → **Components** section to link code components with Figma components. Links persist in `figma/app/.figma-sync/connections.json`.
+| Server | Transport | Purpose |
+|--------|-----------|---------|
+| `figma` | HTTP | Official Figma MCP — capture, design context |
+| `figma-bridge` | stdio | Custom bridge — node CRUD, components, specs, tokens |
+
+**Data flow:** Copilot → MCP → Bridge (port 9001) → Figma Plugin
+
+## Documentation
+
+Full documentation is available at:  
+**[https://ThanapatJutha.github.io/gene2-figma-mcp/](https://ThanapatJutha.github.io/gene2-figma-mcp/)**
+
+Covers architecture, setup, usecases, bridge protocol, and troubleshooting.
 
 ## Project Structure
 
 ```
-figma-sync/
-  src/                      ← Real product/app source (your project)
-  figma-docs/
-    bridge/
-      src/                  ← Bridge server & MCP tools
-        server.ts           ← WebSocket server (local + plugin commands)
-        local-handlers.ts   ← Filesystem handlers (config, connections, scan)
-        mcp-server.ts       ← MCP server for Copilot integration
-        protocol.ts         ← Shared message types
-    plugin/                 ← Figma Plugin (runs inside Figma app)
-      code.ts               ← Plugin command handlers
-      ui.html               ← Plugin UI + WebSocket client
-    docs/                   ← Documentation site (Docusaurus)
-      src/pages/dashboard.tsx ← Dashboard — Discover + Components
-      src/pages/settings.tsx  ← Settings — project configuration
-  figma/
-    pages/
-      showcase/             ← Temporary capture showcase app
-    app/
-      figma.config.json     ← Project config (created/edited via Settings)
-      .figma-sync/          ← Local DB (connections, layer map)
-    components/             ← Local .figma.ts component specs
-  .vscode/mcp.json          ← MCP server configuration
+your-project/
+├── .github/copilot-instructions.md   ← Copilot rules (seeded by init)
+├── .vscode/mcp.json                  ← MCP server config (seeded by init)
+├── figma/
+│   ├── config/figma.config.json      ← Project config
+│   ├── app/.figma-sync/              ← Connections & layer map
+│   └── components/                   ← .figma.tsx component specs
+└── src/                              ← Your app source code
 ```
 
-## Documentation Site
+## Requirements
 
-```bash
-npm run docs:dev     # Dev server on http://localhost:4000/figma-sync/
-npm run docs:build   # Production build
-npm run docs:serve   # Serve the build locally
-```
-
-Pages:
-- **Dashboard** — Discover Figma layers, link code ↔ Figma components
-- **Settings** — Configure project file key, include/exclude patterns, parser
+- Node.js ≥ 20
+- VS Code with GitHub Copilot (Agent Mode)
+- Figma Desktop with Gene2 Figma MCP plugin
 
 ## License
 

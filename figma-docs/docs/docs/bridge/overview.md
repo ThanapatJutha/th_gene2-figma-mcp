@@ -86,11 +86,11 @@ graph LR
 
 | File | Purpose |
 |---|---|
-| `figma-docs/bridge/src/protocol.ts` | Shared TypeScript types for messages (24 bridge commands) |
-| `figma-docs/bridge/src/server.ts` | WebSocket bridge server — routes local vs plugin commands |
-| `figma-docs/bridge/src/bridge-client.ts` | WebSocket client — used by MCP server to connect to bridge without starting a second server |
-| `figma-docs/bridge/src/local-handlers.ts` | Local filesystem handlers (config, connections, scan, layer map, component source) |
-| `figma-docs/bridge/src/mcp-server.ts` | MCP server exposing 21 tools to Copilot |
+| `packages/gene2-figma-mcp/src/bridge/protocol.ts` | Shared TypeScript types for messages (24 bridge commands) |
+| `packages/gene2-figma-mcp/src/bridge/server.ts` | WebSocket bridge server — routes local vs plugin commands |
+| `packages/gene2-figma-mcp/src/bridge/bridge-client.ts` | WebSocket client — used by MCP server to connect to bridge without starting a second server |
+| `packages/gene2-figma-mcp/src/bridge/local-handlers.ts` | Local filesystem handlers (config, connections, scan, layer map, component source) |
+| `packages/gene2-figma-mcp/src/bridge/mcp-server.ts` | MCP server exposing 21 tools to Copilot |
 | `figma-docs/plugin/manifest.json` | Figma plugin manifest |
 | `figma-docs/plugin/code.ts` | Plugin main thread — 14 command handlers (read, create, update, delete, reorder) |
 | `figma-docs/plugin/ui.html` | Plugin UI — WebSocket + status dashboard |

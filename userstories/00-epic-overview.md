@@ -1,4 +1,4 @@
-# Figma Sync POC — Overview
+# Gene2 Figma MCP — Overview
 
 ## Vision
 

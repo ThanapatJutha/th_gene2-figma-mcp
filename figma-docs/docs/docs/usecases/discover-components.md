@@ -106,5 +106,5 @@ Figma File (live updates)
 The browser connects to the bridge as a **client** (same as MCP/Copilot). The bridge routes `list-layers` / `list-components` / `create-component` commands to the plugin and returns responses.
 
 :::info Local only
-These pages only work when the bridge is running locally. The deployed docs site at `https://patja60.github.io/figma-sync/` will show a "Bridge not connected" state — this is expected. The pages are developer tools, not production dashboards.
+These pages only work when the bridge is running locally. The deployed docs site at `https://ThanapatJutha.github.io/gene2-figma-mcp/` will show a "Bridge not connected" state — this is expected. The pages are developer tools, not production dashboards.
 :::

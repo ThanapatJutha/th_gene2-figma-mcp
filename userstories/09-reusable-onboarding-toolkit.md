@@ -1,7 +1,7 @@
 # Epic 9: Reusable Onboarding Toolkit
 
-> Evolve `figma-sync` from a single-project POC into a distributable toolkit that any
-> project can adopt via `npx figma-sync init`, without cloning this repo.
+> Evolve `gene2-figma-mcp` from a single-project POC into a distributable toolkit that any
+> project can adopt via `npx gene2-figma-mcp init`, without cloning this repo.
 
 ---
 
@@ -167,12 +167,12 @@ The bridge code lives under `figma-docs/bridge/src/`, which is confusingly named
 - Moving docs site
 
 **Acceptance criteria:**
-- [ ] `npm run bridge` starts the bridge from the new location
-- [ ] MCP server starts correctly via `.vscode/mcp.json`
-- [ ] All local handler commands work (read-config, save-connections, etc.)
-- [ ] Plugin commands work when plugin is connected
-- [ ] No references to `figma-docs/bridge/` remain in active code paths
-- [ ] Old `figma-docs/bridge/` directory removed or redirected
+- [x] `npm run bridge` starts the bridge from the new location
+- [x] MCP server starts correctly via `.vscode/mcp.json`
+- [x] All local handler commands work (read-config, save-connections, etc.)
+- [x] Plugin commands work when plugin is connected
+- [x] No references to `figma-docs/bridge/` remain in active code paths
+- [x] Old `figma-docs/bridge/` directory removed or redirected
 
 **Technical notes:**
 - Keep `figma-docs/docs/` where it is — it's the docs site, not the bridge
@@ -225,13 +225,13 @@ Today's onboarding requires cloning the entire repo and knowing which files to k
 - Auto-detecting UI library or framework
 
 **Acceptance criteria:**
-- [ ] Running `node packages/figma-sync/bin/figma-sync.mjs init` in any directory creates the expected files
-- [ ] Created `.vscode/mcp.json` uses portable command (e.g., `npx tsx`)
-- [ ] Created `figma.config.json` includes the prompted file key (or placeholder)
-- [ ] Created `copilot-instructions.md` has correct paths relative to consumer project
-- [ ] Running init twice does not overwrite existing files without confirmation
-- [ ] All created files pass JSON/Markdown lint
-- [ ] No machine-specific paths in any generated file
+- [x] Running `node packages/gene2-figma-mcp/bin/gene2-figma-mcp.mjs init` in any directory creates the expected files
+- [x] Created `.vscode/mcp.json` uses portable command (`npx gene2-figma-mcp mcp`)
+- [x] Created `figma.config.json` includes the prompted file key (or placeholder)
+- [x] Created `copilot-instructions.md` has correct paths relative to consumer project
+- [x] Running init twice does not overwrite existing files without confirmation
+- [x] All created files pass JSON/Markdown lint
+- [x] No machine-specific paths in any generated file
 
 **Technical notes:**
 - Use `node:readline` for prompts (zero external deps for the CLI)
@@ -298,10 +298,10 @@ This breaks on every other machine. It also hardcodes the bridge path as `figma-
 - Supporting non-VS-Code editors
 
 **Acceptance criteria:**
-- [ ] `.vscode/mcp.json` contains no absolute paths
-- [ ] Works with nvm, fnm, volta, and system Node
-- [ ] MCP server starts correctly when VS Code opens the workspace
-- [ ] The generated file is valid JSON with `${workspaceFolder}` for cwd
+- [x] `.vscode/mcp.json` contains no absolute paths
+- [x] Works with nvm, fnm, volta, and system Node
+- [x] MCP server starts correctly when VS Code opens the workspace
+- [x] The generated file is valid JSON with `${workspaceFolder}` for cwd
 
 **Technical notes:**
 - `npx tsx` is the safest cross-platform invocation
@@ -353,12 +353,12 @@ A consumer needs a **distilled version** that:
 - Dynamic instruction generation at runtime
 
 **Acceptance criteria:**
-- [ ] Template produces a valid Copilot instructions file
-- [ ] No references to `figma-docs/` in the generated file
-- [ ] No references to this repo's GitHub URL
+- [x] Template produces a valid Copilot instructions file
+- [x] No references to `figma-docs/` in the generated file
+- [x] No references to this repo's GitHub URL
 - [ ] Copilot can successfully execute the Bootstrap-from-URL workflow using only the consumer's instructions
-- [ ] All MCP tool names are documented
-- [ ] Completion invariant and source-of-truth order are present
+- [x] All MCP tool names are documented
+- [x] Completion invariant and source-of-truth order are present
 
 **Files to create/modify:**
 | Action | File |
@@ -398,9 +398,9 @@ The current onboarding has many moving parts: bridge server, Figma plugin, MCP c
 - Checking Figma file existence via API
 
 **Acceptance criteria:**
-- [ ] `npx figma-sync doctor` runs without errors even when nothing is set up
-- [ ] Each check prints clear pass/fail with description
-- [ ] Failed checks include a suggested fix
+- [x] `npx gene2-figma-mcp doctor` runs without errors even when nothing is set up
+- [x] Each check prints clear pass/fail with description
+- [x] Failed checks include a suggested fix
 - [ ] Exit code 0 if all critical checks pass, 1 otherwise
 
 **Files to create/modify:**
@@ -488,10 +488,10 @@ Today the bridge starts via `npm run bridge` which runs `tsx figma-docs/bridge/s
 - Auto-restart on crash
 
 **Acceptance criteria:**
-- [ ] `npx figma-sync bridge` starts the WebSocket server
+- [x] `npx gene2-figma-mcp bridge` starts the WebSocket server
 - [ ] Port is configurable via `BRIDGE_PORT` env var
-- [ ] Server logs show connection status
-- [ ] Ctrl+C cleanly shuts down
+- [x] Server logs show connection status
+- [x] Ctrl+C cleanly shuts down
 
 **Files to create/modify:**
 | Action | File |
@@ -533,8 +533,8 @@ If the bridge protocol adds new commands, or the Copilot instructions add new ru
 - Semantic versioning policy definition
 
 **Acceptance criteria:**
-- [ ] `init` writes version markers in all seeded files
-- [ ] `doctor` detects version mismatch and warns
+- [x] `init` writes version markers in all seeded files
+- [x] `doctor` detects version mismatch and warns
 - [ ] `upgrade` re-generates templates and prompts before overwriting modified files
 
 **Files to create/modify:**
@@ -573,9 +573,9 @@ The repo contains `poc-react/`, `demo/`, `demo-2/`, `demo-3/`, `figma-shadcn-sho
 - Rewriting git history
 
 **Acceptance criteria:**
-- [ ] `git status` is clean after running init in the repo itself
-- [ ] No demo/POC folders are tracked
-- [ ] README reflects the current structure
+- [x] `git status` is clean after running init in the repo itself
+- [x] No demo/POC folders are tracked
+- [x] README reflects the current structure
 
 **Files to create/modify:**
 | Action | File |
@@ -590,42 +590,9 @@ The repo contains `poc-react/`, `demo/`, `demo-2/`, `demo-3/`, `figma-shadcn-sho
 
 ### Story 9.10 — End-to-end integration test
 
-**As a** toolkit maintainer  
-**I want** an automated test that runs `init` → `bridge` → basic operations in a temp directory  
-**So that** I can verify the toolkit works for consumers without manual testing
-
-**Problem being solved:**
-There are no tests. Changes to the bridge, templates, or CLI could silently break the consumer experience.
-
-**Scope:**
-- Create a test script (Node.js, not a heavy test framework) that:
-  1. Creates a temp directory
-  2. Runs `init` with default values
-  3. Verifies all expected files exist
-  4. Verifies file contents (no absolute paths, correct JSON structure)
-  5. Starts bridge server
-  6. Sends a `ping` command via WebSocket
-  7. Sends `read-config` and verifies response matches seeded config
-  8. Stops bridge server
-  9. Cleans up temp directory
-
-**Non-goals:**
-- Unit tests for every function
-- UI testing of dashboard
-- Plugin integration testing
-
-**Acceptance criteria:**
-- [ ] Test script runs with `npm test` from root
-- [ ] Test passes on clean checkout
-- [ ] Test fails if init generates broken files
-
-**Files to create/modify:**
-| Action | File |
-|--------|------|
-| Create | `packages/figma-sync/test/e2e-init.test.mjs` |
-| Modify | Root `package.json` (add test script) |
-
-**Priority:** P2 — important but can ship MVP without
+> **Moved to separate file:** See [`userstories/10-e2e-integration-test.md`](./10-e2e-integration-test.md)
+>
+> **Priority:** P2 — deferred past MVP
 
 ---
 
