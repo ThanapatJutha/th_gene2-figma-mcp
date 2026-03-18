@@ -21,7 +21,7 @@ Make sure you have:
 1. **Bridge server running** — `npm run bridge` in your terminal
 2. **Figma plugin connected** — Open Figma → Plugins → Figma Sync Bridge → 🟢 Connected
 3. **Copilot in Agent Mode** — Open VS Code Chat → select **Agent** mode
-4. **Your Figma file key** — Copy from the URL: `figma.com/design/`**`YOUR_FILE_KEY`**`/…`
+4. **Your Figma file key configured** — Set in `figma/config/figma.config.json` (the `figmaFileKey` field), or provide it in your prompt. Copilot reads it automatically from the config.
 5. **Read [Copilot Instructions](/docs/setup/instruction-guide)** — Complete reference covering all workflows, layout conventions, and troubleshooting
 
 :::danger Don't touch Figma while Copilot is working
@@ -36,14 +36,14 @@ While Copilot is actively executing commands through the bridge, **do not switch
 
 If you want to build a Figma component library for a UI library (e.g., shadcn/ui, MUI, Chakra UI), the best approach is to **render real components** in a local app and capture them — not draw them by hand.
 
-This project includes a ready-made template in `figma/pages/showcase/`. Paste this into Copilot:
+Paste this into Copilot:
 
 :::note 💬 Prompt
-I want to create a Figma component library for [your library, e.g. shadcn/ui]. Use `figma/pages/showcase/` as a template — scaffold a Vite + React showcase app that renders every component variant (buttons, badges, cards, alerts, etc.) in a clean grid with white background and clear labels. Install the components, then serve it on localhost:5173.
+I want to create a Figma component library for [your library, e.g. shadcn/ui]. Scaffold a Vite + React showcase app in `figma/pages/showcase/` that renders every component variant (buttons, badges, cards, alerts, etc.) in a clean grid with white background and clear labels. Install the components, then serve it on localhost:5173.
 :::
 
 **What happens:**
-- Copilot scaffolds (or updates) a Vite + React app in `figma/pages/showcase/`
+- Copilot scaffolds a Vite + React app in `figma/pages/showcase/`
 - Installs the target component library and its dependencies
 - Creates a showcase page (`App.tsx`) that renders every variant side by side
 - Starts the dev server at `http://localhost:5173`
@@ -59,11 +59,11 @@ Capturing real HTML preserves exact fonts, shadows, border-radius, padding, and 
 Once your page is ready (external site or local dev server), paste this into Copilot:
 
 :::note 💬 Prompt — External URL
-Capture the UI from `https://ui.shadcn.com/examples/dashboard` into my Figma file (key: `YOUR_FILE_KEY`). Use Playwright to handle lazy-loading — slow-scroll the full page, force eager images, resize viewport to full height, then capture. Add it as a new page in the existing file. Poll until the capture is complete.
+Capture the UI from `https://ui.shadcn.com/examples/dashboard` into my Figma file. Add it as a new page in the existing file. Poll until the capture is complete.
 :::
 
 :::note 💬 Prompt — Local Project
-Capture the UI from `http://localhost:5173` into my Figma file (key: `YOUR_FILE_KEY`). Use Playwright to capture the full page. Add it as a new page in the existing file. Poll until the capture is complete.
+Capture the UI from `http://localhost:5173` into my Figma file. Add it as a new page in the existing file. Poll until the capture is complete.
 :::
 
 Here's an example of a website before capture — this is what Copilot will capture and import into Figma:
@@ -71,7 +71,8 @@ Here's an example of a website before capture — this is what Copilot will capt
 ![Example website to capture — a dashboard with components like cards, charts, and navigation](/img/bootstrap-example-website.png)
 
 **What happens:**
-- Copilot uses Playwright to open the URL, handle lazy-loading (for external sites), and take a full-page capture
+- Copilot reads the file key from `figma/config/figma.config.json` (or uses the one you provided)
+- Copilot decides the best capture strategy — for external URLs, it uses Playwright with slow-scroll to handle lazy-loading
 - The capture is imported into your Figma file as a **temporary new page**
 - The capture preserves **real CSS layout** — fonts, colors, spacing, shadows, auto-layout — exactly as rendered in the browser
 
@@ -92,12 +93,19 @@ You should see a new page with editable layers that match the original website �
 Once you've verified the capture looks good, paste this into Copilot:
 
 :::note 💬 Prompt
-Look at the captured page in Figma. Find the key UI components — things like Buttons, Badges, Cards, Alerts, etc. For each component, promote it to a master component using the `Category / Variant` naming convention (e.g. "Button / Default", "Badge / Secondary"). Arrange them in a clean grid layout. Then delete the raw capture page.
+Look at the captured page in Figma. Find the key UI components — things like Buttons, Badges, Cards, Alerts, etc. For each component:
+1. Promote it to a master component using `Category / Variant` naming (e.g. "Button / Default", "Badge / Secondary")
+2. Save a `.figma.tsx` React component file that imports and renders the real UI library component with all variants
+3. Save the code ↔ Figma mappings
+
+Arrange them in a clean grid layout, then delete the raw capture page.
 :::
 
 **What happens:**
 - Copilot scans the captured layers and identifies the reusable UI pieces
 - Each component is promoted to a **master component** with variant group naming
+- A `.figma.tsx` file is saved for each component in `figma/components/` — these are **real React components** that wrap the project's UI library (visual only, no business logic)
+- Code ↔ Figma mappings are saved to `connections.json`
 - Components are arranged in a tidy grid (small controls in a row, cards stacked, etc.)
 - The raw capture page is cleaned up
 
@@ -107,6 +115,11 @@ You should see master components organized in Figma's Assets panel by category:
 
 ![📦 Components page with all master components in a wrapper frame](/img/bootstrap-components-page.png)
 
+**✅ Check your code artifacts:**
+
+- `figma/components/` should contain `.figma.tsx` files for each component
+- `figma/app/.figma-sync/connections.json` should have the code ↔ Figma mappings
+
 ---
 
 ## Full Workflow Example
@@ -115,16 +128,16 @@ You should see master components organized in Figma's Assets panel by category:
 
 | # | Prompt | What it does |
 |---|--------|-------------|
-| 1 | *"Build a showcase app for shadcn/ui using `figma/pages/showcase/`. Render all variants. Serve on localhost:5173."* | Scaffolds app, installs library, starts dev server |
-| 2 | *"Capture `http://localhost:5173` into my Figma file (key: `ABC123`). Use Playwright. Poll until complete."* | Full-page capture → Figma page |
-| 3 | *"Find all components in the capture. Promote each to a master component with `Category / Variant` naming. Arrange in a grid. Delete the capture page."* | Components organized & promoted |
+| 1 | *"Build a showcase app for shadcn/ui in `figma/pages/showcase/`. Render all variants. Serve on localhost:5173."* | Scaffolds app, installs library, starts dev server |
+| 2 | *"Capture `http://localhost:5173` into my Figma file. Poll until complete."* | Full-page capture → Figma page |
+| 3 | *"Find all components in the capture. Promote each to a master component with `Category / Variant` naming. Save `.figma.tsx` files and connections. Arrange in a grid. Delete the capture page."* | Components promoted, code artifacts saved |
 
 ### Use Case B — Any Website (prompts 2 & 3 only)
 
 | # | Prompt | What it does |
 |---|--------|-------------|
-| 2 | *"Capture `https://ui.shadcn.com/examples/dashboard` into my Figma file (key: `ABC123`). Use Playwright to handle lazy-loading — slow-scroll, force eager images, resize viewport. Poll until complete."* | Full-page capture → Figma page |
-| 3 | *"Find all components in the capture. Promote each to a master component with `Category / Variant` naming. Arrange in a grid. Delete the capture page."* | Components organized & promoted |
+| 2 | *"Capture `https://ui.shadcn.com/examples/dashboard` into my Figma file. Poll until complete."* | Full-page capture → Figma page |
+| 3 | *"Find all components in the capture. Promote each to a master component with `Category / Variant` naming. Save `.figma.tsx` files and connections. Arrange in a grid. Delete the capture page."* | Components promoted, code artifacts saved |
 
 ---
 
@@ -134,5 +147,8 @@ You should see master components organized in Figma's Assets panel by category:
 - **Be specific in Prompt 3** — Name the components you want (e.g., "Buttons, Badges, Cards, Alerts") so Copilot picks the right layers
 - **One URL per prompt** — Don't ask Copilot to capture multiple URLs at once
 - **Always check between prompts** — Open Figma after each prompt to verify the result before moving on
+- **Check code artifacts after Prompt 3** — Look in `figma/components/` for `.figma.tsx` files and verify `connections.json` was updated
+- **No need to specify capture strategy** — Copilot automatically uses Playwright with slow-scroll for external URLs
+- **File key is auto-detected** — Copilot reads it from `figma/config/figma.config.json`. Only mention it in your prompt if you want to use a different file.
 - **Repeat for more components** — Capture additional URLs and merge into your existing component library incrementally
 - **Use `Category / Variant` naming** — e.g., "Button / Default", "Button / Destructive" — this creates variant groups in Figma's Assets panel

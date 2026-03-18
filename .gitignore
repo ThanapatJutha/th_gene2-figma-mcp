@@ -7,7 +7,7 @@ dist/
 figma/app/.figma-sync/
 
 # Compiled Figma plugin
-.figma.config/plugin/code.js
+figma-docs/plugin/code.js
 
 # Temporary helper scripts (one-off capture/build scripts)
 *.cjs

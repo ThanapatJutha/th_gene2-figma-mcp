@@ -67,7 +67,7 @@ Open the documentation site and go to the **Settings** page:
 npm run docs:dev     # Dev server on http://localhost:4000/figma-sync/
 ```
 
-Navigate to **Settings**, connect to the bridge, and save your project config. This creates `figma/app/figma.config.json`.
+Navigate to **Settings**, connect to the bridge, and save your project config. This creates `figma/config/figma.config.json`.
 
 ### 6. Link components
 
@@ -78,7 +78,7 @@ Go to the **Dashboard** → **Components** section to link code components with 
 ```
 figma-sync/
   src/                      ← Real product/app source (your project)
-  .figma.config/
+  figma-docs/
     bridge/
       src/                  ← Bridge server & MCP tools
         server.ts           ← WebSocket server (local + plugin commands)

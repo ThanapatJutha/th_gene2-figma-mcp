@@ -1,5 +1,8 @@
 # Usecase 2 — Discover and Convert
 
+> **Note:** The workflow summary is already in `.github/copilot-instructions.md` section 7.
+> This file provides additional detail on eligibility and heuristics.
+
 Goal: Scan an existing page, identify component candidates, and convert them.
 
 ## Steps

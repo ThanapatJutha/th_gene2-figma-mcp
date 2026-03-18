@@ -86,15 +86,15 @@ graph LR
 
 | File | Purpose |
 |---|---|
-| `.figma.config/bridge/src/protocol.ts` | Shared TypeScript types for messages (24 bridge commands) |
-| `.figma.config/bridge/src/server.ts` | WebSocket bridge server — routes local vs plugin commands |
-| `.figma.config/bridge/src/bridge-client.ts` | WebSocket client — used by MCP server to connect to bridge without starting a second server |
-| `.figma.config/bridge/src/local-handlers.ts` | Local filesystem handlers (config, connections, scan, layer map, component source) |
-| `.figma.config/bridge/src/mcp-server.ts` | MCP server exposing 21 tools to Copilot |
-| `.figma.config/plugin/manifest.json` | Figma plugin manifest |
-| `.figma.config/plugin/code.ts` | Plugin main thread — 14 command handlers (read, create, update, delete, reorder) |
-| `.figma.config/plugin/ui.html` | Plugin UI — WebSocket + status dashboard |
-| `figma/app/figma.config.json` | Project config (created via Settings page) |
+| `figma-docs/bridge/src/protocol.ts` | Shared TypeScript types for messages (24 bridge commands) |
+| `figma-docs/bridge/src/server.ts` | WebSocket bridge server — routes local vs plugin commands |
+| `figma-docs/bridge/src/bridge-client.ts` | WebSocket client — used by MCP server to connect to bridge without starting a second server |
+| `figma-docs/bridge/src/local-handlers.ts` | Local filesystem handlers (config, connections, scan, layer map, component source) |
+| `figma-docs/bridge/src/mcp-server.ts` | MCP server exposing 21 tools to Copilot |
+| `figma-docs/plugin/manifest.json` | Figma plugin manifest |
+| `figma-docs/plugin/code.ts` | Plugin main thread — 14 command handlers (read, create, update, delete, reorder) |
+| `figma-docs/plugin/ui.html` | Plugin UI — WebSocket + status dashboard |
+| `figma/config/figma.config.json` | Project config (persistent, never deleted) |
 | `figma/app/.figma-sync/connections.json` | Component links — code component ↔ Figma master component |
 | `figma/app/.figma-sync/layer-map.json` | Layer links — sub-components ↔ Figma layers inside parent frames |
 | `.vscode/mcp.json` | MCP server registration |

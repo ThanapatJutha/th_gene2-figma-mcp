@@ -141,7 +141,7 @@ export default function SettingsPage(): React.JSX.Element {
       await send('save-config', { config: newConfig });
       setConfig(newConfig);
       setDirty(false);
-      setSuccess('Configuration saved to figma/app/figma.config.json');
+      setSuccess('Configuration saved to figma/config/figma.config.json');
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save config');
@@ -497,7 +497,7 @@ export default function SettingsPage(): React.JSX.Element {
 
             {/* ── Config file info ── */}
             <div className={styles.infoBar}>
-              <span>📄 Config file: <code>figma/app/figma.config.json</code></span>
+              <span>📄 Config file: <code>figma/config/figma.config.json</code></span>
               <span>🗃️ Connections DB: <code>figma/app/.figma-sync/connections.json</code></span>
             </div>
           </>

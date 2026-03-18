@@ -193,7 +193,7 @@ server.registerTool(
 server.registerTool(
   'bridge_read_config',
   {
-    description: 'Read the figma/app/figma.config.json project configuration. Returns rootDir, figmaFileKey, include/exclude globs.',
+    description: 'Read the figma/config/figma.config.json project configuration. Returns rootDir, figmaFileKey, include/exclude globs.',
   },
   async () => callPlugin('read-config'),
 );
@@ -229,7 +229,7 @@ server.registerTool(
 server.registerTool(
   'bridge_list_project_components',
   {
-    description: 'Scan project files and list exported code components. Uses include/exclude globs from figma/app/figma.config.json.',
+    description: 'Scan project files and list exported code components. Uses include/exclude globs from figma/config/figma.config.json.',
   },
   async () => callPlugin('list-project-components'),
 );
@@ -281,7 +281,7 @@ server.registerTool(
 server.registerTool(
   'bridge_list_component_specs',
   {
-    description: 'List local design-contract files from componentSpecDir (default: figma/components). Returns .figma.ts paths.',
+    description: 'List React UI component files from componentSpecDir (default: figma/components). Returns .figma.tsx paths.',
   },
   async () => callPlugin('list-component-specs'),
 );
@@ -290,7 +290,7 @@ server.registerTool(
 server.registerTool(
   'bridge_read_component_spec',
   {
-    description: 'Read a local figma component spec file (.figma.ts) by name. Example name: "Button" → figma/components/Button.figma.ts.',
+    description: 'Read a React UI component file (.figma.tsx) by name. Example name: "Button" → figma/components/Button.figma.tsx.',
     inputSchema: {
       name: z.string().describe('Spec name without extension, e.g. "Button" or "forms/Button"'),
     },
@@ -302,10 +302,10 @@ server.registerTool(
 server.registerTool(
   'bridge_save_component_spec',
   {
-    description: 'Save a local figma component spec file (.figma.ts). This writes to componentSpecDir and creates folders as needed.',
+    description: 'Save a React UI component file (.figma.tsx). This writes to componentSpecDir and creates folders as needed.',
     inputSchema: {
-      name: z.string().describe('Spec name without extension, e.g. "Button" or "forms/Button"'),
-      content: z.string().describe('Full TypeScript file content to save'),
+      name: z.string().describe('Component name without extension, e.g. "Button" or "forms/Button"'),
+      content: z.string().describe('Full React component file content (TSX) to save'),
     },
   },
   async ({ name, content }) => callPlugin('save-component-spec', { name, content }),
