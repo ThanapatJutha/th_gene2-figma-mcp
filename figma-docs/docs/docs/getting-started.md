@@ -150,6 +150,8 @@ In the bridge server terminal:
 [bridge] ✅ Figma plugin connected
 ```
 
+![Plugin connected to the bridge](/img/plugin-connected.png)
+
 :::caution
 If the status shows 🔴 **Disconnected**, make sure the bridge server from Step 4 is still running. The plugin retries every 3 seconds.
 :::
