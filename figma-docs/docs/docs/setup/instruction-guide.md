@@ -34,7 +34,7 @@ This is the **Copilot instructions file** that lives at `.github/copilot-instruc
 Communication: Copilot → MCP → Bridge WebSocket (port 9001) → Figma Plugin (desktop app)
 
 ### Prerequisites (all workflows)
-- Bridge running: `npm run bridge` (port 9001)
+- Bridge running: `npx gene2-figma-mcp bridge` (port 9001)
 - Figma plugin open: 🟢 Connected
 - Copilot in Agent Mode
 - Figma file key from URL: `figma.com/design/FILE_KEY/...`
@@ -149,7 +149,7 @@ Direct manipulation of Figma layers from Copilot.
 |---|---|
 | Playwright capture hangs | Use `Promise.race` with 60s timeout; poll captureId separately |
 | Capture stuck on "pending" | Simpler URL, increase timeout, check no auth/paywall |
-| Bridge not connected | `lsof -ti :9001 \| xargs kill -9; npm run bridge` |
+| Bridge not connected | `lsof -ti :9001 \| xargs kill -9; npx gene2-figma-mcp bridge` |
 | Plugin shows 🔴 | Restart bridge → re-open plugin in Figma |
 | Components overlap after move | Always `bridge_update_node({ x, y })` before promoting |
 | "Cannot convert TEXT" | Wrap text in a frame first, then convert the frame |
@@ -162,10 +162,9 @@ Direct manipulation of Figma layers from Copilot.
 |---|---|
 | `.github/copilot-instructions.md` | This file — auto-read by Copilot |
 | `.vscode/mcp.json` | MCP server configuration |
-| `figma-plugin/code.ts` | Plugin handlers (create-page, move-node, update-node, etc.) |
-| `src/mcp-server.ts` | MCP tool definitions for bridge commands |
-| `src/server.ts` | WebSocket bridge server |
-| `figma.config.json` | Project config (file key, root dir, patterns) |
+| `figma/config/figma.config.json` | Project config (file key, root dir, patterns) |
+| `figma/app/.figma-sync/connections.json` | Code ↔ Figma component mappings |
+| `figma/components/` | `.figma.tsx` component spec files |
 ````
 
 ---
@@ -179,6 +178,6 @@ Copilot automatically reads `.github/copilot-instructions.md` on every prompt. T
 - **Copilot knows the layout rules** — it will reposition components in a grid instead of leaving them overlapping
 - **Copilot knows the workarounds** — timeout fixes, conversion rules, and troubleshooting steps
 
-:::info Already included in figma-sync
-If you cloned this project, `.github/copilot-instructions.md` is already present — no setup needed. Just start prompting!
+:::info Automatically set up by init
+If you ran `npx gene2-figma-mcp init`, `.github/copilot-instructions.md` is already present — no manual setup needed. Just start prompting!
 :::

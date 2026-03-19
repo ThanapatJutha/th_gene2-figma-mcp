@@ -16,16 +16,25 @@ slug: /getting-started
 
 ## Step 1: Install
 
-**Option A — Add to an existing project (recommended)**
+Install the package from the latest [GitHub Release](https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases):
 
 ```bash
 npm install --save-dev https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases/download/v0.2.0/gene2-figma-mcp-0.2.0.tgz
-npx gene2-figma-mcp init
 ```
 
-> Check the [Releases page](https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases) for the latest version URL.
+This adds `gene2-figma-mcp` to your project's devDependencies. It includes the CLI, bridge server, MCP server, templates, and dashboard UI.
 
-**Option B — Clone for development**
+:::tip Upgrading
+To upgrade, replace the version in the URL with the new release tag:
+```bash
+npm install --save-dev https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases/download/v0.3.0/gene2-figma-mcp-0.3.0.tgz
+```
+:::
+
+<details>
+<summary><strong>Alternative: Clone for development / contribution</strong></summary>
+
+If you want to modify gene2-figma-mcp itself:
 
 ```bash
 git clone https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp.git
@@ -33,9 +42,31 @@ cd th_gene2-figma-mcp
 npm install
 ```
 
-## Step 2: Configure MCP Servers
+</details>
 
-The project includes `.vscode/mcp.json` which connects Copilot to both the **official Figma MCP** (read-only tools) and the **custom bridge MCP** (read + write via plugin):
+## Step 2: Initialize Your Project
+
+```bash
+npx gene2-figma-mcp init
+```
+
+This creates the following files in your project:
+
+| File | Purpose |
+|------|---------|
+| `figma/config/figma.config.json` | Project config — set your Figma file key here |
+| `.vscode/mcp.json` | MCP server wiring for Copilot |
+| `.github/copilot-instructions.md` | Copilot behavioral rules for Figma workflows |
+| `figma/app/.figma-sync/connections.json` | Code ↔ Figma component mappings |
+| `figma/components/` | Directory for `.figma.tsx` component specs |
+
+:::info Already initialized?
+Use `npx gene2-figma-mcp init --force` to re-generate files (overwrites existing).
+:::
+
+## Step 3: Configure MCP Servers
+
+The `init` command creates `.vscode/mcp.json` which connects Copilot to both MCP servers:
 
 ```json
 {
@@ -47,7 +78,7 @@ The project includes `.vscode/mcp.json` which connects Copilot to both the **off
     "figma-bridge": {
       "type": "stdio",
       "command": "npx",
-      "args": ["tsx", "packages/gene2-figma-mcp/src/bridge/mcp-server.ts"],
+      "args": ["gene2-figma-mcp", "mcp"],
       "cwd": "${workspaceFolder}"
     }
   }
@@ -61,28 +92,19 @@ The project includes `.vscode/mcp.json` which connects Copilot to both the **off
 
 When you first use a Figma MCP tool, a browser window opens for OAuth authentication.
 
-## Step 3: Compile the Figma Plugin
-
-The plugin is written in TypeScript and needs to be compiled before Figma can load it.
-
-```bash
-npm run plugin:build
-```
-
-This compiles `figma-docs/plugin/code.ts` → `figma-docs/plugin/code.js`.
-
 ## Step 4: Start the Bridge Server
 
-The bridge server is a local WebSocket relay that sits between Copilot and the Figma plugin.
+The bridge server is a local WebSocket relay that sits between Copilot and the Figma plugin. It also serves the dashboard UI.
 
 ```bash
-npm run bridge
+npx gene2-figma-mcp bridge
 ```
 
 You should see:
 
 ```
 [bridge] WebSocket server listening on ws://localhost:9001
+[bridge] Dashboard UI available at http://localhost:9001/ui/
 ```
 
 :::tip
@@ -98,11 +120,15 @@ The bridge handles two types of commands:
 1. Open the **Figma desktop app**
 2. Open the Figma file you want to work with
 3. Go to the menu: **Plugins → Development → Import plugin from manifest…**
-4. Navigate to your repo folder and select:
+4. Navigate to the plugin folder and select the manifest:
    ```
-  figma-sync/figma-docs/plugin/manifest.json
+   node_modules/gene2-figma-mcp/figma-plugin/manifest.json
    ```
 5. The plugin **"Figma Sync Bridge"** will appear under **Plugins → Development**
+
+:::note Plugin location
+If you cloned the repo for development, the manifest is at `figma-docs/plugin/manifest.json` instead.
+:::
 
 ### Run the plugin
 
@@ -138,20 +164,16 @@ Copilot should call `bridge_ping` and return `"pong"`. If you see that, **everyt
 
 ## Step 7: Configure the Project
 
-Open the [Settings](/settings) page in the documentation site and:
+Open the dashboard at **http://localhost:9001/ui/#settings** and:
 
-1. Click **Connect** to connect to the bridge
-2. Enter your Figma File Key
+1. The dashboard auto-connects to the bridge
+2. Enter your **Figma File Key** (from the URL: `figma.com/design/FILE_KEY/...`)
 3. Select a root directory and review include/exclude patterns
-4. Click **Save Configuration** — this creates `figma/config/figma.config.json`
+4. Click **Save Configuration** — this saves to `figma/config/figma.config.json`
 
-## Step 8: Run Your App (optional)
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:5173](http://localhost:5173) to see your project app.
+:::tip
+You can also run `npx gene2-figma-mcp doctor` to diagnose any setup issues.
+:::
 
 ## Try It Out
 
@@ -174,48 +196,55 @@ Now that everything is connected, try these prompts in Copilot Agent Mode:
 | Symptom | Fix |
 |---|---|
 | Copilot says "tool not found" | Restart VS Code or click "Start" on `figma-bridge` in MCP panel |
-| `bridge_ping` returns error | Bridge server not running — run `npm run bridge` |
+| `bridge_ping` returns error | Bridge server not running — run `npx gene2-figma-mcp bridge` |
 | Bridge says "plugin not connected" | Open the plugin in Figma: Plugins → Development → Figma Sync Bridge |
-| Plugin shows 🔴 Disconnected | Restart `npm run bridge` — plugin auto-reconnects in 3s |
-| `npx vite` picks wrong version | Use the local binary: `./node_modules/.bin/vite` |
+| Plugin shows 🔴 Disconnected | Restart `npx gene2-figma-mcp bridge` — plugin auto-reconnects in 3s |
+| Setup issues | Run `npx gene2-figma-mcp doctor` for diagnostics |
 
 ## Setup Checklist
 
-- [ ] `npm install` completed
-- [ ] `npm run plugin:build` produces `figma-docs/plugin/code.js`
-- [ ] `npm run bridge` shows `WebSocket server listening on ws://localhost:9001`
+- [ ] `npm install` completed (with tarball URL or via clone)
+- [ ] `npx gene2-figma-mcp init` ran (if using tarball install)
+- [ ] `npx gene2-figma-mcp bridge` shows `WebSocket server listening on ws://localhost:9001`
+- [ ] Dashboard loads at `http://localhost:9001/ui/`
 - [ ] Plugin loaded in Figma via **Import plugin from manifest**
 - [ ] Plugin UI shows 🟢 **Connected**
 - [ ] Bridge terminal shows `✅ Figma plugin connected`
 - [ ] Copilot `bridge_ping` returns `"pong"`
-- [ ] `figma/config/figma.config.json` created via Settings page
+- [ ] `figma/config/figma.config.json` configured with Figma file key
 
-## Project Structure
+## Project Structure (Consumer)
+
+After running `npx gene2-figma-mcp init`, your project will have:
 
 ```
-figma-sync/
-  src/                      ← Real product/app source
-  figma-docs/
-    bridge/
-      src/
-        server.ts           ← WebSocket server (local + plugin commands)
-        local-handlers.ts   ← Filesystem handlers (config, connections, scan)
-        mcp-server.ts       ← MCP server for Copilot integration
-        protocol.ts         ← Shared message types
-    plugin/                 ← Figma Plugin (runs inside Figma app)
-      code.ts               ← Plugin command handlers
-      ui.html               ← Plugin UI + WebSocket client
-    docs/                   ← Documentation site (Docusaurus)
-    dashboard/              ← Standalone dashboard UI (Vite + React)
-      dist/                 ← Pre-built — served by bridge at /ui/
+your-project/
+  .github/
+    copilot-instructions.md   ← Copilot behavioral rules (auto-read)
+  .vscode/
+    mcp.json                  ← MCP server config for Copilot
   figma/
     config/
-      figma.config.json     ← Project config (persistent, never deleted)
-    pages/
-      showcase/             ← Temporary capture showcase app
+      figma.config.json       ← Project config (file key, patterns)
+    components/               ← .figma.tsx component specs
     app/
       .figma-sync/
-        connections.json    ← Component links (created via Dashboard)
+        connections.json      ← Code ↔ Figma component mappings
+  src/                        ← Your app source code
+  node_modules/
+    gene2-figma-mcp/          ← CLI, bridge, MCP server, dashboard, plugin
+```
+
+## CLI Commands
+
+```bash
+npx gene2-figma-mcp init          # Seed project files
+npx gene2-figma-mcp init --force  # Re-seed (overwrite existing)
+npx gene2-figma-mcp bridge        # Start WebSocket bridge + dashboard
+npx gene2-figma-mcp mcp           # Start MCP server (used by VS Code)
+npx gene2-figma-mcp doctor        # Diagnose setup issues
+npx gene2-figma-mcp --version     # Print version
+```
     components/             ← React UI component files (.figma.tsx)
   .vscode/mcp.json          ← MCP server configuration
 ```
