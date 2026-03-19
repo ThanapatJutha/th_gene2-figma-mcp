@@ -1,154 +1,200 @@
 ---
 sidebar_position: 3
-slug: /usecases/bootstrap-from-url
+slug: /usecases/create-ds-component-page
 ---
 
-# Create Figma Components from Any URL
+# Create Design System Component Page
 
-Capture any web page into Figma, then promote the key UI pieces into reusable master components. This workflow supports **two use cases** — pick the one that fits:
+Create a structured Figma Design System page for any UI component — with header, master components, and optional variants table — entirely through Copilot prompts.
 
-| Use Case | Description | Start from |
-|---|---|---|
-| **A) UI Library** — shadcn/ui, MUI, Chakra UI, etc. | You want a Figma component library for a specific UI framework. Copilot builds a local showcase app that renders every variant, captures it into Figma, then organizes the pieces into master components. | **Prompt 1** → 2 → 3 |
-| **B) Any Website** — external site or local dev server | You already have a URL — an external site like `https://ui.shadcn.com/examples/dashboard` or a local dev server like `http://localhost:3000`. Copilot captures it directly and organizes the components. | **Prompt 2** → 3 *(skip Prompt 1)* |
+## Why?
 
----
+Professional design system teams organize their Figma files with **structured component pages**, not flat captures. Each component gets a dedicated page with:
 
-## Before You Start
+| Section | Content | Example (Button) |
+|---------|---------|-------------------|
+| **1 — Header** | Component name, description, breadcrumb | `PALO IT · Components → Button` |
+| **2 — Variants table** *(optional)* | Grid of instances: variant rows × state columns | Solid / Outline / Ghost × Default / Hover / Pressed / Disabled |
+| **3 — Master components** | All variant combinations as Figma components | `size=md, variant=solid, state=default, type=default` |
 
-Make sure you have:
+This workflow builds all of that **programmatically** using the bridge MCP tools — no manual Figma work required.
 
-1. **Bridge server running** — `npm run bridge` in your terminal
-2. **Figma plugin connected** — Open Figma → Plugins → Figma Sync Bridge → 🟢 Connected
-3. **Copilot in Agent Mode** — Open VS Code Chat → select **Agent** mode
-4. **Your Figma file key configured** — Set in `figma/config/figma.config.json` (the `figmaFileKey` field), or provide it in your prompt. Copilot reads it automatically from the config.
-5. **Read [Copilot Instructions](/docs/setup/instruction-guide)** — Complete reference covering all workflows, layout conventions, and troubleshooting
+## Prerequisites
+
+Make sure the Plugin Bridge is fully set up:
+
+- ✅ Bridge server running (`npm run bridge`)
+- ✅ Figma plugin open and showing 🟢 **Connected**
+- ✅ Copilot Agent Mode enabled in VS Code
+- ✅ Figma file key configured in `figma/config/figma.config.json`
+- ✅ Template components pre-seeded in your Figma file (see [Template Setup](#template-setup))
+
+See [Getting Started](/docs/getting-started) for the full setup guide.
+
+![Plugin connected to the bridge](/img/plugin-connected.png)
 
 :::danger Don't touch Figma while Copilot is working
-While Copilot is actively executing commands through the bridge, **do not switch pages or open a different Figma file**. All bridge commands operate on the currently active page — switching mid-operation will cause commands to target the wrong page, fail to find nodes, or create components in the wrong location. Wait for Copilot to finish its current batch before navigating in Figma.
+While Copilot is executing commands through the bridge, **do not switch pages or open a different Figma file**. All bridge commands operate on the currently active page — switching mid-operation will cause commands to target the wrong page.
 :::
 
 ---
 
-## Prompt 1 — Build a Showcase App
+## Prompt 1 — Create the DS Component Page
 
-> **Use Case A only.** Skip this step if you already have a URL to capture (Use Case B).
-
-If you want to build a Figma component library for a UI library (e.g., shadcn/ui, MUI, Chakra UI), the best approach is to **render real components** in a local app and capture them — not draw them by hand.
-
-Paste this into Copilot:
+This is the main prompt. It creates the header, master components, design tokens, and saves code artifacts.
 
 :::note 💬 Prompt
-I want to create a Figma component library for [your library, e.g. shadcn/ui]. Scaffold a Vite + React showcase app in `figma/pages/showcase/` that renders every component variant (buttons, badges, cards, alerts, etc.) in a clean grid with white background and clear labels. Install the components, then serve it on localhost:5173.
+Create a Design System page for Button based on shadcn/ui.
+
+Use green-500 (#22C55E) as the primary color.
+
+Create the design tokens as Figma variables.
 :::
 
 **What happens:**
-- Copilot scaffolds a Vite + React app in `figma/pages/showcase/`
-- Installs the target component library and its dependencies
-- Creates a showcase page (`App.tsx`) that renders every variant side by side
-- Starts the dev server at `http://localhost:5173`
 
-:::tip Why render instead of drawing?
-Capturing real HTML preserves exact fonts, shadows, border-radius, padding, and all CSS from the real library. Building Figma nodes one-by-one with AI produces flat rectangles that don't match the actual library.
-:::
+1. Copilot identifies the component (Button) and library (shadcn/ui)
+2. Infers variants: solid, outline, dim, ghost, destructive-solid, destructive-outline
+3. Infers states: default, hover, pressed, disabled
+4. Infers sizes: md, lg (reduced matrix for reliability — add sm later)
+5. Presents variant plan to user for confirmation
+6. Creates design tokens as Figma variables (`color/primary/500`, etc.)
+7. Discovers template components (`T Header`, `T Section Header`, etc.)
+8. Creates a new "Button" page in Figma
+9. Builds master components (48 variants: 2 sizes × 6 variants × 4 states)
+10. Builds header section using `T Header` template
+11. Saves `.figma.tsx` + `connections.json`
 
----
+### Build order
 
-## Prompt 2 — Capture the URL into Figma
+Copilot builds sections in this specific order:
 
-Once your page is ready (external site or local dev server), paste this into Copilot:
+```
+Section 3 (Master Components) → Section 1 (Header) → Dividers → Save artifacts
+```
 
-:::note 💬 Prompt — External URL
-Capture the UI from `https://ui.shadcn.com/examples/dashboard` into my Figma file. Add it as a new page in the existing file. Poll until the capture is complete.
-:::
-
-:::note 💬 Prompt — Local Project
-Capture the UI from `http://localhost:5173` into my Figma file. Add it as a new page in the existing file. Poll until the capture is complete.
-:::
-
-Here's an example of a website before capture — this is what Copilot will capture and import into Figma:
-
-![Example website to capture — a dashboard with components like cards, charts, and navigation](/img/bootstrap-example-website.png)
-
-**What happens:**
-- Copilot reads the file key from `figma/config/figma.config.json` (or uses the one you provided)
-- Copilot decides the best capture strategy — for external URLs, it uses Playwright with slow-scroll to handle lazy-loading
-- The capture is imported into your Figma file as a **temporary new page**
-- The capture preserves **real CSS layout** — fonts, colors, spacing, shadows, auto-layout — exactly as rendered in the browser
-
-:::caution This page is temporary
-The captured page is a raw dump of the website — it contains every HTML element as a Figma layer. You'll extract the useful components from it in Prompt 3, and **the raw capture page will be deleted** after the components are organized.
-:::
-
-**✅ Check your result in Figma:**
-
-You should see a new page with editable layers that match the original website — editable layers preserving the original CSS layout:
-
-![Captured page in Figma — editable layers matching the original website](/img/bootstrap-captured-in-figma.png)
+Master components are built first because the variants table (if added later) needs their IDs to create instances.
 
 ---
 
-## Prompt 3 — Organize into a Component Library
+## Prompt 2 (optional) — Add Variants Table
 
-Once you've verified the capture looks good, paste this into Copilot:
+After master components exist, you can add the variants table:
 
 :::note 💬 Prompt
-Look at the captured page in Figma. Find the key UI components — things like Buttons, Badges, Cards, Alerts, etc. For each component:
-1. Promote it to a master component using `Category / Variant` naming (e.g. "Button / Default", "Badge / Secondary")
-2. Save a `.figma.tsx` React component file that imports and renders the real UI library component with all variants
-3. Save the code ↔ Figma mappings
-
-Arrange them in a clean grid layout, then delete the raw capture page.
+Now build the variants table (Section 2) for the Button DS page using instances of the master components.
 :::
 
 **What happens:**
-- Copilot scans the captured layers and identifies the reusable UI pieces
-- Each component is promoted to a **master component** with variant group naming
-- A `.figma.tsx` file is saved for each component in `figma/components/` — these are **real React components** that wrap the project's UI library (visual only, no business logic)
-- Code ↔ Figma mappings are saved to `connections.json`
-- Components are arranged in a tidy grid (small controls in a row, cards stacked, etc.)
-- The raw capture page is cleaned up
 
-**✅ Check your result in Figma:**
-
-You should see master components organized in Figma's Assets panel by category:
-
-![📦 Components page with all master components in a wrapper frame](/img/bootstrap-components-page.png)
-
-**✅ Check your code artifacts:**
-
-- `figma/components/` should contain `.figma.tsx` files for each component
-- `figma/app/.figma-sync/connections.json` should have the code ↔ Figma mappings
+- Copilot reads existing master components from the page
+- Creates a grid table: variant rows × state columns
+- Each cell contains an **instance** of the corresponding master component
+- Adds a `T Section Header` ("✏️ Variants") above the table
 
 ---
 
-## Full Workflow Example
+## Follow-up Prompts
 
-### Use Case A — UI Library (all 3 prompts)
+After the initial creation, you can expand:
 
-| # | Prompt | What it does |
-|---|--------|-------------|
-| 1 | *"Build a showcase app for shadcn/ui in `figma/pages/showcase/`. Render all variants. Serve on localhost:5173."* | Scaffolds app, installs library, starts dev server |
-| 2 | *"Capture `http://localhost:5173` into my Figma file. Poll until complete."* | Full-page capture → Figma page |
-| 3 | *"Find all components in the capture. Promote each to a master component with `Category / Variant` naming. Save `.figma.tsx` files and connections. Arrange in a grid. Delete the capture page."* | Components promoted, code artifacts saved |
+:::note 💬 Add more sizes
+Add size=sm variants to the Button master components. Use height=32, minWidth=64.
+:::
 
-### Use Case B — Any Website (prompts 2 & 3 only)
+:::note 💬 Add icon variants
+Add type=icon-left variants to all existing Button master components.
+:::
 
-| # | Prompt | What it does |
-|---|--------|-------------|
-| 2 | *"Capture `https://ui.shadcn.com/examples/dashboard` into my Figma file. Poll until complete."* | Full-page capture → Figma page |
-| 3 | *"Find all components in the capture. Promote each to a master component with `Category / Variant` naming. Save `.figma.tsx` files and connections. Arrange in a grid. Delete the capture page."* | Components promoted, code artifacts saved |
+:::note 💬 Create another component
+Create a DS page for Card based on shadcn/ui using the same design tokens.
+:::
 
 ---
 
-## Tips for Best Results
+## What Gets Created
 
-- **Start with a rich page** — Dashboards or kitchen-sink pages give you 10–20 components in one capture
-- **Be specific in Prompt 3** — Name the components you want (e.g., "Buttons, Badges, Cards, Alerts") so Copilot picks the right layers
-- **One URL per prompt** — Don't ask Copilot to capture multiple URLs at once
-- **Always check between prompts** — Open Figma after each prompt to verify the result before moving on
-- **Check code artifacts after Prompt 3** — Look in `figma/components/` for `.figma.tsx` files and verify `connections.json` was updated
-- **No need to specify capture strategy** — Copilot automatically uses Playwright with slow-scroll for external URLs
-- **File key is auto-detected** — Copilot reads it from `figma/config/figma.config.json`. Only mention it in your prompt if you want to use a different file.
-- **Repeat for more components** — Capture additional URLs and merge into your existing component library incrementally
-- **Use `Category / Variant` naming** — e.g., "Button / Default", "Button / Destructive" — this creates variant groups in Figma's Assets panel
+### In Figma
+
+| Element | Details |
+|---------|---------|
+| New page | Named after the component (e.g., "Button") |
+| Master components | Property-based naming: `size=md, variant=solid, state=default, type=default` |
+| Design tokens | Figma variables: `color/primary/500`, `color/destructive/500`, etc. |
+| Header | `T Header` instance with breadcrumb, title, description |
+| Dividers | `T Divider` instances between sections |
+
+### In your codebase
+
+| File | Content |
+|------|---------|
+| `figma/components/Button.figma.tsx` | React component rendering all Button variants (visual only) |
+| `figma/app/.figma-sync/connections.json` | Mappings between Figma node IDs and code components |
+
+---
+
+## Template Setup
+
+Your Figma file needs pre-seeded template components for consistent DS pages. These templates use a `T ` prefix:
+
+| Template | Purpose |
+|----------|---------|
+| `T Header` | Page header with breadcrumb, title, description |
+| `T Section Header` | Section label (e.g., "✏️ Variants") |
+| `T Divider` | Visual separator between sections |
+
+Optional helpers: `Badge`, `Divider`
+
+:::tip Template fallbacks
+If templates are missing, Copilot creates fallback frames with approximate dimensions. But for the best results, pre-seed the templates first.
+:::
+
+### How to set up templates
+
+1. Open your target Figma file
+2. Create a "Templates" page
+3. Create each template component (`T Header`, `T Section Header`, `T Divider`)
+4. Publish them so they appear in the Assets panel
+
+See the reference file `DS-creation-test` → `Button-example` page for the expected template dimensions and styling.
+
+---
+
+## Property-Based Naming
+
+Master components use this naming format:
+
+```
+size=md, variant=solid, state=default, type=default
+```
+
+Rules:
+- Properties always in order: `size`, `variant`, `state`, `type`
+- Values are lowercase with hyphens: `destructive-solid`, `icon-left`
+- Comma + single space between properties
+
+This creates a proper variant picker in Figma's component properties panel.
+
+---
+
+## Troubleshooting
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| "Figma plugin not connected" | Plugin window not open | Open the plugin in Figma |
+| Missing design tokens | `bridge_read_variables` returned empty | Check Figma file has variable support |
+| Template not found | Templates not created in Figma file | Follow the Template Setup section above |
+| Components incomplete | Context window ran out during batch | Run a follow-up prompt to complete remaining sizes |
+| Layout drift | Components overlapping or misaligned | Copilot uses fixed layout constants — report the issue for tuning |
+
+---
+
+## Example Prompts
+
+| Prompt | What It Does |
+|--------|-------------|
+| *"Create DS page for Button based on shadcn/ui. Use green-500 as primary."* | Full DS page with master components |
+| *"Create DS page for Card based on MUI."* | Card component page with MUI variants |
+| *"Build the variants table for the Button page."* | Adds Section 2 with instances |
+| *"Add size=sm variants to Button."* | Expands the matrix with small size |
+| *"Create design tokens: blue-500 as primary, red-500 as destructive."* | Creates Figma variables only |

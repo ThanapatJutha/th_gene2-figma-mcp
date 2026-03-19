@@ -51,7 +51,10 @@ Many operations need the target Figma file key. To find it:
 
 A Figma-library task is **complete** only when ALL of these exist:
 
-- [ ] Components promoted in Figma (via `bridge_create_component`)
+- [ ] Figma page created for the component (one page per component)
+- [ ] Master components created with property-based naming (`size=md, variant=solid, …`)
+- [ ] Design tokens created as Figma variables and applied to components
+- [ ] Templates discovered and instanced (or fallbacks used)
 - [ ] `.figma.tsx` React component files saved in `figma/components/` (via `bridge_save_component_spec`)
 - [ ] Mappings saved in `figma/app/.figma-sync/connections.json` (via `bridge_save_connections`)
 - [ ] Work is NOT only in `figma/pages/showcase/`
@@ -109,79 +112,80 @@ Always consult in this order before making changes:
 
 ---
 
-## 6 · Usecase 1 — Bootstrap from URL
+## 6 · Usecase 1 — Create DS Component Page
 
-> **STOP:** Before starting, read `.github/copilot/usecases/01-bootstrap-from-url.md`
+> **STOP:** Before starting, read `.github/copilot/usecases/01-create-ds-component-page.md`
 > for full detail. The summary below is the minimum behavioral contract.
 
 ### Usecase detection
 
-When a user prompt looks like it matches this usecase (mentions a URL, a UI
-library, "create Figma components from…", "capture…", etc.):
+When a user prompt mentions a UI library (URL or name), a component name,
+or phrases like "create DS page", "design system page", "component page":
 
-1. **If confident it's this usecase →** Suggest the 3-prompt approach:
-   > "This looks like a Bootstrap-from-URL task. For best results I recommend
-   > splitting this into 3 prompts: (1) build showcase, (2) capture into Figma,
-   > (3) componentize & persist. Shall I start with Prompt 1?"
+1. **If confident it's this usecase →** Suggest the 2-prompt approach:
+   > "This looks like a Create DS Component Page task. I recommend 2 prompts:
+   > (1) create header + master components, (2) optionally add variants table.
+   > Shall I start?"
 2. **If not sure →** Ask the user to confirm which usecase applies.
-3. **If the user insists on doing everything in one prompt →** Proceed, but
-   warn that quality may be lower because the context window must cover
-   scaffold + capture + componentize in a single session.
 
-### Why 3 prompts?
+### Why 2 prompts?
 
-Each prompt is a natural stopping point that produces a verifiable result:
-- Prompt 1 → dev server running, components visible in browser
-- Prompt 2 → frames visible in the Figma file
-- Prompt 3 → `.figma.tsx` components + connections saved (completion gate met)
+Each prompt is a natural stopping point:
+- Prompt 1 → Header + master components created, tokens applied, artifacts saved
+- Prompt 2 (optional) → Variants table added with instances of masters
 
-Combining all 3 in one session risks context overflow and makes debugging
-harder when any step fails.
+### Prompt 1 — Create the DS component page
 
-### Prompt 1 — Build showcase app (skip for external URL)
-- Scaffold Vite + React in `figma/pages/showcase/`
-- Read target `package.json` → detect and use the exact installed UI library
-- Render **full variant coverage** (all states visible, no interactions needed)
-- Serve on `http://localhost:5173`
-- ⚠️ **This step alone is NOT completion**
+1. **Identify library + component** from user's prompt
+2. **Infer variants & states** — use known structures from `rules/05-variant-inference.md`
+   - Present variant plan to user for confirmation
+   - If ambiguous, ask before proceeding
+3. **Create design tokens** — `bridge_read_variables` then `bridge_create_variable`
+   - Follow naming convention from `rules/02-design-tokens.md`
+4. **Discover templates** — `bridge_list_components` to find `T Header`, `T Section Header`, etc.
+   - Follow rules from `rules/06-template-discovery.md`
+5. **Create new page** — `bridge_create_page` + `bridge_set_current_page`
+6. **Build Section 3 — Master components** (built FIRST)
+   - Follow batch-by-size-tier pattern from `rules/04-layout-constants.md`
+   - Default: 2 sizes × 6 variants × 4 states × 1 type = 48 components
+   - Property naming: `size=md, variant=solid, state=default, type=default`
+   - Each component: `bridge_create_node` → `bridge_create_node(TEXT)` → `bridge_create_component`
+   - Apply token fills using the token-to-fill mapping table (see usecase file)
+   - Position in grid: `x = col * 128`, `y = row * 68` (6 cols per row)
+   - Add `T Section Header` ("✏️ Master Component") above the grid
+7. **Build Section 1 — Header**
+   - Instance `T Header` (`bridge_create_instance`) or create fallback frame
+   - Set breadcrumb: `"PALO IT · Components → {Name}"`
+   - Set title: `"{Name}"`
+   - Set description: auto-generate from component type (see usecase file for table)
+   - Add documentation link placeholder
+   - Position at `y = 0`
+8. **Add dividers** between sections
+   - Instance `T Divider` or create FRAME(width=1200, height=1, gray fill)
+   - Use `DIVIDER_GAP = 40` spacing before/after
+9. **Save code artifacts**
+   - `bridge_save_component_spec` → `.figma.tsx` in `figma/components/`
+   - `bridge_save_connections` → all component mappings
 
-#### Scaffold checklist (do every time)
-1. **Check Node version** — scaffolding tools have minimum Node requirements
-   (e.g., Vite 6+ needs Node ≥ 20.19 or ≥ 22.12). Run `node --version` first.
-   If too old, upgrade via `nvm install <version>` before scaffolding.
-2. **Remove nested `.git`** — `create-vite` (and similar tools) create their
-   own `.git` inside the scaffolded folder. This breaks VS Code's git
-   tracking. Always run `rm -rf .git` inside the scaffold folder immediately.
-3. **Read the detected library's setup docs** — don't assume config patterns.
-   For example, Tailwind CSS v4 uses `@import "tailwindcss"` instead of a
-   config file; other libraries have their own init quirks. When in doubt,
-   check the library's latest docs before configuring.
-4. **Verify dev server starts** — after installing dependencies and
-   configuring the project, start the dev server and confirm it responds
-   (`curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/` → 200)
-   before telling the user Prompt 1 is done.
-5. **Ensure `nvm use` in new terminals** — each new terminal may revert to the
-   system Node. Source nvm and switch to the required version before running
-   commands.
+#### Build order (mandatory)
 
-### Prompt 2 — Capture into Figma
-- Read `figma/config/figma.config.json` → get `figmaFileKey`. If user provided a
-  file key or URL in their prompt, use that instead.
-- Use official `figma` MCP to capture the URL into the target Figma file
-- **Copilot decides the capture strategy** — for external URLs, prefer
-  Playwright-based capture (slow-scroll, force eager images, resize viewport)
-  to handle lazy-loaded content. The user does NOT need to specify this.
-- Poll capture status until completed
-- ⚠️ **Capture alone is still NOT completion**
+Section 3 (masters) → Section 1 (header) → Dividers → Save artifacts
 
-### Prompt 3 — Componentize and persist code artifacts
-1. `bridge_list_layers` — discover frames in captured output
-2. `bridge_create_component` — promote candidates (use `Category / Variant` naming)
-3. `bridge_save_component_spec` — save a **React UI component** (`.figma.tsx`) for
-   EVERY promoted component. The component should import and render the
-   project's actual UI library component with all visual variants. No business logic.
-4. `bridge_save_connections` — save all code ↔ Figma mappings
-5. Clean up temporary capture layers if needed
+Section 3 is built first so Section 2 (variants table) can instance them later.
+
+### Prompt 2 (optional) — Add variants table
+
+1. Read existing master components from the page (`bridge_list_components`)
+2. Build lookup map: property name → master component ID
+3. Add `T Section Header` ("✏️ Variants") at top of section
+4. Create column header row with state labels (Default, Hover, Pressed, Disabled)
+5. Build Section 2 using row-by-row pattern from `rules/04-layout-constants.md`
+   - Each row = 1 variant, columns = states, cells = instances of masters
+   - Use `DISPLAY_SIZE = "md"` for instances in the table
+   - Each row: `bridge_create_node(FRAME)` → `bridge_create_node(TEXT)` label → N × `bridge_create_instance`
+   - Fallback: if master not found, create placeholder TEXT node
+6. Add dividers between sections
+7. Reorder page: Header → Divider → Variants → Divider → Masters
 
 ✅ **Done only when the completion gate (section 3) is satisfied.**
 
@@ -209,7 +213,7 @@ harder when any step fails.
   "connections": [
     {
       "figmaNodeId": "42:100",
-      "figmaComponentName": "Button / Primary",
+      "figmaComponentName": "size=md, variant=solid, state=default, type=default",
       "codeComponent": "Button",
       "file": "src/components/ui/button.tsx",
       "linkedAt": "2026-03-17T12:00:00.000Z"
@@ -228,19 +232,41 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 
 /**
- * Figma component: Button / Primary
- * Figma node: 42:100
+ * Figma DS Page: Button
+ * Library: shadcn/ui
+ * Master components: size=md,lg × variant=solid,outline,ghost,destructive × state=default,hover,pressed,disabled
+ * Figma page node: 42:100
  * Source: src/components/ui/button.tsx
  */
 export default function ButtonFigma() {
   return (
-    <div style={{ display: "flex", gap: 12, padding: 16 }}>
-      <Button variant="default">Default</Button>
-      <Button variant="secondary">Secondary</Button>
-      <Button variant="destructive">Destructive</Button>
-      <Button variant="outline">Outline</Button>
-      <Button variant="ghost">Ghost</Button>
-      <Button disabled>Disabled</Button>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24, padding: 16 }}>
+      {/* Solid variants */}
+      <div style={{ display: "flex", gap: 12 }}>
+        <Button variant="default">Solid Default</Button>
+        <Button variant="default" disabled>Solid Disabled</Button>
+      </div>
+      {/* Outline variants */}
+      <div style={{ display: "flex", gap: 12 }}>
+        <Button variant="outline">Outline Default</Button>
+        <Button variant="outline" disabled>Outline Disabled</Button>
+      </div>
+      {/* Ghost variants */}
+      <div style={{ display: "flex", gap: 12 }}>
+        <Button variant="ghost">Ghost Default</Button>
+        <Button variant="ghost" disabled>Ghost Disabled</Button>
+      </div>
+      {/* Destructive variants */}
+      <div style={{ display: "flex", gap: 12 }}>
+        <Button variant="destructive">Destructive Default</Button>
+        <Button variant="destructive" disabled>Destructive Disabled</Button>
+      </div>
+      {/* Sizes */}
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <Button size="lg">Large</Button>
+        <Button size="default">Medium</Button>
+        <Button size="sm">Small</Button>
+      </div>
     </div>
   );
 }
@@ -258,11 +284,14 @@ export default function ButtonFigma() {
 
 1. **`.figma.tsx` files ARE renderable React components.** They wrap the project's real UI library components — visual/style only, **no business logic**. Business logic stays in `src/`.
 2. **Showcase is temporary.** It exists only to render components for Figma capture. It is never a deliverable.
-3. **Library detection:** Before generating showcase UI, read target `package.json` and use the exact detected library. If unclear, ask.
-4. **`Category / Variant` naming:** Use this pattern for promoted components (e.g., `Button / Primary`, `Card / With Footer`).
+3. **Library detection:** Read target `package.json` and use the exact detected library. If unclear, ask.
+4. **Property-based naming:** Use `size=md, variant=solid, state=default, type=default` for master components. See `rules/04-layout-constants.md` for exact format.
 5. **Preserve dimensions** when converting to components. Validate no layout drift after conversion.
-6. **Prefer design tokens** (variables) over hardcoded values where applicable.
-7. **Figma file key:** Read from `figma/config/figma.config.json` first. If user provides one, use that. Never fabricate a key.
+6. **Design tokens are mandatory.** Create Figma variables for colors — never hardcode hex values in master components. See `rules/02-design-tokens.md`.
+7. **Template discovery first.** Before building a DS page, discover templates via `bridge_list_components`. Use fallbacks if templates are missing. See `rules/06-template-discovery.md`.
+8. **Build order: Section 3 → 2 → 1.** Master components first, then variants table (if needed), then header. See `rules/04-layout-constants.md`.
+9. **Figma file key:** Read from `figma/config/figma.config.json` first. If user provides one, use that. Never fabricate a key.
+10. **One page per component.** Each component (Button, Card, etc.) gets its own Figma page.
 
 ---
 
@@ -273,11 +302,14 @@ Read these with tools when you need additional detail:
 | File | When to read |
 |------|-------------|
 | `.github/copilot/00-overview-and-global-rules.md` | Architecture details, source-of-truth rules |
-| `.github/copilot/usecases/01-bootstrap-from-url.md` | Full Bootstrap from URL workflow |
+| `.github/copilot/usecases/01-create-ds-component-page.md` | Full Create DS Component Page workflow |
 | `.github/copilot/usecases/02-discover-and-convert.md` | Full Discover & Convert workflow |
 | `.github/copilot/rules/01-read-and-update-nodes.md` | Node manipulation patterns |
-| `.github/copilot/rules/02-design-tokens.md` | Variable/token operations |
+| `.github/copilot/rules/02-design-tokens.md` | Token naming convention, minimum token set, creation workflow |
 | `.github/copilot/rules/03-component-spec-layer.md` | React UI component file rules |
+| `.github/copilot/rules/04-layout-constants.md` | Layout constants, grid formulas, batch-by-size pattern, property naming |
+| `.github/copilot/rules/05-variant-inference.md` | Known variant structures per library, clarification rules |
+| `.github/copilot/rules/06-template-discovery.md` | Template naming, discovery process, fallback behavior |
 | `.github/copilot/04-troubleshooting.md` | Common issues + fixes |
 | `.github/copilot/05-component-creation-best-practices.md` | Naming, dimensions, drift |
 | `.github/copilot/06-file-reference.md` | Full file map |
