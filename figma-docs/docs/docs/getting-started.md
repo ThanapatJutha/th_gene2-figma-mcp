@@ -14,11 +14,22 @@ slug: /getting-started
 - ✅ **Figma account** (Pro plan or higher recommended)
 - ✅ **Node.js 20+** installed
 
-## Step 1: Clone & Install
+## Step 1: Install
+
+**Option A — Add to an existing project (recommended)**
+
+```bash
+npm install --save-dev https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases/download/v0.2.0/gene2-figma-mcp-0.2.0.tgz
+npx gene2-figma-mcp init
+```
+
+> Check the [Releases page](https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases) for the latest version URL.
+
+**Option B — Clone for development**
 
 ```bash
 git clone https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp.git
-cd gene2-figma-mcp
+cd th_gene2-figma-mcp
 npm install
 ```
 

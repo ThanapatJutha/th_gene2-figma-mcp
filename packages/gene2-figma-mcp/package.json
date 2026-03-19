@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "dashboard:build": "cd dashboard && npm run build",
     "dashboard:dev": "cd dashboard && npm run dev",
-    "prepublishOnly": "cd dashboard && npm install && npm run build"
+    "prepack": "cd dashboard && npm install && npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
