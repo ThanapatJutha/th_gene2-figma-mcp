@@ -37,13 +37,15 @@ Many operations need the target Figma file key. To find it:
 | `figma/components/*.figma.tsx` | **React UI components** — visual shell only (style + layout, NO business logic) |
 | `figma/config/figma.config.json` | Project config (file key, component spec dir, etc.) — **persistent, never deleted** |
 | `figma/app/.figma-sync/connections.json` | Code ↔ Figma mappings (written by bridge) |
-| `figma/pages/showcase/` | **Temporary** capture helper — NOT a deliverable |
+| `figma/showcase/` | **Capture helper** — Vite + React app for rendering components before Figma capture |
+| `figma/showcase/src/components/DSPageTemplate.tsx` | **Reusable template** for DS page layout (header + per-property sections + masters) |
+| `figma/showcase/src/pages/*.tsx` | Component-specific pages using DSPageTemplate |
 | `packages/gene2-figma-mcp/src/bridge/` | Bridge implementation (serves WS + dashboard on port 9001) |
 | `packages/gene2-figma-mcp/dashboard/` | Standalone Vite + React dashboard UI — served at `http://localhost:9001/ui/` |
 | `figma-docs/plugin/` | Plugin implementation |
 
 **Rule:** `figma/components/*.figma.tsx` files are **real, renderable React components** that wrap the project's UI library. They contain only visual/style code — never business logic.
-**Rule:** Changes *only* in `figma/pages/showcase/` are **partial progress**, not completion.
+**Rule:** Changes *only* in `figma/showcase/` are **partial progress**, not completion. Post-processing in Figma is required.
 
 ---
 
@@ -57,7 +59,7 @@ A Figma-library task is **complete** only when ALL of these exist:
 - [ ] Templates discovered and instanced (or fallbacks used)
 - [ ] `.figma.tsx` React component files saved in `figma/components/` (via `bridge_save_component_spec`)
 - [ ] Mappings saved in `figma/app/.figma-sync/connections.json` (via `bridge_save_connections`)
-- [ ] Work is NOT only in `figma/pages/showcase/`
+- [ ] Work is NOT only in `figma/showcase/`
 
 ---
 
@@ -91,6 +93,10 @@ Always consult in this order before making changes:
 | `bridge_reorder_children` | Reorder children of a frame |
 | `bridge_create_page` | Create a new Figma page |
 | `bridge_set_current_page` | Switch active page |
+| `bridge_combine_as_variants` | Combine COMPONENTs into COMPONENT_SET |
+| `bridge_swap_with_instance` | Replace a node with a component instance |
+| `bridge_promote_and_combine` | **Batch:** promote frames → COMPONENTs → COMPONENT_SET in one call |
+| `bridge_swap_batch` | **Batch:** swap multiple nodes with component instances |
 | `bridge_read_variables` | Read design tokens |
 | `bridge_create_variable` | Create design token |
 | `bridge_update_variable` | Update design token |
@@ -122,70 +128,30 @@ Always consult in this order before making changes:
 When a user prompt mentions a UI library (URL or name), a component name,
 or phrases like "create DS page", "design system page", "component page":
 
-1. **If confident it's this usecase →** Suggest the 2-prompt approach:
-   > "This looks like a Create DS Component Page task. I recommend 2 prompts:
-   > (1) create header + master components, (2) optionally add variants table.
-   > Shall I start?"
+1. **If confident it's this usecase →** Proceed with the workflow.
 2. **If not sure →** Ask the user to confirm which usecase applies.
 
-### Why 2 prompts?
+### Workflow: Parse → Explore → Suggest → Confirm → Build → Capture → Post-process → Save
 
-Each prompt is a natural stopping point:
-- Prompt 1 → Header + master components created, tokens applied, artifacts saved
-- Prompt 2 (optional) → Variants table added with instances of masters
-
-### Prompt 1 — Create the DS component page
-
-1. **Identify library + component** from user's prompt
-2. **Infer variants & states** — use known structures from `rules/05-variant-inference.md`
-   - Present variant plan to user for confirmation
-   - If ambiguous, ask before proceeding
-3. **Create design tokens** — `bridge_read_variables` then `bridge_create_variable`
-   - Follow naming convention from `rules/02-design-tokens.md`
-4. **Discover templates** — `bridge_list_components` to find `T Header`, `T Section Header`, etc.
-   - Follow rules from `rules/06-template-discovery.md`
-5. **Create new page** — `bridge_create_page` + `bridge_set_current_page`
-6. **Build Section 3 — Master components** (built FIRST)
-   - Follow batch-by-size-tier pattern from `rules/04-layout-constants.md`
-   - Default: 2 sizes × 6 variants × 4 states × 1 type = 48 components
-   - Property naming: `size=md, variant=solid, state=default, type=default`
-   - Each component: `bridge_create_node` → `bridge_create_node(TEXT)` → `bridge_create_component`
-   - Apply token fills using the token-to-fill mapping table (see usecase file)
-   - Position in grid: `x = col * 128`, `y = row * 68` (6 cols per row)
-   - Add `T Section Header` ("✏️ Master Component") above the grid
-7. **Build Section 1 — Header**
-   - Instance `T Header` (`bridge_create_instance`) or create fallback frame
-   - Set breadcrumb: `"PALO IT · Components → {Name}"`
-   - Set title: `"{Name}"`
-   - Set description: auto-generate from component type (see usecase file for table)
-   - Add documentation link placeholder
-   - Position at `y = 0`
-8. **Add dividers** between sections
-   - Instance `T Divider` or create FRAME(width=1200, height=1, gray fill)
-   - Use `DIVIDER_GAP = 40` spacing before/after
-9. **Save code artifacts**
+1. **Parse** — extract component name(s), library, Figma file key from user prompt
+2. **Explore library** — read component source code + apply built-in knowledge
+   to detect properties (variant, size, state, etc.)
+3. **Suggest properties** — present properties table to user for confirmation
+   - Show each property with its options
+   - User can add/remove/change before proceeding
+   - Display sections are **per-property**: 4 variants + 3 sizes = 7 display items
+   - Master components are **cross-product**: 4 variants × 3 sizes = 12 masters (required for Figma variant picker)
+4. **Build showcase page** — create/update React page at `figma/showcase/src/pages/{Name}.tsx`
+   - Uses `DSPageTemplate` component for consistent layout
+   - Start dev server: `cd figma/showcase && ./node_modules/.bin/vite --port 5173`
+5. **Capture to Figma** — `generate_figma_design` with `?component={Name}` URL
+6. **Post-process** — create Figma page, move captured frame, then:
+   - Identify the **inner component frames** inside each master cell (NOT the container cells — see guardrail 9)
+   - `bridge_promote_and_combine` — promote inner component frames → COMPONENTs → COMPONENT_SET
+   - `bridge_swap_batch` — swap property section items with real instances (optional)
+7. **Save artifacts**
    - `bridge_save_component_spec` → `.figma.tsx` in `figma/components/`
    - `bridge_save_connections` → all component mappings
-
-#### Build order (mandatory)
-
-Section 3 (masters) → Section 1 (header) → Dividers → Save artifacts
-
-Section 3 is built first so Section 2 (variants table) can instance them later.
-
-### Prompt 2 (optional) — Add variants table
-
-1. Read existing master components from the page (`bridge_list_components`)
-2. Build lookup map: property name → master component ID
-3. Add `T Section Header` ("✏️ Variants") at top of section
-4. Create column header row with state labels (Default, Hover, Pressed, Disabled)
-5. Build Section 2 using row-by-row pattern from `rules/04-layout-constants.md`
-   - Each row = 1 variant, columns = states, cells = instances of masters
-   - Use `DISPLAY_SIZE = "md"` for instances in the table
-   - Each row: `bridge_create_node(FRAME)` → `bridge_create_node(TEXT)` label → N × `bridge_create_instance`
-   - Fallback: if master not found, create placeholder TEXT node
-6. Add dividers between sections
-7. Reorder page: Header → Divider → Variants → Divider → Masters
 
 ✅ **Done only when the completion gate (section 3) is satisfied.**
 
@@ -283,15 +249,20 @@ export default function ButtonFigma() {
 ## 9 · Guardrails (always enforce)
 
 1. **`.figma.tsx` files ARE renderable React components.** They wrap the project's real UI library components — visual/style only, **no business logic**. Business logic stays in `src/`.
-2. **Showcase is temporary.** It exists only to render components for Figma capture. It is never a deliverable.
+2. **Showcase is a capture helper.** `figma/showcase/` renders components for Figma capture. It is never a deliverable on its own — post-processing in Figma is required.
 3. **Library detection:** Read target `package.json` and use the exact detected library. If unclear, ask.
-4. **Property-based naming:** Use `size=md, variant=solid, state=default, type=default` for master components. See `rules/04-layout-constants.md` for exact format.
+4. **Property-based naming:** Use `{property}={value}` format for master components (e.g., `variant=solid`). See `rules/04-layout-constants.md`.
 5. **Preserve dimensions** when converting to components. Validate no layout drift after conversion.
-6. **Design tokens are mandatory.** Create Figma variables for colors — never hardcode hex values in master components. See `rules/02-design-tokens.md`.
-7. **Template discovery first.** Before building a DS page, discover templates via `bridge_list_components`. Use fallbacks if templates are missing. See `rules/06-template-discovery.md`.
-8. **Build order: Section 3 → 2 → 1.** Master components first, then variants table (if needed), then header. See `rules/04-layout-constants.md`.
-9. **Figma file key:** Read from `figma/config/figma.config.json` first. If user provides one, use that. Never fabricate a key.
-10. **One page per component.** Each component (Button, Card, etc.) gets its own Figma page.
+6. **Two layout strategies — know which to use:**
+   - **Display sections** (per-property): Each property gets its own section showing only that property's options. 4 variants + 3 sizes = 7 display items, NOT 12.
+   - **Master components** (cross-product): ALL property combinations must exist for Figma's variant picker. 4 variants × 3 sizes = 12 master components. Without cross-product masters, users can't select arbitrary combinations like `variant=secondary, size=lg`.
+7. **Must suggest properties first.** Before building, present detected properties to the user and get confirmation. See `rules/05-variant-inference.md`.
+8. **Use batch tools for post-processing.** Use `bridge_promote_and_combine` and `bridge_swap_batch` instead of individual calls.
+9. **Promote the INNER component frame, not the container cell.** Each master cell in the captured page has structure: Container (200×120) → ComponentFrame (~59×22) + LabelText. When promoting to a Figma Component, target the **inner component frame** (the actual visual element), NOT the outer container cell. Promoting the container would make the component include the label text and whitespace. Identify inner frames by their smaller dimensions and component-matching name (e.g., "Badge", "Button").
+10. **Figma file key:** Read from `figma/config/figma.config.json` first. If user provides one, use that. Never fabricate a key.
+11. **One page per component.** Each component (Button, Card, etc.) gets its own Figma page.
+12. **Dev server:** Use `./node_modules/.bin/vite`, NOT `npx vite` — npx may use globally cached Vite 6 which is incompatible.
+13. **Capture URL:** Use `?component=Name` query param, NOT hash routing (`#Name`) — Figma capture uses the hash.
 
 ---
 

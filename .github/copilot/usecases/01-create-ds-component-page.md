@@ -4,8 +4,22 @@
 > `.github/copilot-instructions.md` section 6. This file provides additional detail.
 
 Goal: Create a structured Figma DS page for a UI component with header,
-variants table, and master components — all built programmatically via
-bridge MCP tools.
+property display sections, and cross-product master components — built via
+the showcase capture workflow (preferred) or direct bridge calls (fallback).
+
+---
+
+## CRITICAL: Two layout strategies
+
+This distinction caused bugs when conflated. Understand it before proceeding:
+
+| Layout | Used for | Calculation | Example (4 variants × 3 sizes) |
+|--------|----------|-------------|---------------------------------|
+| **Per-property** | Display sections only | Sum of all options | 4 + 3 = **7 items** |
+| **Cross-product** | Master components (COMPONENT_SET) | Product of all options | 4 × 3 = **12 masters** |
+
+- **Display sections** show one section per property (e.g., "Property: variant" with 4 items, "Property: size" with 3 items). Each item sets only ONE property.
+- **Master components** must have ALL property combinations for Figma's variant picker to work. Without cross-product, users can't select `variant=secondary, size=lg` because that combination won't exist.
 
 ---
 
@@ -26,7 +40,107 @@ When a user prompt mentions any of these:
 
 ---
 
-## Why 2 prompts?
+## Capture-based workflow (preferred)
+
+The preferred approach uses the showcase app to render components, captures
+them to Figma, then post-processes the captured frame. This avoids building
+nodes one-by-one via bridge calls.
+
+### Workflow: Parse → Explore → Suggest → Confirm → Build → Capture → Post-process → Save
+
+1. **Parse** — extract component name(s), library, Figma file key
+2. **Explore library** — read component source code + detect properties
+3. **Suggest properties** — present table, get user confirmation
+   - Display sections: per-property (e.g., 4+3=7)
+   - Masters: cross-product (e.g., 4×3=12)
+4. **Build showcase page** — create/update page at `figma/showcase/src/pages/{Name}.tsx`
+   - Uses `DSPageTemplate` (already has `crossProduct()` helper for masters)
+   - Dev server: `cd figma/showcase && ./node_modules/.bin/vite --port 5173`
+5. **Capture to Figma** — `generate_figma_design` with `?component={Name}` URL
+6. **Post-process** (CRITICAL — see detailed section below)
+7. **Save artifacts** — `.figma.tsx` + `connections.json`
+
+### Post-processing: the most error-prone step
+
+After capture, the Figma frame contains flat rendered HTML. It needs to be
+converted into proper Figma components. This is where bugs happen.
+
+#### Step 6a: Read the captured tree
+
+```
+tree = bridge_read_tree(capturedFrameId, depth=4)
+```
+
+Find the "Master Components" section. It contains a grid of cells.
+Each cell has this structure:
+
+```
+Container (200×120)           ← OUTER container cell (label + component)
+├── ComponentFrame (~59×22)   ← INNER component frame (actual visual element)
+└── Text frame                ← Label text ("variant=default, size=sm")
+    └── TEXT node
+```
+
+#### Step 6b: Identify INNER component frames (NOT container cells)
+
+⚠️ **CRITICAL BUG PREVENTION:** You must promote the INNER component frame,
+not the outer container cell.
+
+| Target | Dimensions | Contains |
+|--------|-----------|----------|
+| ❌ Container cell (WRONG) | 200×120 | Component + label text + whitespace |
+| ✅ Inner component frame (CORRECT) | Variable (e.g., 59×22) | Just the visual component |
+
+**How to identify the inner frame:**
+- It has the component's name (e.g., "Badge", "Button")
+- Its dimensions are much smaller than 200×120
+- It's the first FRAME child of the container cell
+- It does NOT contain label text
+
+**Use a script or manual inspection** to extract all inner frame IDs with
+their labels from the master section tree.
+
+#### Step 6c: Promote inner frames to Components
+
+```
+for each innerFrame in masterInnerFrames:
+  bridge_create_component(innerFrame.id)  // promotes to COMPONENT
+```
+
+All promoted components should have small, component-appropriate dimensions
+(NOT 200×120).
+
+#### Step 6d: Combine into COMPONENT_SET
+
+```
+bridge_combine_as_variants(
+  nodeIds: [all promoted component IDs],
+  name: "{ComponentName}"
+)
+```
+
+The resulting COMPONENT_SET should have N children where N = cross-product
+of all properties (e.g., 12 for 4×3).
+
+#### Step 6e: Swap property section items (optional)
+
+Replace the original captured frames in property display sections with
+real instances from the COMPONENT_SET:
+
+- **Variant section items** → use instances with the default value for other properties
+  (e.g., `variant=X, size=default`)
+- **Size section items** → use instances with the default value for other properties
+  (e.g., `variant=default, size=X`)
+
+Pattern: `bridge_delete_node(originalBadge.id)` + `bridge_create_instance(componentId, parentId)`
+
+---
+
+## Direct bridge workflow (fallback)
+
+Use this only when the capture workflow isn't feasible.
+
+### Why 2 prompts?
 
 Each prompt is a natural stopping point:
 - Prompt 1 → Header + master components created, tokens applied, artifacts saved

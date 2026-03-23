@@ -8,3 +8,5 @@
 6. **Build order matters** — Section 3 (masters) → Section 2 (variants table) → Section 1 (header). See `rules/04-layout-constants.md`.
 7. **Batch by size tier** — create all components for one size before moving to the next to avoid context overflow.
 8. Keep capture helpers temporary; persist final specs/mappings in `figma/`.
+9. **Cross-product for masters, per-property for display.** Master components need ALL property combinations (4 variants × 3 sizes = 12). Display sections show one property at a time (4 + 3 = 7). Never confuse these two.
+10. **Promote INNER component frames, not container cells.** After capture, each master cell is Container (200×120) containing an inner component frame (~59×22) + label text. Always promote the inner frame. Promoting the container makes the Figma component include unwanted label text and whitespace.

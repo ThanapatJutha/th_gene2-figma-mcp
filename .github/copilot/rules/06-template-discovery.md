@@ -15,68 +15,85 @@ Templates use a `T ` prefix (capital T, space):
 | `T Section Header` | Section label (e.g., "✏️ Variants", "✏️ Master Component") | Sections 2 & 3 |
 | `T Divider` | Visual separator between sections | Between all sections |
 
-Helper components (no `T ` prefix):
-
-| Component Name | Purpose | Used in |
-|----------------|---------|---------|
-| `Badge` | Variant sub-option labels in table rows | Section 2 |
-| `Divider` | Thin line separator within sections | Section 2 rows |
-
 ---
 
 ## Discovery process
 
-1. Call `bridge_list_components` to get all components on the current page
-   and any shared/published components.
-2. Filter results for names starting with `T ` — these are templates.
-3. Also look for `Badge` and `Divider` helpers.
-4. Store discovered component IDs for instancing.
+Templates may be from a **team/shared library**, not local components.
+To discover them:
+
+1. **Check existing pages first:** Switch to a reference page (e.g., Button-example)
+   that already uses templates and read instance nodes to get `mainComponentId`.
+2. **Read instance nodes:** `bridge_read_node(instanceId)` now returns
+   `mainComponentId` and `mainComponentName` for INSTANCE nodes.
+3. **Store the master component IDs** for use in `bridge_create_instance`.
 
 ```
-templates = bridge_list_components()
-T_HEADER         = find(templates, name startsWith "T Header")
-T_SECTION_HEADER = find(templates, name startsWith "T Section Header")
-T_DIVIDER        = find(templates, name startsWith "T Divider")
-BADGE            = find(templates, name == "Badge")
-DIVIDER          = find(templates, name == "Divider")
+# Switch to reference page with known template usage
+bridge_set_current_page(referencePageId)
+
+# Read instances to find template master component IDs
+tHeaderInstance = bridge_read_node("1:777")  # T Header instance
+→ tHeaderInstance.mainComponentId = "4059:5359"  # library component ID
+
+tSectionHeaderInstance = bridge_read_node("1:780")
+→ mainComponentId for T Section Header
+
+tDividerInstance = bridge_read_node("1:931")
+→ mainComponentId for T Divider
+
+# Switch back to target page
+bridge_set_current_page(targetPageId)
+
+# Now instance using the discovered master IDs
+bridge_create_instance(componentId=mainComponentId, parentId=parentFrame)
 ```
+
+**If no reference page exists:** Use fallback frames (see below).
 
 ---
 
 ## Instancing templates
 
-Use `bridge_create_instance` with the discovered component ID:
+Use `bridge_create_instance` with the discovered master component ID:
 
 ```
-bridge_create_instance(componentId=T_HEADER.id, parent=pageId)
-→ then bridge_update_node to set position and text overrides
+bridge_create_instance(componentId=T_HEADER_MASTER_ID, parentId=wrapperFrame.id)
 ```
 
 ### T Header instance customization
 
-After instancing `T Header`, update these text layers:
+After instancing `T Header`, find and update these text children:
 - **Breadcrumb:** `PALO IT · Components → {ComponentName}`
 - **Title:** `{ComponentName}`
 - **Description:** Auto-generated or user-provided
+
+Use `bridge_read_node(instanceId, depth=3)` to find the text node IDs
+inside the instance, then `bridge_update_node` to set characters.
 
 ### T Section Header instance customization
 
 After instancing `T Section Header`, update:
 - **Label text:** `✏️ Variants` or `✏️ Master Component`
 
+### T Divider
+
+No customization needed — just instance it.
+
 ---
 
 ## Fallback behavior (when templates are missing)
 
-If a template is not found, create a raw frame substitute:
+If no reference page exists or templates can't be found, create substitute frames.
+Use the same structural pattern but with simple frames:
 
 | Missing Template | Fallback |
 |------------------|----------|
-| `T Header` | Create FRAME (width=1200, height=200) with TEXT children for breadcrumb, title, description |
-| `T Section Header` | Create FRAME (width=1200, height=48) with TEXT child for section label |
-| `T Divider` | Create FRAME (width=1200, height=1) with gray fill (#E5E5E5) |
-| `Badge` | Create FRAME (width=auto, height=24) with TEXT child + rounded corners + gray fill |
-| `Divider` | Create FRAME (width=1200, height=1) with light gray fill (#F0F0F0) |
+| `T Header` | Create FRAME (width=PAGE_WIDTH, height=476, layoutMode=VERTICAL) with gradient strip + content frame with text children |
+| `T Section Header` | Create FRAME (width=CONTENT_WIDTH, height=80, layoutMode=HORIZONTAL, paddingTop=40, paddingBottom=40) with TEXT child |
+| `T Divider` | Create FRAME (width=CONTENT_WIDTH, height=120) with child frame (width=CONTENT_WIDTH, height=0, y=60) |
+
+**Fallback dimensions must match template dimensions** for consistent layout.
 
 Always report which templates were found vs. missing:
 

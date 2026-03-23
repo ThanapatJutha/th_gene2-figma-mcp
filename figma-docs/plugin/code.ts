@@ -70,6 +70,12 @@ figma.ui.onmessage = async (msg: {
         data = await handleReadVariables(payload as { collectionName?: string });
         break;
 
+      case 'create-collection':
+        data = await handleCreateCollection(
+          payload as { name: string },
+        );
+        break;
+
       case 'create-variable':
         data = await handleCreateVariable(
           payload as {
@@ -120,6 +126,34 @@ figma.ui.onmessage = async (msg: {
       case 'move-node':
         data = await handleMoveNode(
           payload as { nodeId: string; targetParentId: string },
+        );
+        break;
+
+      case 'combine-as-variants':
+        data = await handleCombineAsVariants(
+          payload as { componentIds: string[]; name: string; parentId: string },
+        );
+        break;
+
+      case 'swap-with-instance':
+        data = await handleSwapWithInstance(
+          payload as { nodeId: string; componentId: string },
+        );
+        break;
+
+      case 'promote-and-combine':
+        data = await handlePromoteAndCombine(
+          payload as {
+            nodes: Array<{ nodeId: string; variantName: string }>;
+            setName: string;
+            parentId: string;
+          },
+        );
+        break;
+
+      case 'swap-batch':
+        data = await handleSwapBatch(
+          payload as { swaps: Array<{ nodeId: string; componentId: string }> },
         );
         break;
 
@@ -338,6 +372,62 @@ async function handleCreateComponent(p: {
   };
 }
 
+// ── Combine components as variants (COMPONENT_SET) ─────────────────────
+
+async function handleCombineAsVariants(p: {
+  componentIds: string[];
+  name: string;
+  parentId: string;
+}) {
+  // Collect all components
+  var components: ComponentNode[] = [];
+  for (var i = 0; i < p.componentIds.length; i++) {
+    var node = await figma.getNodeByIdAsync(p.componentIds[i]);
+    if (!node) throw new Error('Component not found: ' + p.componentIds[i]);
+    if (node.type !== 'COMPONENT') {
+      throw new Error('Node ' + p.componentIds[i] + ' is ' + node.type + ', expected COMPONENT');
+    }
+    components.push(node as ComponentNode);
+  }
+
+  if (components.length < 2) {
+    throw new Error('Need at least 2 components to combine as variants');
+  }
+
+  // Resolve parent first
+  var parent = await figma.getNodeByIdAsync(p.parentId);
+  if (!parent || !('appendChild' in parent)) {
+    throw new Error('Parent not found or cannot have children: ' + p.parentId);
+  }
+
+  // Use Figma API to combine — place directly into parent
+  var componentSet = figma.combineAsVariants(components, parent as FrameNode & BaseNode);
+
+  // Set the name
+  componentSet.name = p.name;
+
+  // Let Figma position the COMPONENT_SET based on the original components' locations.
+  // Do NOT override x/y — forcing (0,0) misplaces the set.
+
+  return {
+    id: componentSet.id,
+    name: componentSet.name,
+    type: 'COMPONENT_SET',
+    width: componentSet.width,
+    height: componentSet.height,
+    x: componentSet.x,
+    y: componentSet.y,
+    childCount: componentSet.children.length,
+    children: componentSet.children.map(c => ({
+      id: c.id,
+      name: c.name,
+      type: c.type,
+      width: c.width,
+      height: c.height,
+    })),
+  };
+}
+
 async function handleUpdateNode(p: {
   nodeId: string;
   properties: Record<string, unknown>;
@@ -345,31 +435,47 @@ async function handleUpdateNode(p: {
   const node = await figma.getNodeByIdAsync(p.nodeId);
   if (!node) throw new Error(`Node not found: ${p.nodeId}`);
 
-  const props = p.properties;
+  const updated = await applyNodeProperties(node, p.properties);
+
+  return { nodeId: p.nodeId, updated };
+}
+
+/**
+ * Shared helper: apply a bag of properties to any SceneNode.
+ * Used by handleUpdateNode, handleCreateNode, and handleCreateInstance.
+ */
+async function applyNodeProperties(
+  node: BaseNode,
+  props: Record<string, unknown>,
+): Promise<string[]> {
   const updated: string[] = [];
 
+  // name
+  if (props.name !== undefined) {
+    node.name = props.name as string;
+    updated.push('name');
+  }
+
+  // characters (TEXT only)
   if (props.characters !== undefined && node.type === 'TEXT') {
     await figma.loadFontAsync((node as TextNode).fontName as FontName);
     (node as TextNode).characters = props.characters as string;
     updated.push('characters');
   }
 
-  if (props.width !== undefined && 'resize' in node) {
-    (node as FrameNode).resize(
-      props.width as number,
-      (node as FrameNode).height,
-    );
+  // dimensions
+  if (props.width !== undefined && props.height !== undefined && 'resize' in node) {
+    (node as FrameNode).resize(props.width as number, props.height as number);
+    updated.push('width', 'height');
+  } else if (props.width !== undefined && 'resize' in node) {
+    (node as FrameNode).resize(props.width as number, (node as FrameNode).height);
     updated.push('width');
-  }
-
-  if (props.height !== undefined && 'resize' in node) {
-    (node as FrameNode).resize(
-      (node as FrameNode).width,
-      props.height as number,
-    );
+  } else if (props.height !== undefined && 'resize' in node) {
+    (node as FrameNode).resize((node as FrameNode).width, props.height as number);
     updated.push('height');
   }
 
+  // opacity
   if (props.opacity !== undefined && 'opacity' in node) {
     (node as SceneNode & { opacity: number }).opacity = props.opacity as number;
     updated.push('opacity');
@@ -381,7 +487,7 @@ async function handleUpdateNode(p: {
     updated.push('fills');
   }
 
-  // fontSize (TEXT nodes)
+  // fontSize (TEXT)
   if (props.fontSize !== undefined && node.type === 'TEXT') {
     var textNode = node as TextNode;
     await figma.loadFontAsync(textNode.fontName as FontName);
@@ -389,7 +495,7 @@ async function handleUpdateNode(p: {
     updated.push('fontSize');
   }
 
-  // fontName (TEXT nodes)
+  // fontName (TEXT)
   if (props.fontName !== undefined && node.type === 'TEXT') {
     var fontData = props.fontName as { family: string; style: string };
     var newFont: FontName = { family: fontData.family, style: fontData.style };
@@ -404,7 +510,43 @@ async function handleUpdateNode(p: {
     updated.push('cornerRadius');
   }
 
-  // padding (auto-layout frames)
+  // layoutMode
+  if (props.layoutMode !== undefined && 'layoutMode' in node) {
+    (node as FrameNode).layoutMode = props.layoutMode as 'NONE' | 'HORIZONTAL' | 'VERTICAL';
+    updated.push('layoutMode');
+  }
+
+  // primaryAxisSizingMode
+  if (props.primaryAxisSizingMode !== undefined && 'primaryAxisSizingMode' in node) {
+    (node as FrameNode).primaryAxisSizingMode = props.primaryAxisSizingMode as 'FIXED' | 'AUTO';
+    updated.push('primaryAxisSizingMode');
+  }
+
+  // counterAxisSizingMode
+  if (props.counterAxisSizingMode !== undefined && 'counterAxisSizingMode' in node) {
+    (node as FrameNode).counterAxisSizingMode = props.counterAxisSizingMode as 'FIXED' | 'AUTO';
+    updated.push('counterAxisSizingMode');
+  }
+
+  // itemSpacing
+  if (props.itemSpacing !== undefined && 'itemSpacing' in node) {
+    (node as FrameNode).itemSpacing = props.itemSpacing as number;
+    updated.push('itemSpacing');
+  }
+
+  // primaryAxisAlignItems
+  if (props.primaryAxisAlignItems !== undefined && 'primaryAxisAlignItems' in node) {
+    (node as FrameNode).primaryAxisAlignItems = props.primaryAxisAlignItems as 'MIN' | 'CENTER' | 'MAX' | 'SPACE_BETWEEN';
+    updated.push('primaryAxisAlignItems');
+  }
+
+  // counterAxisAlignItems
+  if (props.counterAxisAlignItems !== undefined && 'counterAxisAlignItems' in node) {
+    (node as FrameNode).counterAxisAlignItems = props.counterAxisAlignItems as 'MIN' | 'CENTER' | 'MAX';
+    updated.push('counterAxisAlignItems');
+  }
+
+  // padding
   if (props.paddingLeft !== undefined && 'paddingLeft' in node) {
     (node as FrameNode).paddingLeft = props.paddingLeft as number;
     updated.push('paddingLeft');
@@ -434,8 +576,7 @@ async function handleUpdateNode(p: {
     updated.push('strokes');
   }
 
-  // x position — use type check instead of 'x' in node (Figma Proxy objects
-  // don't reliably support the `in` operator for position properties)
+  // x position
   if (props.x !== undefined && node.type !== 'DOCUMENT' && node.type !== 'PAGE') {
     (node as SceneNode).x = props.x as number;
     updated.push('x');
@@ -447,7 +588,31 @@ async function handleUpdateNode(p: {
     updated.push('y');
   }
 
-  return { nodeId: p.nodeId, updated };
+  // clipsContent
+  if (props.clipsContent !== undefined && 'clipsContent' in node) {
+    (node as FrameNode).clipsContent = props.clipsContent as boolean;
+    updated.push('clipsContent');
+  }
+
+  // visible
+  if (props.visible !== undefined && 'visible' in node) {
+    (node as SceneNode).visible = props.visible as boolean;
+    updated.push('visible');
+  }
+
+  // layoutAlign (child alignment in auto-layout parent)
+  if (props.layoutAlign !== undefined && 'layoutAlign' in node) {
+    (node as FrameNode).layoutAlign = props.layoutAlign as 'MIN' | 'CENTER' | 'MAX' | 'STRETCH' | 'INHERIT';
+    updated.push('layoutAlign');
+  }
+
+  // layoutGrow (flex grow)
+  if (props.layoutGrow !== undefined && 'layoutGrow' in node) {
+    (node as FrameNode).layoutGrow = props.layoutGrow as number;
+    updated.push('layoutGrow');
+  }
+
+  return updated;
 }
 
 // ── Create instance ────────────────────────────────────────────────────
@@ -481,26 +646,18 @@ async function handleCreateInstance(p: {
     instance.name = p.name;
   }
 
-  // Apply initial properties
+  // Apply initial properties via shared helper
   if (p.properties) {
-    var props = p.properties;
-
-    if (props.characters !== undefined) {
-      // Find the first TEXT child and set its characters
+    // Special handling for characters: find first TEXT child and set it
+    if (p.properties.characters !== undefined) {
       var textChild = findFirstTextNode(instance);
       if (textChild) {
         await figma.loadFontAsync(textChild.fontName as FontName);
-        textChild.characters = props.characters as string;
+        textChild.characters = p.properties.characters as string;
       }
     }
 
-    if (props.width !== undefined && props.height !== undefined) {
-      instance.resize(props.width as number, props.height as number);
-    } else if (props.width !== undefined) {
-      instance.resize(props.width as number, instance.height);
-    } else if (props.height !== undefined) {
-      instance.resize(instance.width, props.height as number);
-    }
+    await applyNodeProperties(instance, p.properties);
   }
 
   return serializeNode(instance, 1);
@@ -545,28 +702,10 @@ async function handleCreateNode(p: {
     await figma.loadFontAsync(fontToLoad);
     textNode.fontName = fontToLoad;
 
-    if (p.properties) {
-      if (p.properties.characters !== undefined) {
-        textNode.characters = p.properties.characters as string;
-      }
-      if (p.properties.fontSize !== undefined) {
-        textNode.fontSize = p.properties.fontSize as number;
-      }
-    }
-
     newNode = textNode;
   } else {
     // FRAME
-    var frame = figma.createFrame();
-    if (p.properties) {
-      if (p.properties.width !== undefined && p.properties.height !== undefined) {
-        frame.resize(p.properties.width as number, p.properties.height as number);
-      }
-      if (p.properties.fills !== undefined) {
-        frame.fills = p.properties.fills as Paint[];
-      }
-    }
-    newNode = frame;
+    newNode = figma.createFrame();
   }
 
   if (p.name) {
@@ -574,6 +713,11 @@ async function handleCreateNode(p: {
   }
 
   (parent as FrameNode).appendChild(newNode);
+
+  // Apply all properties via the shared helper
+  if (p.properties) {
+    await applyNodeProperties(newNode, p.properties);
+  }
 
   return serializeNode(newNode, 1);
 }
@@ -600,6 +744,15 @@ async function handleReadVariables(_p: { collectionName?: string }) {
   }
 
   return result;
+}
+
+async function handleCreateCollection(p: { name: string }) {
+  const collection = figma.variables.createVariableCollection(p.name);
+  return {
+    id: collection.id,
+    name: collection.name,
+    modes: collection.modes.map((m) => ({ modeId: m.modeId, name: m.name })),
+  };
 }
 
 async function handleCreateVariable(p: {
@@ -765,9 +918,21 @@ async function handleListComponents() {
   }
 
   // Attach instances to their components
+  var mappedMainIds: Record<string, boolean> = {};
   for (var k = 0; k < components.length; k++) {
     var compId = components[k].id as string;
     components[k].instances = instanceMap[compId] || [];
+    mappedMainIds[compId] = true;
+  }
+
+  // Collect library (unmapped) instances — those whose mainComponentId
+  // doesn't match any local component on this page
+  var libraryInstances: Array<Record<string, unknown>> = [];
+  for (var m = 0; m < allInstances.length; m++) {
+    var mId = allInstances[m].mainComponentId as string;
+    if (mId && !mappedMainIds[mId]) {
+      libraryInstances.push(allInstances[m]);
+    }
   }
 
   return {
@@ -775,6 +940,7 @@ async function handleListComponents() {
     pageId: page.id,
     totalComponents: components.length,
     components: components,
+    libraryInstances: libraryInstances,
   };
 }
 
@@ -861,6 +1027,79 @@ async function handleSetCurrentPage(p: { pageId: string }) {
   return { pageId: node.id, name: node.name };
 }
 
+// ── Swap node with component instance ──────────────────────────────────
+
+async function handleSwapWithInstance(p: {
+  nodeId: string;
+  componentId: string;
+}) {
+  var node = await figma.getNodeByIdAsync(p.nodeId);
+  if (!node) throw new Error('Node not found: ' + p.nodeId);
+  if (!('parent' in node) || !node.parent) throw new Error('Node has no parent: ' + p.nodeId);
+
+  var sceneNode = node as SceneNode;
+  var parentNode = node.parent;
+
+  if (!('children' in parentNode)) {
+    throw new Error('Parent cannot have children');
+  }
+
+  // Find the index of the original node in parent's children
+  var parentChildren = (parentNode as ChildrenMixin).children;
+  var originalIndex = -1;
+  for (var si = 0; si < parentChildren.length; si++) {
+    if (parentChildren[si].id === p.nodeId) {
+      originalIndex = si;
+      break;
+    }
+  }
+
+  // Record original position and size
+  var origX = sceneNode.x;
+  var origY = sceneNode.y;
+  var origW = sceneNode.width;
+  var origH = sceneNode.height;
+
+  // Get the master component
+  var masterNode = await figma.getNodeByIdAsync(p.componentId);
+  if (!masterNode) throw new Error('Component not found: ' + p.componentId);
+  if (masterNode.type !== 'COMPONENT') {
+    throw new Error('Node ' + p.componentId + ' is ' + masterNode.type + ', expected COMPONENT');
+  }
+
+  // Create instance
+  var component = masterNode as ComponentNode;
+  var instance = component.createInstance();
+
+  // Insert into parent
+  (parentNode as FrameNode).appendChild(instance);
+
+  // Position at same location as original, centered
+  instance.x = origX + (origW - instance.width) / 2;
+  instance.y = origY + (origH - instance.height) / 2;
+
+  // Move to same index position if possible
+  if (originalIndex >= 0 && 'insertChild' in parentNode) {
+    (parentNode as FrameNode).insertChild(originalIndex, instance);
+  }
+
+  // Remove the original node
+  sceneNode.remove();
+
+  return {
+    instanceId: instance.id,
+    instanceName: instance.name,
+    componentId: p.componentId,
+    componentName: component.name,
+    replacedNodeId: p.nodeId,
+    x: instance.x,
+    y: instance.y,
+    width: instance.width,
+    height: instance.height,
+    parentId: parentNode.id,
+  };
+}
+
 async function handleMoveNode(p: { nodeId: string; targetParentId: string }) {
   var node = await figma.getNodeByIdAsync(p.nodeId);
   if (!node) throw new Error('Node not found: ' + p.nodeId);
@@ -880,6 +1119,149 @@ async function handleMoveNode(p: { nodeId: string; targetParentId: string }) {
     newParentName: target.name,
   };
 }
+
+// ── Promote and combine (batch) ────────────────────────────────────────
+
+async function handlePromoteAndCombine(p: {
+  nodes: Array<{ nodeId: string; variantName: string }>;
+  setName: string;
+  parentId: string;
+}) {
+  if (p.nodes.length < 2) {
+    throw new Error('Need at least 2 nodes to promote and combine');
+  }
+
+  // Resolve parent
+  var parent = await figma.getNodeByIdAsync(p.parentId);
+  if (!parent || !('appendChild' in parent)) {
+    throw new Error('Parent not found or cannot have children: ' + p.parentId);
+  }
+
+  // Promote each node to a COMPONENT
+  var components: ComponentNode[] = [];
+  for (var i = 0; i < p.nodes.length; i++) {
+    var entry = p.nodes[i];
+    var node = await figma.getNodeByIdAsync(entry.nodeId);
+    if (!node) throw new Error('Node not found: ' + entry.nodeId);
+
+    if (node.type !== 'FRAME' && node.type !== 'GROUP' && node.type !== 'RECTANGLE') {
+      throw new Error(
+        'Cannot convert ' + node.type + ' (' + entry.nodeId + ') to component. Only FRAME, GROUP, or RECTANGLE.',
+      );
+    }
+
+    // Create component from the frame (inline promote logic)
+    var component = figma.createComponent();
+    var frameNode = node as FrameNode;
+    component.resize(frameNode.width || 100, frameNode.height || 100);
+    component.x = (node as SceneNode).x;
+    component.y = (node as SceneNode).y;
+    component.name = entry.variantName;
+
+    // Move children
+    if ('children' in node) {
+      var children = [...(node as FrameNode).children];
+      for (var ci = 0; ci < children.length; ci++) {
+        component.appendChild(children[ci]);
+      }
+    }
+
+    // Copy visual properties from FRAME
+    if (node.type === 'FRAME') {
+      var frame = node as FrameNode;
+      component.fills = frame.fills !== figma.mixed ? frame.fills : [];
+      component.strokes = frame.strokes;
+      component.strokeWeight = frame.strokeWeight !== figma.mixed ? frame.strokeWeight : 0;
+      component.cornerRadius = frame.cornerRadius !== figma.mixed ? frame.cornerRadius : 0;
+      component.clipsContent = frame.clipsContent;
+
+      var savedW = frame.width;
+      var savedH = frame.height;
+      component.layoutMode = frame.layoutMode;
+      if (frame.layoutMode !== 'NONE') {
+        component.primaryAxisSizingMode = frame.primaryAxisSizingMode;
+        component.counterAxisSizingMode = frame.counterAxisSizingMode;
+        component.paddingTop = frame.paddingTop;
+        component.paddingRight = frame.paddingRight;
+        component.paddingBottom = frame.paddingBottom;
+        component.paddingLeft = frame.paddingLeft;
+        component.itemSpacing = frame.itemSpacing;
+        component.primaryAxisAlignItems = frame.primaryAxisAlignItems;
+        component.counterAxisAlignItems = frame.counterAxisAlignItems;
+        component.resize(savedW, savedH);
+      } else {
+        // Auto-layout fixup for captured frames with CSS padding
+        var totalHP = frame.paddingLeft + frame.paddingRight;
+        var totalVP = frame.paddingTop + frame.paddingBottom;
+        if (totalHP > 4 || totalVP > 4) {
+          var dir = inferLayoutDirection(component.children);
+          component.layoutMode = dir;
+          component.primaryAxisSizingMode = 'AUTO';
+          component.counterAxisSizingMode = 'FIXED';
+          component.paddingTop = frame.paddingTop;
+          component.paddingRight = frame.paddingRight;
+          component.paddingBottom = frame.paddingBottom;
+          component.paddingLeft = frame.paddingLeft;
+          component.counterAxisAlignItems = 'CENTER';
+          if (component.children.length > 1) {
+            component.itemSpacing = inferItemSpacing(component.children, dir);
+          }
+          if (dir === 'HORIZONTAL') {
+            component.resize(component.width, savedH);
+          } else {
+            component.resize(savedW, component.height);
+          }
+        }
+      }
+    }
+
+    // Insert at same position in parent, then remove original
+    var origParent = node.parent;
+    if (origParent && 'children' in origParent) {
+      var idx = origParent.children.indexOf(node as SceneNode);
+      (origParent as FrameNode).insertChild(idx, component);
+    }
+    node.remove();
+
+    components.push(component);
+  }
+
+  // Combine into COMPONENT_SET
+  var componentSet = figma.combineAsVariants(components, parent as FrameNode & BaseNode);
+  componentSet.name = p.setName;
+  // Let Figma position the COMPONENT_SET based on the original components' locations.
+  // Do NOT override x/y — forcing (0,0) misplaces the set.
+
+  return {
+    componentSetId: componentSet.id,
+    componentSetName: componentSet.name,
+    width: componentSet.width,
+    height: componentSet.height,
+    components: componentSet.children.map(function(c) {
+      return { id: c.id, name: c.name, type: c.type, width: c.width, height: c.height };
+    }),
+  };
+}
+
+// ── Swap batch ─────────────────────────────────────────────────────────
+
+async function handleSwapBatch(p: {
+  swaps: Array<{ nodeId: string; componentId: string }>;
+}) {
+  var results: Array<Record<string, unknown>> = [];
+
+  for (var i = 0; i < p.swaps.length; i++) {
+    var swap = p.swaps[i];
+    var result = await handleSwapWithInstance({
+      nodeId: swap.nodeId,
+      componentId: swap.componentId,
+    });
+    results.push(result);
+  }
+
+  return { total: results.length, results: results };
+}
+
 // ── Serialization ──────────────────────────────────────────────────────
 
 function serializeNode(node: BaseNode, maxDepth: number, depth = 0): Record<string, unknown> {
@@ -936,6 +1318,15 @@ function serializeNode(node: BaseNode, maxDepth: number, depth = 0): Record<stri
     result.strokes = (node as GeometryMixin).strokes;
     var sw = (node as GeometryMixin).strokeWeight;
     if (sw !== figma.mixed) result.strokeWeight = sw;
+  }
+
+  // Instance mainComponent
+  if (node.type === 'INSTANCE') {
+    var inst = node as InstanceNode;
+    if (inst.mainComponent) {
+      result.mainComponentId = inst.mainComponent.id;
+      result.mainComponentName = inst.mainComponent.name;
+    }
   }
 
   if ('children' in node && depth < maxDepth) {

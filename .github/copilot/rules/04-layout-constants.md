@@ -3,6 +3,38 @@
 Pre-defined constants and patterns for building DS component pages.
 Copilot MUST use these constants — no ad-hoc positioning math.
 
+> **Reference:** Study the existing Button-example page to see the
+> target structure. Use `bridge_read_tree(nodeId, depth=2)` to inspect it.
+
+---
+
+## Page structure (must match Button-example)
+
+The page uses a nested frame structure with VERTICAL auto layout:
+
+```
+PAGE "{ComponentName}"
+└── FRAME "{ComponentName}" (layoutMode=VERTICAL, width=PAGE_WIDTH)
+    ├── FRAME "Header" (fallback) or INSTANCE "T Header"
+    └── FRAME "Body" (layoutMode=VERTICAL, paddingLeft=80, paddingRight=80)
+        ├── FRAME "Master component" (layoutMode=VERTICAL)
+        │   ├── FRAME "Section Header"  (or INSTANCE "T Section Header")
+        │   └── FRAME "Content wrapper" (cornerRadius=16, padding=40, white fill)
+        │       └── (master components inside)
+        ├── (optional) FRAME "T Divider" or divider frame
+        └── (optional) FRAME "Variants" — added in Prompt 2
+```
+
+### Key structural rules
+
+1. **Wrapping frame** — All content lives inside a single root FRAME
+   with `layoutMode: "VERTICAL"`. Children stack automatically.
+2. **Body frame** — Contains sections with left/right padding of 80px.
+3. **Content wrappers** — Each section has a content wrapper FRAME with
+   `cornerRadius: 16`, `padding: 40`, white fill.
+4. **Auto layout everywhere** — Use `layoutMode: "VERTICAL"` for all
+   structural frames. Never use `layoutMode: "NONE"` for layout frames.
+
 ---
 
 ## Build order (mandatory)
@@ -15,36 +47,14 @@ Always build sections in this order:
 
 ---
 
-## Page-level section positioning
-
-Each section is separated by a divider with spacing:
+## Page-level constants
 
 ```
-HEADER_HEIGHT  = 200   # T Header or fallback frame height
-DIVIDER_GAP    = 40    # space before/after each divider
-DIVIDER_HEIGHT = 1     # divider line thickness
-PAGE_WIDTH     = 1200  # standard page content width
-```
-
-### Section Y offsets (Prompt 1 — Header + Masters only)
-
-```
-Header:           y = 0
-Divider 1:        y = HEADER_HEIGHT + DIVIDER_GAP = 240
-Master Header:    y = 240 + DIVIDER_HEIGHT + DIVIDER_GAP = 281
-Master Grid:      y = 281 + 48 + 16 = 345   (section header height + gap)
-```
-
-### Section Y offsets (Prompt 2 — with Variants table inserted)
-
-```
-Header:           y = 0
-Divider 1:        y = 240
-Variants Header:  y = 281
-Variants Table:   y = 281 + 48 + 16 = 345
-Divider 2:        y = 345 + tableHeight + DIVIDER_GAP
-Master Header:    y = Divider 2 + DIVIDER_HEIGHT + DIVIDER_GAP
-Master Grid:      y = Master Header + 48 + 16
+PAGE_WIDTH      = 2164   # wrapping frame width (matches Button-example)
+CONTENT_WIDTH   = 2004   # PAGE_WIDTH - 2 * BODY_PAD_X
+BODY_PAD_X      = 80     # left/right padding on Body frame
+CONTENT_PAD     = 40     # padding inside content wrapper frames
+CONTENT_RADIUS  = 16     # corner radius on content wrapper frames
 ```
 
 ---
@@ -124,6 +134,19 @@ for each stateIndex, state in enumerate(states):
 
 ## Section 3 — Master components
 
+### CRITICAL: Cross-product, not per-property
+
+Master components MUST use **cross-product** of all properties.
+This is different from display sections which are per-property.
+
+```
+Display sections: 4 variants + 3 sizes = 7 items (per-property)
+Master components: 4 variants × 3 sizes = 12 items (cross-product)
+```
+
+Without cross-product masters, Figma's variant picker won't allow users
+to select arbitrary combinations like `variant=secondary, size=lg`.
+
 ### Default matrix (reduced for reliability)
 
 ```
@@ -147,15 +170,31 @@ for each size in SIZES:
       for each type in TYPES:
         name = "size={size}, variant={variant}, state={state}, type={type}"
 
-        1. bridge_create_node(FRAME, name=name)
-           → width = SIZE_DIMENSIONS[size].width
-           → height = SIZE_DIMENSIONS[size].height
-           → fills = TOKEN_FILLS[variant][state]
+        1. bridge_create_node(FRAME, name=name, parentId=contentWrapper.id, {
+              width: SIZE_DIMENSIONS[size].minWidth,
+              height: SIZE_DIMENSIONS[size].height,
+              fills: TOKEN_FILLS[variant][state],
+              cornerRadius: 6,
+              layoutMode: "HORIZONTAL",
+              paddingLeft: 12,
+              paddingRight: 12,
+              counterAxisAlignItems: "CENTER"
+           })
 
-        2. bridge_update_node(nodeId, fills, dimensions)
+        2. bridge_create_node(TEXT, parent=node.id, {
+              characters: "{ComponentName}",
+              fontSize: SIZE_FONT[size],
+              fills: TEXT_COLOR_FOR[variant][state]
+           })
 
-        3. bridge_create_component(nodeId)
+        3. bridge_create_component(node.id)
 ```
+
+**Important:** Each master component MUST use:
+- `layoutMode: "HORIZONTAL"` — auto layout for text centering
+- `paddingLeft: 12, paddingRight: 12` — internal padding
+- `counterAxisAlignItems: "CENTER"` — vertical text centering
+- `cornerRadius: 6` — rounded corners (matching Button-example)
 
 ### Component dimension rules
 

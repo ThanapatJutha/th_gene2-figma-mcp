@@ -98,30 +98,19 @@ server.registerTool(
 server.registerTool(
   'bridge_update_node',
   {
-    description: 'Update properties of a Figma node (position, text, fills, dimensions, opacity, font, corner radius, padding, stroke).',
+    description: 'Update properties of a Figma node (position, text, fills, dimensions, opacity, font, corner radius, padding, stroke, layout).',
     inputSchema: {
       nodeId: z.string().describe('Figma node ID'),
-      properties: z.object({
-        x: z.number().optional().describe('X position'),
-        y: z.number().optional().describe('Y position'),
-        characters: z.string().optional().describe('New text content (TEXT nodes only)'),
-        fills: z.array(z.unknown()).optional().describe('Array of fill paints, e.g. [{ type: "SOLID", color: { r: 0.5, g: 0, b: 1 } }]'),
-        width: z.number().optional().describe('New width'),
-        height: z.number().optional().describe('New height'),
-        opacity: z.number().optional().describe('Opacity 0-1'),
-        fontSize: z.number().optional().describe('Font size (TEXT nodes only)'),
-        fontName: z.object({
-          family: z.string(),
-          style: z.string(),
-        }).optional().describe('Font name, e.g. { family: "Inter", style: "Bold" } (TEXT nodes only)'),
-        cornerRadius: z.number().optional().describe('Corner radius (FRAME/RECTANGLE/COMPONENT)'),
-        paddingLeft: z.number().optional().describe('Left padding (auto-layout frames)'),
-        paddingRight: z.number().optional().describe('Right padding (auto-layout frames)'),
-        paddingTop: z.number().optional().describe('Top padding (auto-layout frames)'),
-        paddingBottom: z.number().optional().describe('Bottom padding (auto-layout frames)'),
-        strokeWeight: z.number().optional().describe('Stroke/border width'),
-        strokes: z.array(z.unknown()).optional().describe('Array of stroke paints'),
-      }).describe('Properties to update'),
+      properties: z.record(z.string(), z.unknown()).describe(
+        'Properties to update. Supported: x, y, width, height, fills, cornerRadius, ' +
+        'layoutMode ("VERTICAL"|"HORIZONTAL"|"NONE"), itemSpacing, ' +
+        'counterAxisAlignItems ("MIN"|"CENTER"|"MAX"), primaryAxisAlignItems ("MIN"|"CENTER"|"MAX"|"SPACE_BETWEEN"), ' +
+        'primaryAxisSizingMode ("FIXED"|"AUTO"), counterAxisSizingMode ("FIXED"|"AUTO"), ' +
+        'paddingLeft, paddingRight, paddingTop, paddingBottom, ' +
+        'strokes, strokeWeight, clipsContent, visible, opacity, ' +
+        'layoutAlign ("STRETCH"|"INHERIT"), layoutGrow, ' +
+        'characters (TEXT only), fontSize (TEXT only), fontName ({family, style} TEXT only)'
+      ),
     },
   },
   async ({ nodeId, properties }) => callPlugin('update-node', { nodeId, properties }),
@@ -135,6 +124,18 @@ server.registerTool(
     inputSchema: { collectionName: z.string().optional().describe('Filter by variable collection name') },
   },
   async ({ collectionName }) => callPlugin('read-variables', { collectionName }),
+);
+
+// -- create-collection --
+server.registerTool(
+  'bridge_create_collection',
+  {
+    description: 'Create a new Figma variable collection for design tokens.',
+    inputSchema: {
+      name: z.string().describe('Collection name, e.g. "DS Tokens"'),
+    },
+  },
+  async ({ name }) => callPlugin('create-collection', { name }),
 );
 
 // -- create-variable --
@@ -322,15 +323,30 @@ server.registerTool(
       componentId: z.string().describe('ID of the master component to instantiate (e.g. "30:1")'),
       parentId: z.string().describe('ID of the parent frame to insert the instance into (e.g. "20:1")'),
       name: z.string().optional().describe('Optional name override for the new instance'),
-      properties: z.object({
-        characters: z.string().optional().describe('Text to set on the first TEXT child'),
-        width: z.number().optional().describe('Width override'),
-        height: z.number().optional().describe('Height override'),
-      }).optional().describe('Initial property overrides'),
+      properties: z.record(z.string(), z.unknown()).optional().describe(
+        'Property overrides. Supported: width, height, x, y, fills, cornerRadius, ' +
+        'layoutMode, itemSpacing, padding*, strokes, strokeWeight, visible, layoutAlign, layoutGrow, ' +
+        'characters (TEXT only), fontSize, fontName'
+      ),
     },
   },
   async ({ componentId, parentId, name, properties }) =>
     callPlugin('create-instance', { componentId, parentId, name, properties }),
+);
+
+// -- combine-as-variants --
+server.registerTool(
+  'bridge_combine_as_variants',
+  {
+    description: 'Combine multiple COMPONENT nodes into a single COMPONENT_SET (variant group). Components must use property-based naming like "size=md, variant=solid".',
+    inputSchema: {
+      componentIds: z.array(z.string()).describe('Array of COMPONENT node IDs to combine'),
+      name: z.string().describe('Name for the COMPONENT_SET (e.g. "Badge")'),
+      parentId: z.string().describe('ID of the parent frame to place the COMPONENT_SET into'),
+    },
+  },
+  async ({ componentIds, name, parentId }) =>
+    callPlugin('combine-as-variants', { componentIds, name, parentId }),
 );
 
 // -- create-node --
@@ -342,17 +358,15 @@ server.registerTool(
       type: z.enum(['FRAME', 'TEXT']).describe('Node type to create'),
       parentId: z.string().describe('ID of the parent frame to insert into'),
       name: z.string().optional().describe('Name for the new node'),
-      properties: z.object({
-        characters: z.string().optional().describe('Text content (TEXT nodes only)'),
-        width: z.number().optional().describe('Width'),
-        height: z.number().optional().describe('Height'),
-        fills: z.array(z.unknown()).optional().describe('Fill paints'),
-        fontSize: z.number().optional().describe('Font size (TEXT nodes only)'),
-        fontName: z.object({
-          family: z.string(),
-          style: z.string(),
-        }).optional().describe('Font (TEXT nodes only)'),
-      }).optional().describe('Initial properties'),
+      properties: z.record(z.string(), z.unknown()).optional().describe(
+        'Initial properties to apply. Supported: width, height, x, y, fills, cornerRadius, ' +
+        'layoutMode ("VERTICAL"|"HORIZONTAL"|"NONE"), itemSpacing, ' +
+        'counterAxisAlignItems ("MIN"|"CENTER"|"MAX"), primaryAxisAlignItems ("MIN"|"CENTER"|"MAX"|"SPACE_BETWEEN"), ' +
+        'primaryAxisSizingMode ("FIXED"|"AUTO"), counterAxisSizingMode ("FIXED"|"AUTO"), ' +
+        'paddingLeft, paddingRight, paddingTop, paddingBottom, ' +
+        'strokes, strokeWeight, clipsContent, visible, layoutAlign ("STRETCH"|"INHERIT"), layoutGrow, ' +
+        'characters (TEXT only), fontSize (TEXT only), fontName ({family, style} TEXT only)'
+      ),
     },
   },
   async ({ type, parentId, name, properties }) =>
@@ -421,6 +435,52 @@ server.registerTool(
     },
   },
   async ({ nodeId, targetParentId }) => callPlugin('move-node', { nodeId, targetParentId }),
+);
+
+// -- swap-with-instance --
+server.registerTool(
+  'bridge_swap_with_instance',
+  {
+    description: 'Replace a Figma node (frame) with an instance of a master component. The instance is placed at the same position (centered) within the same parent, at the same child index. The original node is deleted. Use this to swap captured frames in a variants table with real component instances.',
+    inputSchema: {
+      nodeId: z.string().describe('ID of the node to replace, e.g. "20:43"'),
+      componentId: z.string().describe('ID of the master COMPONENT to instantiate, e.g. "19:3392"'),
+    },
+  },
+  async ({ nodeId, componentId }) => callPlugin('swap-with-instance', { nodeId, componentId }),
+);
+
+// -- promote-and-combine --
+server.registerTool(
+  'bridge_promote_and_combine',
+  {
+    description: 'Batch promote multiple frames to COMPONENTs and combine them into a COMPONENT_SET. Each node is converted to a component with the given variant name, then all are combined. Use after capturing a showcase page to turn captured frames into a Figma variant group.',
+    inputSchema: {
+      nodes: z.array(z.object({
+        nodeId: z.string().describe('ID of the frame to promote'),
+        variantName: z.string().describe('Property-based name, e.g. "variant=solid, state=default"'),
+      })).describe('Array of nodes to promote and combine'),
+      setName: z.string().describe('Name for the COMPONENT_SET, e.g. "Badge"'),
+      parentId: z.string().describe('ID of the parent frame to place the COMPONENT_SET into'),
+    },
+  },
+  async ({ nodes, setName, parentId }) =>
+    callPlugin('promote-and-combine', { nodes, setName, parentId }),
+);
+
+// -- swap-batch --
+server.registerTool(
+  'bridge_swap_batch',
+  {
+    description: 'Batch swap multiple nodes with component instances. Each node is replaced by an instance of the specified component, positioned at the same location. Use to replace captured variant table frames with real component instances.',
+    inputSchema: {
+      swaps: z.array(z.object({
+        nodeId: z.string().describe('ID of the node to replace'),
+        componentId: z.string().describe('ID of the master COMPONENT to instantiate'),
+      })).describe('Array of swap operations'),
+    },
+  },
+  async ({ swaps }) => callPlugin('swap-batch', { swaps }),
 );
 
 // ── Start ──────────────────────────────────────────────────────────────
