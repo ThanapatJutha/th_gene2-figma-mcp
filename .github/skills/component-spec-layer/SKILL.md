@@ -38,6 +38,10 @@ project's UI library. They contain visual/style code only — never business log
   actual UI library component with all visual variants
 - Save with stable naming and deterministic structure
 - **No `onClick`, no `useState`, no business logic** in `.figma.tsx` files
+- **NEVER duplicate component source code.** The `.figma.tsx` file MUST
+  `import` the component from its library path (e.g., `@/components/ui/button`)
+  and render it with all visual variants — not copy-paste the component's
+  implementation. The `.figma.tsx` is a **visual wrapper** only.
 
 ---
 
@@ -79,31 +83,47 @@ Every `.figma.tsx` file MUST include:
 ## Example `.figma.tsx` file
 
 ```tsx
+// ✅ CORRECT: imports the component from the library and renders all variants
 import React from "react";
 import { Button } from "@/components/ui/button";
 
 /**
  * Figma DS Page: Button
  * Library: shadcn/ui
- * Master components: size=md,lg × variant=solid,outline,ghost,destructive
- * Figma page node: 42:100
- * Source: src/components/ui/button.tsx
+ * Master components: 6 variants × 5 sizes = 30
+ * Figma page node: 92:472
+ * Component set: 101:547
+ * Source: figma/showcase/src/components/ui/button.tsx
  */
+
+const variants = ["default", "secondary", "destructive", "outline", "ghost", "link"] as const;
+const sizes = ["default", "xs", "sm", "lg", "icon"] as const;
+
 export default function ButtonFigma() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, padding: 16 }}>
-      <div style={{ display: "flex", gap: 12 }}>
-        <Button variant="default">Solid Default</Button>
-        <Button variant="default" disabled>Solid Disabled</Button>
-      </div>
-      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-        <Button size="lg">Large</Button>
-        <Button size="default">Medium</Button>
-        <Button size="sm">Small</Button>
-      </div>
+      {variants.map((variant) => (
+        <div key={variant} style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {sizes.map((size) => (
+            <Button key={`${variant}-${size}`} variant={variant} size={size}>
+              {size === "icon" ? "✦" : "Button"}
+            </Button>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
+
+export { Button };
+```
+
+```tsx
+// ❌ WRONG: copies raw component source code — NEVER do this
+import { cva } from "class-variance-authority";
+const buttonVariants = cva("...", { variants: { ... } });
+function Button({ ... }) { ... }
+export { Button };   // This duplicates the source, not a wrapper!
 ```
 
 **Key rules:**

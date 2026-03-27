@@ -209,6 +209,9 @@ when the master component changes.
 
 ### Step 7: Save artifacts
 - `bridge_save_component_spec` → `.figma.tsx` in `figma/components/`
+  - **MUST be a wrapper that imports the component from the library** — never paste raw source code
+  - Include JSDoc with library, variants, sizes, Figma page node, component set ID, source path
+  - Re-export the component for convenience
 - `bridge_save_connections` → all component mappings
 
 ✅ **Done only when the completion gate is satisfied:**
