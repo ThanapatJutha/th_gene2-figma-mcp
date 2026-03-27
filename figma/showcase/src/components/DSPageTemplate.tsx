@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 
 // ── Layout constants (match Figma DS page structure) ─────────────────
 const PAGE_W = 2164;
@@ -9,8 +9,6 @@ const SECTION_HEADER_H = 80;
 const DIVIDER_SECTION_H = 120;
 const ITEM_CELL_W = 200;
 const ITEM_CELL_H = 120;
-const MASTER_CELL_W = 200;
-const MASTER_CELL_H = 120;
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -97,6 +95,12 @@ export default function DSPageTemplate({
   properties,
   renderComponent,
 }: DSPageTemplateProps) {
+  // First option of each property = default for property section rendering.
+  // This ensures property section items match a specific master variant exactly.
+  const defaults = Object.fromEntries(
+    properties.map((p) => [p.name, p.options[0].value])
+  );
+
   return (
     <div
       style={{
@@ -222,7 +226,7 @@ export default function DSPageTemplate({
                     border: "1px solid #F0F0F0",
                   }}
                 >
-                  {renderComponent({ [prop.name]: opt.value })}
+                  {renderComponent({ ...defaults, [prop.name]: opt.value })}
                   <span
                     style={{
                       fontSize: 11,
@@ -250,50 +254,21 @@ export default function DSPageTemplate({
           style={{
             width: CONTENT_W,
             marginTop: 24,
-            padding: 48,
-            background: "#FAFAFA",
-            borderRadius: 16,
+            padding: 24,
             display: "flex",
             flexDirection: "row",
-            gap: 24,
+            gap: 16,
             justifyContent: "flex-start",
             alignItems: "flex-start",
             flexWrap: "wrap",
           }}
         >
-          {/* Cross-product: one master per property COMBINATION */}
-          {crossProduct(properties).map((combo) => {
-            const label = comboLabel(combo);
-            return (
-              <div
-                key={label}
-                data-master={label}
-                style={{
-                  width: MASTER_CELL_W,
-                  height: MASTER_CELL_H,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 12,
-                  background: "#FFFFFF",
-                  borderRadius: 8,
-                  border: "1px solid #E8E8E8",
-                }}
-              >
-                {renderComponent(combo)}
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: "#999",
-                    fontFamily: "monospace",
-                  }}
-                >
-                  {label}
-                </span>
-              </div>
-            );
-          })}
+          {/* Cross-product: one bare component per property COMBINATION.
+              Fragment avoids a wrapper div — components are direct children
+              of the master container in the Figma capture tree. */}
+          {crossProduct(properties).map((combo, i) => (
+            <Fragment key={i}>{renderComponent(combo)}</Fragment>
+          ))}
         </div>
 
         {/* ── Bottom divider ───────────────────────────────── */}
