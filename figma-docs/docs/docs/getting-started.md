@@ -19,7 +19,7 @@ slug: /getting-started
 Install the package from the latest [GitHub Release](https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases):
 
 ```bash
-npm install --save-dev https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases/download/v0.2.0/gene2-figma-mcp-0.2.0.tgz
+npm install --save-dev https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases/download/v3.0.0/gene2-figma-mcp-3.0.0.tgz
 ```
 
 This adds `gene2-figma-mcp` to your project's devDependencies. It includes the CLI, bridge server, MCP server, templates, and dashboard UI.
