@@ -16,10 +16,10 @@ slug: /getting-started
 
 ## Step 1: Install
 
-Install the package from the latest [GitHub Release](https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases):
+Install the package from the latest [GitHub Release](https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases):
 
 ```bash
-npm install --save-dev https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases/download/v3.0.0/gene2-figma-mcp-3.0.0.tgz
+npm install --save-dev https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases/download/v3.0.0/gene2-figma-mcp-3.0.0.tgz
 ```
 
 This adds `gene2-figma-mcp` to your project's devDependencies. It includes the CLI, bridge server, MCP server, templates, and dashboard UI.
@@ -27,7 +27,7 @@ This adds `gene2-figma-mcp` to your project's devDependencies. It includes the C
 :::tip Upgrading
 To upgrade, replace the version in the URL with the new release tag:
 ```bash
-npm install --save-dev https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases/download/v0.3.0/gene2-figma-mcp-0.3.0.tgz
+npm install --save-dev https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases/download/v0.3.0/gene2-figma-mcp-0.3.0.tgz
 ```
 :::
 
@@ -37,7 +37,7 @@ npm install --save-dev https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/rele
 If you want to modify gene2-figma-mcp itself:
 
 ```bash
-git clone https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp.git
+git clone https://github.com/ThanapatJutha/th_gene2-figma-mcp.git
 cd th_gene2-figma-mcp
 npm install
 ```

@@ -77,7 +77,7 @@ function figmaNodeUrl(nodeId: string, fileKey: string): string {
 }
 
 function githubFileUrl(filePath: string): string {
-  return `https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/blob/main/${filePath}`;
+  return `https://github.com/ThanapatJutha/th_gene2-figma-mcp/blob/main/${filePath}`;
 }
 
 function suggestAsComponent(layer: LayerInfo): boolean {

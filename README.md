@@ -9,10 +9,10 @@ Copilot-driven bidirectional sync between a React codebase and Figma.
 
 ```bash
 # Install from the latest GitHub release
-npm install --save-dev https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases/download/v3.0.0/gene2-figma-mcp-3.0.0.tgz
+npm install --save-dev https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases/download/v3.0.0/gene2-figma-mcp-3.0.0.tgz
 ```
 
-> Check the [Releases page](https://github.com/GLOBAL-PALO-IT/th_gene2-figma-mcp/releases) for the latest version URL.
+> Check the [Releases page](https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases) for the latest version URL.
 
 ### 2. Initialize your project
 
