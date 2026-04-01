@@ -27,6 +27,10 @@ export interface DSPageTemplateProps {
   description: string;
   properties: PropertyDef[];
   renderComponent: (props: Record<string, string>) => ReactNode;
+  /** Override default cell size (200×120) for larger components */
+  cellSize?: { width: number; height: number };
+  /** Optional full-page example section rendered after masters */
+  renderFullPageExample?: () => ReactNode;
 }
 
 // ── Shared sub-components ────────────────────────────────────────────
@@ -69,8 +73,6 @@ function HorizontalDivider() {
 }
 
 // ── Cross-product helper ─────────────────────────────────────────────
-// Masters need ALL property combinations for Figma's variant picker.
-// E.g. 4 variants × 3 sizes = 12 master components.
 
 function crossProduct(properties: PropertyDef[]): Record<string, string>[] {
   if (properties.length === 0) return [{}];
@@ -94,9 +96,11 @@ export default function DSPageTemplate({
   description,
   properties,
   renderComponent,
+  cellSize,
+  renderFullPageExample,
 }: DSPageTemplateProps) {
-  // First option of each property = default for property section rendering.
-  // This ensures property section items match a specific master variant exactly.
+  const cellW = cellSize?.width ?? ITEM_CELL_W;
+  const cellH = cellSize?.height ?? ITEM_CELL_H;
   const defaults = Object.fromEntries(
     properties.map((p) => [p.name, p.options[0].value])
   );
@@ -118,7 +122,6 @@ export default function DSPageTemplate({
           flexDirection: "column",
         }}
       >
-        {/* Green gradient strip */}
         <div
           style={{
             width: "100%",
@@ -126,7 +129,6 @@ export default function DSPageTemplate({
             background: "linear-gradient(90deg, #00C853, #00E676, #69F0AE)",
           }}
         />
-        {/* Header content */}
         <div
           style={{
             flex: 1,
@@ -201,7 +203,6 @@ export default function DSPageTemplate({
           <div key={prop.name}>
             <SectionHeader title={`👉 Property: ${prop.name}`} />
 
-            {/* Items row */}
             <div
               style={{
                 width: CONTENT_W,
@@ -216,8 +217,8 @@ export default function DSPageTemplate({
                 <div
                   key={opt.value}
                   style={{
-                    width: ITEM_CELL_W,
-                    height: ITEM_CELL_H,
+                    width: cellW,
+                    height: cellH,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -263,9 +264,6 @@ export default function DSPageTemplate({
             flexWrap: "wrap",
           }}
         >
-          {/* Cross-product: one bare component per property COMBINATION.
-              Fragment avoids a wrapper div — components are direct children
-              of the master container in the Figma capture tree. */}
           {crossProduct(properties).map((combo, i) => (
             <Fragment key={i}>{renderComponent(combo)}</Fragment>
           ))}
@@ -273,6 +271,26 @@ export default function DSPageTemplate({
 
         {/* ── Bottom divider ───────────────────────────────── */}
         <HorizontalDivider />
+
+        {/* ── Full-page example (optional) ─────────────────── */}
+        {renderFullPageExample && (
+          <>
+            <SectionHeader title="📱 Full-Page Example" />
+            <div
+              style={{
+                width: CONTENT_W,
+                marginTop: 24,
+                position: "relative",
+                overflow: "hidden",
+                borderRadius: 16,
+                border: "1px solid #E0E0E0",
+              }}
+            >
+              {renderFullPageExample()}
+            </div>
+            <HorizontalDivider />
+          </>
+        )}
       </div>
     </div>
   );

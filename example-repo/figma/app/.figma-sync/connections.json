@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "connections": [
+    {
+      "figmaNodeId": "6:40",
+      "figmaComponentName": "Button",
+      "codeComponent": "Button",
+      "file": "figma/components/Button.figma.tsx",
+      "linkedAt": "2026-03-27T00:00:00Z"
+    },
+    {
+      "figmaNodeId": "6:75",
+      "figmaComponentName": "Badge",
+      "codeComponent": "Badge",
+      "file": "figma/components/Badge.figma.tsx",
+      "linkedAt": "2026-03-27T00:00:00Z"
+    }
+  ]
+}

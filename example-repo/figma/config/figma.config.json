@@ -1,11 +1,12 @@
 {
-  "figmaFileKey": "SsBy5PuyOG78wZhv2s9lMz",
+  "_gene2Version": "0.2.0",
+  "figmaFileKey": "8Vhe8EQ9nA01gjeLkvIAaY",
   "rootDir": ".",
   "componentSpecDir": "figma/components",
   "codeConnect": {
     "parser": "react",
     "include": ["src/**/*.{tsx,jsx}"],
-    "exclude": ["**/*.test.*", "**/*.spec.*"],
+    "exclude": ["**/*.test.*", "**/*.spec.*", "**/*.figma.*"],
     "label": "React",
     "language": "typescript"
   }

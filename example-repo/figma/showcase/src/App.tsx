@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-// Eagerly import all preview modules from the previews directory
+// Eagerly import all preview modules from the pages directory
 const previewModules = import.meta.glob<{ default: React.ComponentType }>(
   "./pages/*.tsx",
   { eager: true }
@@ -9,14 +9,12 @@ const previewModules = import.meta.glob<{ default: React.ComponentType }>(
 // Build a map: component name → React component
 const previews: Record<string, React.ComponentType> = {};
 for (const [path, mod] of Object.entries(previewModules)) {
-  // "./previews/Badge.tsx" → "Badge"
   const name = path.replace("./pages/", "").replace(".tsx", "");
   previews[name] = mod.default;
 }
 
 function App() {
   const [componentName, setComponentName] = useState(() => {
-    // Support ?component=Badge or hash #Badge
     const params = new URLSearchParams(window.location.search);
     return params.get("component") || window.location.hash.slice(1) || "";
   });
@@ -41,7 +39,7 @@ function App() {
         <ul>
           {Object.keys(previews).map((name) => (
             <li key={name} style={{ marginBottom: 8 }}>
-              <a href={`#${name}`} style={{ color: "#0066cc" }}>
+              <a href={`?component=${name}`} style={{ color: "#0066cc" }}>
                 {name}
               </a>
             </li>
