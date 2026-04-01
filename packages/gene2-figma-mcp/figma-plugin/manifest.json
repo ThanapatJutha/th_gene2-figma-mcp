@@ -1,0 +1,14 @@
+{
+  "name": "Figma Sync Bridge",
+  "id": "figma-sync-bridge",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": ["*"],
+    "reasoning": "Connects to local WebSocket bridge server on port 9001 for Copilot ↔ Figma sync."
+  },
+  "capabilities": [],
+  "enableProposedApi": false
+}

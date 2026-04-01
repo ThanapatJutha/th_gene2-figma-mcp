@@ -9,7 +9,7 @@ Copilot-driven bidirectional sync between a React codebase and Figma.
 
 ```bash
 # Install from the latest GitHub release
-npm install --save-dev https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases/download/v3.0.0/gene2-figma-mcp-3.0.0.tgz
+npm install --save-dev https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases/download/v0.3.1/gene2-figma-mcp-0.3.1.tgz
 ```
 
 > Check the [Releases page](https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases) for the latest version URL.
@@ -29,6 +29,7 @@ This seeds the required files into your project:
 | `.github/copilot-instructions.md` | Copilot behavioral rules for Figma workflows |
 | `figma/app/.figma-sync/connections.json` | Code ↔ Figma component mappings |
 | `figma/components/` | Directory for `.figma.tsx` component specs |
+| `figma/plugin/` | Figma plugin files (manifest, code, UI) |
 
 ### 3. Start the bridge server
 

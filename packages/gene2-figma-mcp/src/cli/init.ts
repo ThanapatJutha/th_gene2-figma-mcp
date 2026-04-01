@@ -13,7 +13,8 @@ import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const TEMPLATES_DIR = resolve(__dirname, '..', '..', 'templates');
+const PKG_ROOT = resolve(__dirname, '..', '..');
+const TEMPLATES_DIR = resolve(PKG_ROOT, 'templates');
 
 // ── Helpers ────────────────────────────────────────────────────────
 
@@ -73,6 +74,8 @@ interface SeedFile {
   template: string | null;
   /** Raw content (used when template is null) */
   content?: string;
+  /** Source file path relative to package root (for binary/large file copies) */
+  copyFrom?: string;
 }
 
 const SEED_FILES: SeedFile[] = [
@@ -82,6 +85,9 @@ const SEED_FILES: SeedFile[] = [
   { relPath: '.vscode/mcp.json', template: 'mcp.json.template' },
   { relPath: '.github/copilot-instructions.md', template: 'copilot-instructions.md.template' },
   { relPath: 'figma/components/.gitkeep', template: null, content: '' },
+  { relPath: 'figma/plugin/manifest.json', template: null, copyFrom: 'figma-plugin/manifest.json' },
+  { relPath: 'figma/plugin/code.js', template: null, copyFrom: 'figma-plugin/code.js' },
+  { relPath: 'figma/plugin/ui.html', template: null, copyFrom: 'figma-plugin/ui.html' },
 ];
 
 // ── Main ───────────────────────────────────────────────────────────
@@ -130,7 +136,9 @@ export async function runInit(args: string[]): Promise<void> {
     const absPath = resolve(projectRoot, file.relPath);
     let content: string;
 
-    if (file.template) {
+    if (file.copyFrom) {
+      content = await readFile(resolve(PKG_ROOT, file.copyFrom), 'utf8');
+    } else if (file.template) {
       const raw = await readTemplate(file.template);
       content = applyVars(raw, vars);
     } else {

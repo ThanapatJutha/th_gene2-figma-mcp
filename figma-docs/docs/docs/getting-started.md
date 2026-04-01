@@ -19,7 +19,7 @@ slug: /getting-started
 Install the package from the latest [GitHub Release](https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases):
 
 ```bash
-npm install --save-dev https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases/download/v3.0.0/gene2-figma-mcp-3.0.0.tgz
+npm install --save-dev https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases/download/v0.3.1/gene2-figma-mcp-0.3.1.tgz
 ```
 
 This adds `gene2-figma-mcp` to your project's devDependencies. It includes the CLI, bridge server, MCP server, templates, and dashboard UI.
@@ -27,7 +27,7 @@ This adds `gene2-figma-mcp` to your project's devDependencies. It includes the C
 :::tip Upgrading
 To upgrade, replace the version in the URL with the new release tag:
 ```bash
-npm install --save-dev https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases/download/v0.3.0/gene2-figma-mcp-0.3.0.tgz
+npm install --save-dev https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases/download/v0.3.1/gene2-figma-mcp-0.3.1.tgz
 ```
 :::
 
@@ -59,6 +59,7 @@ This creates the following files in your project:
 | `.github/copilot-instructions.md` | Copilot behavioral rules for Figma workflows |
 | `figma/app/.figma-sync/connections.json` | Code ↔ Figma component mappings |
 | `figma/components/` | Directory for `.figma.tsx` component specs |
+| `figma/plugin/` | Figma plugin files (manifest, code, UI) |
 
 :::info Already initialized?
 Use `npx gene2-figma-mcp init --force` to re-generate files (overwrites existing).
@@ -120,14 +121,14 @@ The bridge handles two types of commands:
 1. Open the **Figma desktop app**
 2. Open the Figma file you want to work with
 3. Go to the menu: **Plugins → Development → Import plugin from manifest…**
-4. Navigate to the plugin folder and select the manifest:
+4. Navigate to the plugin folder created by `init` and select the manifest:
    ```
-   node_modules/gene2-figma-mcp/figma-plugin/manifest.json
+   figma/plugin/manifest.json
    ```
 5. The plugin **"Figma Sync Bridge"** will appear under **Plugins → Development**
 
 :::note Plugin location
-If you cloned the repo for development, the manifest is at `figma-docs/plugin/manifest.json` instead.
+The `init` command copies the plugin files to `figma/plugin/` in your project. If you cloned the repo for development, the source manifest is at `figma-docs/plugin/manifest.json`.
 :::
 
 ### Run the plugin
@@ -229,12 +230,13 @@ your-project/
     config/
       figma.config.json       ← Project config (file key, patterns)
     components/               ← .figma.tsx component specs
+    plugin/                   ← Figma plugin (manifest, code, UI)
     app/
       .figma-sync/
         connections.json      ← Code ↔ Figma component mappings
   src/                        ← Your app source code
   node_modules/
-    gene2-figma-mcp/          ← CLI, bridge, MCP server, dashboard, plugin
+    gene2-figma-mcp/          ← CLI, bridge, MCP server, dashboard
 ```
 
 ## CLI Commands

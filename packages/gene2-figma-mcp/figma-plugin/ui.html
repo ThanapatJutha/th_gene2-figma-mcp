@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 12px;
+        color: var(--figma-color-text, #333);
+        background: var(--figma-color-bg, #fff);
+        padding: 12px;
+      }
+      h2 { font-size: 14px; margin-bottom: 8px; }
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+        font-weight: 600;
+      }
+      .status.connected { background: #d4edda; color: #155724; }
+      .status.disconnected { background: #f8d7da; color: #721c24; }
+      .status.connecting { background: #fff3cd; color: #856404; }
+      .dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .connected .dot { background: #28a745; }
+      .disconnected .dot { background: #dc3545; }
+      .connecting .dot { background: #ffc107; }
+
+      .config {
+        margin-bottom: 12px;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .config input {
+        flex: 1;
+        padding: 6px 8px;
+        border: 1px solid var(--figma-color-border, #ccc);
+        border-radius: 4px;
+        font-size: 12px;
+        background: var(--figma-color-bg-secondary, #f5f5f5);
+        color: var(--figma-color-text, #333);
+      }
+      .config button, .actions button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .config button {
+        background: var(--figma-color-bg-brand, #0d99ff);
+        color: #fff;
+      }
+      .config button:hover { opacity: 0.9; }
+
+      .log-container {
+        margin-top: 12px;
+        flex: 1;
+      }
+      .log-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+      .log-header button {
+        background: none;
+        border: 1px solid var(--figma-color-border, #ccc);
+        border-radius: 4px;
+        padding: 2px 8px;
+        font-size: 11px;
+        cursor: pointer;
+        color: var(--figma-color-text-secondary, #666);
+      }
+      #log {
+        background: var(--figma-color-bg-secondary, #1e1e1e);
+        color: var(--figma-color-text, #d4d4d4);
+        padding: 8px;
+        border-radius: 6px;
+        font-family: 'SF Mono', 'Fira Code', monospace;
+        font-size: 11px;
+        line-height: 1.5;
+        max-height: 300px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .log-entry { margin-bottom: 2px; }
+      .log-entry.cmd { color: #569cd6; }
+      .log-entry.ok  { color: #6a9955; }
+      .log-entry.err { color: #f44747; }
+      .log-entry.info { color: #dcdcaa; }
+
+      .stats {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+        font-size: 11px;
+        color: var(--figma-color-text-secondary, #666);
+      }
+      .stats span { font-weight: 600; color: var(--figma-color-text, #333); }
+    </style>
+  </head>
+  <body>
+    <h2>🔗 Figma Sync Bridge</h2>
+
+    <div id="status" class="status disconnected">
+      <span class="dot"></span>
+      <span id="statusText">Disconnected</span>
+    </div>
+
+    <div class="config">
+      <input id="url" type="text" value="ws://localhost:9001/plugin" />
+      <button onclick="toggleConnection()">Connect</button>
+    </div>
+
+    <div class="stats">
+      Commands: <span id="cmdCount">0</span> &nbsp;|&nbsp;
+      Errors: <span id="errCount">0</span> &nbsp;|&nbsp;
+      Uptime: <span id="uptime">—</span>
+    </div>
+
+    <div class="log-container">
+      <div class="log-header">
+        <h2>Activity Log</h2>
+        <button onclick="clearLog()">Clear</button>
+      </div>
+      <div id="log"></div>
+    </div>
+
+    <script>
+      let ws = null;
+      let cmdCount = 0;
+      let errCount = 0;
+      let connectedAt = null;
+      let uptimeInterval = null;
+
+      // ── WebSocket ──────────────────────────────────────────────────
+
+      function toggleConnection() {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.close();
+          return;
+        }
+        connect();
+      }
+
+      function connect() {
+        const url = document.getElementById('url').value;
+        setStatus('connecting', `Connecting to ${url}…`);
+        log('info', `Connecting to ${url}…`);
+
+        try {
+          ws = new WebSocket(url);
+        } catch (err) {
+          log('err', `WebSocket constructor failed: ${err.message || err}`);
+          setStatus('disconnected', 'Failed to create WebSocket');
+          return;
+        }
+
+        ws.onopen = () => {
+          connectedAt = Date.now();
+          setStatus('connected', 'Connected');
+          log('ok', '✅ Connected to bridge server');
+          startUptime();
+        };
+
+        ws.onclose = (e) => {
+          setStatus('disconnected', 'Disconnected');
+          log('err', `❌ Disconnected (code=${e.code} reason=${e.reason || 'none'})`);
+          stopUptime();
+          // Auto-reconnect after 3s
+          setTimeout(() => {
+            if (!ws || ws.readyState === WebSocket.CLOSED) {
+              log('info', 'Attempting reconnect…');
+              connect();
+            }
+          }, 3000);
+        };
+
+        ws.onerror = (e) => {
+          log('err', `WebSocket error: type=${e.type}, url=${url}`);
+        };
+
+        ws.onmessage = (event) => {
+          let msg;
+          try {
+            msg = JSON.parse(event.data);
+          } catch {
+            log('err', `Invalid JSON from bridge: ${event.data}`);
+            return;
+          }
+
+          if (msg.type === 'request') {
+            cmdCount++;
+            document.getElementById('cmdCount').textContent = cmdCount;
+            log('cmd', `← ${msg.command} (${msg.id.slice(0, 8)}…)`);
+
+            // Forward to plugin main thread
+            parent.postMessage({ pluginMessage: msg }, '*');
+          }
+        };
+      }
+
+      // ── Receive responses from plugin main thread ──────────────────
+
+      window.onmessage = (event) => {
+        const msg = event.data.pluginMessage;
+        if (!msg || msg.type !== 'response') return;
+
+        if (msg.success) {
+          log('ok', `→ ${msg.id.slice(0, 8)}… ✓`);
+        } else {
+          errCount++;
+          document.getElementById('errCount').textContent = errCount;
+          log('err', `→ ${msg.id.slice(0, 8)}… ✗ ${msg.error}`);
+        }
+
+        // Send response back to bridge
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(msg));
+        }
+      };
+
+      // ── UI helpers ─────────────────────────────────────────────────
+
+      function setStatus(state, text) {
+        const el = document.getElementById('status');
+        el.className = `status ${state}`;
+        document.getElementById('statusText').textContent = text;
+      }
+
+      function log(type, message) {
+        const el = document.getElementById('log');
+        const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${type}`;
+        entry.textContent = `[${time}] ${message}`;
+        el.appendChild(entry);
+        el.scrollTop = el.scrollHeight;
+      }
+
+      function clearLog() {
+        document.getElementById('log').innerHTML = '';
+      }
+
+      function startUptime() {
+        stopUptime();
+        uptimeInterval = setInterval(() => {
+          if (!connectedAt) return;
+          const secs = Math.floor((Date.now() - connectedAt) / 1000);
+          const m = Math.floor(secs / 60);
+          const s = secs % 60;
+          document.getElementById('uptime').textContent =
+            `${m}m ${s.toString().padStart(2, '0')}s`;
+        }, 1000);
+      }
+
+      function stopUptime() {
+        if (uptimeInterval) clearInterval(uptimeInterval);
+        document.getElementById('uptime').textContent = '—';
+        connectedAt = null;
+      }
+
+      // Auto-connect on load
+      connect();
+    </script>
+  </body>
+</html>
