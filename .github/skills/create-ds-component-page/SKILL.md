@@ -19,6 +19,26 @@ When a user prompt mentions any of these:
 - A component name + library reference
 
 → This is the Create DS Component Page usecase.
+→ **Route: Use the CAPTURE workflow (Steps 0–7).** Do NOT skip to the direct bridge fallback.
+
+---
+
+## ⚠️ MANDATORY: Capture-first decision gate
+
+**ALWAYS use the capture workflow (Steps 0–7)** unless ALL of these are true:
+- [ ] User **explicitly said** "use direct bridge" or "don't use capture"
+- [ ] OR: The `generate_figma_design` tool is **confirmed unavailable** (not just slow)
+- [ ] OR: A localhost dev server **cannot be started** (no Node.js, no network)
+
+If none of the above apply → **use the capture workflow. Period.**
+
+> If you are about to skip to "Direct bridge workflow" — **STOP.** Re-read this
+> guardrail. The capture approach produces higher-quality results and is the
+> designed workflow. "Context window pressure" and "shorter path" are NOT valid
+> reasons to skip capture.
+
+**Decision log (required):** Before proceeding, write one line:
+`Approach: capture` or `Approach: direct bridge — reason: {why capture is impossible}`
 
 ---
 
@@ -48,6 +68,11 @@ The showcase page and `.figma.tsx` files MUST import `tokens.css` and use
 CSS custom properties (`var(--color-semantic-token-...)`) instead of hardcoded hex values.
 
 ### Step 1: Parse
+
+> **Pre-flight:** Confirm you are following the **capture workflow**. If you are
+> about to create component visuals directly via `bridge_create_node` — **STOP**.
+> That is the direct bridge fallback path. Go back and use the capture approach.
+
 Extract component name(s), library, Figma file key from user prompt.
 
 ### Step 2: Explore library
@@ -234,172 +259,6 @@ when the master component changes.
 - [ ] `.figma.tsx` file saved
 - [ ] `connections.json` saved
 - [ ] Work is NOT only in `figma/showcase/`
-
----
-
-## Direct bridge workflow (fallback)
-
-Use when the capture workflow isn't feasible. Build order (mandatory):
-**Section 3 (Master Components) → Section 1 (Header) → Dividers → Save artifacts**
-
-Section 3 first because Section 2 (if added later) needs master component IDs.
-
-### Section 1 — Header builder
-
-```
-# If T_HEADER template found:
-headerNode = bridge_create_instance(componentId=T_HEADER.id)
-bridge_update_node(breadcrumbTextId, { characters: "PALO IT · Components → {Name}" })
-bridge_update_node(titleTextId, { characters: "{Name}" })
-bridge_update_node(descriptionTextId, { characters: "{description}" })
-
-# If T_HEADER NOT found → fallback:
-headerFrame = bridge_create_node(FRAME, name="Header", {
-  width: 1200, height: 200, fills: [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }]
-})
-bridge_create_node(TEXT, parent=headerFrame.id, {
-  characters: "PALO IT · Components → {Name}",
-  x: 40, y: 24, fontSize: 14,
-  fills: [{ type: "SOLID", color: { r: 0.45, g: 0.45, b: 0.45 } }]
-})
-bridge_create_node(TEXT, parent=headerFrame.id, {
-  characters: "{Name}", x: 40, y: 56, fontSize: 32, fontWeight: 700,
-  fills: [{ type: "SOLID", color: { r: 0.09, g: 0.09, b: 0.09 } }]
-})
-bridge_create_node(TEXT, parent=headerFrame.id, {
-  characters: "{description}", x: 40, y: 108, fontSize: 16,
-  fills: [{ type: "SOLID", color: { r: 0.45, g: 0.45, b: 0.45 } }]
-})
-bridge_create_node(TEXT, parent=headerFrame.id, {
-  characters: "📖 Documentation →", x: 40, y: 152, fontSize: 14,
-  fills: [{ type: "SOLID", color: { r: 0.23, g: 0.51, b: 0.97 } }]
-})
-```
-
-#### Auto-generated descriptions
-
-| Component | Description |
-|-----------|-------------|
-| **Button** | Displays a button or a component that looks like a button. Supports multiple variants, sizes, and states. |
-| **Card** | Displays a card with header, content, and footer sections. Used to group related information. |
-| **Badge** | Displays a badge or a component that looks like a badge. Used for status indicators and labels. |
-| **Input** | Displays a text input field. Supports validation states and sizes. |
-| **Select** | Displays a select dropdown. Allows users to choose from a list of options. |
-| **Checkbox** | Displays a checkbox input. Supports checked, unchecked, and indeterminate states. |
-| **Switch** | Displays a toggle switch. Used for binary on/off settings. |
-| **Alert** | Displays a callout for important messages. Supports default and destructive variants. |
-| **Avatar** | Displays a user avatar image with fallback. Supports multiple sizes. |
-| **Tabs** | Displays a tabbed interface. Used to organize content into switchable panels. |
-
-Generic fallback: "Displays a {component name}. {Brief purpose}. Supports {key variants/features}."
-
-### Section 3 — Master component builder
-
-Default matrix: `SIZES=[lg, md]`, `VARIANTS=[6]`, `STATES=[4]`, `TYPES=[1]` = **48 components**
-
-```
-componentIndex = 0
-allComponents = []
-
-for each size in [lg, md]:
-  for each variant in [solid, outline, dim, ghost, destructive-solid, destructive-outline]:
-    for each state in [default, hover, pressed, disabled]:
-      name = "size={size}, variant={variant}, state={state}, type=default"
-      col = componentIndex % 6
-      row = floor(componentIndex / 6)
-      x = col * (MASTER_COL_WIDTH + MASTER_GAP)
-      y = row * (MASTER_ROW_HEIGHT + MASTER_GAP)
-
-      node = bridge_create_node(FRAME, name=name, parent=masterContainer.id, {
-        x, y,
-        width: SIZE_DIMENSIONS[size].minWidth,
-        height: SIZE_DIMENSIONS[size].height,
-        fills: TOKEN_FILLS[variant][state],
-        cornerRadius: 6, layoutMode: "HORIZONTAL",
-        paddingLeft: 12, paddingRight: 12,
-        counterAxisAlignItems: "CENTER"
-      })
-
-      bridge_create_node(TEXT, parent=node.id, {
-        characters: "{ComponentName}",
-        fontSize: SIZE_FONT[size],
-        fills: TEXT_COLOR_FOR[variant][state]
-      })
-
-      result = bridge_create_component(node.id)
-      allComponents.push({ figmaNodeId: result.id, figmaComponentName: name, ... })
-      componentIndex++
-```
-
-**Bridge calls per component:** 3 (create frame + create text + promote)
-**Total for 48 components:** ~144 bridge calls (24 per size tier)
-
-### Section 2 — Variants table builder (Prompt 2)
-
-Built after master components exist. Uses `DISPLAY_SIZE = "md"` for all instances.
-
-```
-# Read existing masters → build lookup map
-masters = bridge_list_components()
-masterLookup = { "size=md, variant=solid, state=default, type=default": nodeId, ... }
-
-# Build rows: one per variant, columns = states
-for each variant in variants:
-  rowFrame = bridge_create_node(FRAME, ...)
-  bridge_create_node(TEXT, { characters: "{Variant Display Name}" })
-  for each state in states:
-    masterKey = "size={DISPLAY_SIZE}, variant={variant}, state={state}, type=default"
-    bridge_create_instance(componentId=masterLookup[masterKey], parent=rowFrame.id)
-```
-
-After building, reorder page children:
-```
-bridge_reorder_children(pageId, [header, divider1, variantsSection, divider2, masterSection])
-```
-
-#### Variant display name mapping
-
-| Internal | Display |
-|----------|---------|
-| `solid` | Solid |
-| `outline` | Outline |
-| `dim` | Dim |
-| `ghost` | Ghost |
-| `destructive-solid` | Destructive Solid |
-| `destructive-outline` | Destructive Outline |
-
----
-
-## Token-to-fill mapping
-
-Map variant + state to design token fills for master component creation:
-
-| Variant | State | Fill token | Text token | Border token |
-|---------|-------|-----------|------------|-------------|
-| solid | default | `color/primary/500` | `color/white` | — |
-| solid | hover | `color/primary/600` | `color/white` | — |
-| solid | pressed | `color/primary/700` | `color/white` | — |
-| solid | disabled | `color/neutral/200` | `color/neutral/400` | — |
-| outline | default | transparent | `color/primary/500` | `color/primary/500` |
-| outline | hover | `color/primary/100` | `color/primary/600` | `color/primary/600` |
-| outline | pressed | `color/primary/100` | `color/primary/700` | `color/primary/700` |
-| outline | disabled | transparent | `color/neutral/400` | `color/neutral/200` |
-| dim | default | `color/primary/100` | `color/primary/500` | — |
-| dim | hover | `color/primary/100` | `color/primary/600` | — |
-| dim | pressed | `color/primary/100` | `color/primary/700` | — |
-| dim | disabled | `color/neutral/200` | `color/neutral/400` | — |
-| ghost | default | transparent | `color/primary/500` | — |
-| ghost | hover | `color/primary/100` | `color/primary/600` | — |
-| ghost | pressed | `color/primary/100` | `color/primary/700` | — |
-| ghost | disabled | transparent | `color/neutral/400` | — |
-| destructive-solid | default | `color/destructive/500` | `color/white` | — |
-| destructive-solid | hover | `color/destructive/600` | `color/white` | — |
-| destructive-solid | pressed | `color/destructive/600` | `color/white` | — |
-| destructive-solid | disabled | `color/neutral/200` | `color/neutral/400` | — |
-| destructive-outline | default | transparent | `color/destructive/500` | `color/destructive/500` |
-| destructive-outline | hover | `color/destructive/500` | `color/white` | `color/destructive/500` |
-| destructive-outline | pressed | `color/destructive/600` | `color/white` | `color/destructive/600` |
-| destructive-outline | disabled | transparent | `color/neutral/400` | `color/neutral/200` |
 
 ---
 
@@ -681,3 +540,176 @@ After initial creation, user can expand:
 10. **First option = default** — the first option of each property array is the default for property section rendering and instance swap matching. Put the most representative value first.
 11. **Property section swap is REQUIRED** — after creating the COMPONENT_SET, always swap property section items with real instances. This ensures they update when the master changes.
 12. **`bridge_promote_and_combine` is a one-shot call** — it takes `{ nodes: [{nodeId, variantName}], setName, parentId }` and handles promoting, naming, and combining. No separate rename step needed.
+---
+
+## ⛔ Direct bridge workflow (LAST RESORT — read decision gate above first)
+
+**Preconditions — ALL must be true before using this section:**
+- [ ] User explicitly said "use direct bridge" or "don't use capture"
+- [ ] OR: `generate_figma_design` tool is confirmed unavailable
+- [ ] OR: localhost dev server cannot be started
+- [ ] You wrote a decision log entry: `Approach: direct bridge — reason: {why}`
+
+**If none apply → go back to the capture workflow (Steps 0–7) above.**
+
+Build order (mandatory):
+**Section 3 (Master Components) → Section 1 (Header) → Dividers → Save artifacts**
+
+Section 3 first because Section 2 (if added later) needs master component IDs.
+
+### Section 1 — Header builder
+
+```
+# If T_HEADER template found:
+headerNode = bridge_create_instance(componentId=T_HEADER.id)
+bridge_update_node(breadcrumbTextId, { characters: "PALO IT · Components → {Name}" })
+bridge_update_node(titleTextId, { characters: "{Name}" })
+bridge_update_node(descriptionTextId, { characters: "{description}" })
+
+# If T_HEADER NOT found → fallback:
+headerFrame = bridge_create_node(FRAME, name="Header", {
+  width: 1200, height: 200, fills: [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }]
+})
+bridge_create_node(TEXT, parent=headerFrame.id, {
+  characters: "PALO IT · Components → {Name}",
+  x: 40, y: 24, fontSize: 14,
+  fills: [{ type: "SOLID", color: { r: 0.45, g: 0.45, b: 0.45 } }]
+})
+bridge_create_node(TEXT, parent=headerFrame.id, {
+  characters: "{Name}", x: 40, y: 56, fontSize: 32, fontWeight: 700,
+  fills: [{ type: "SOLID", color: { r: 0.09, g: 0.09, b: 0.09 } }]
+})
+bridge_create_node(TEXT, parent=headerFrame.id, {
+  characters: "{description}", x: 40, y: 108, fontSize: 16,
+  fills: [{ type: "SOLID", color: { r: 0.45, g: 0.45, b: 0.45 } }]
+})
+bridge_create_node(TEXT, parent=headerFrame.id, {
+  characters: "📖 Documentation →", x: 40, y: 152, fontSize: 14,
+  fills: [{ type: "SOLID", color: { r: 0.23, g: 0.51, b: 0.97 } }]
+})
+```
+
+#### Auto-generated descriptions
+
+| Component | Description |
+|-----------|-------------|
+| **Button** | Displays a button or a component that looks like a button. Supports multiple variants, sizes, and states. |
+| **Card** | Displays a card with header, content, and footer sections. Used to group related information. |
+| **Badge** | Displays a badge or a component that looks like a badge. Used for status indicators and labels. |
+| **Input** | Displays a text input field. Supports validation states and sizes. |
+| **Select** | Displays a select dropdown. Allows users to choose from a list of options. |
+| **Checkbox** | Displays a checkbox input. Supports checked, unchecked, and indeterminate states. |
+| **Switch** | Displays a toggle switch. Used for binary on/off settings. |
+| **Alert** | Displays a callout for important messages. Supports default and destructive variants. |
+| **Avatar** | Displays a user avatar image with fallback. Supports multiple sizes. |
+| **Tabs** | Displays a tabbed interface. Used to organize content into switchable panels. |
+
+Generic fallback: "Displays a {component name}. {Brief purpose}. Supports {key variants/features}."
+
+### Section 3 — Master component builder
+
+Default matrix: `SIZES=[lg, md]`, `VARIANTS=[6]`, `STATES=[4]`, `TYPES=[1]` = **48 components**
+
+```
+componentIndex = 0
+allComponents = []
+
+for each size in [lg, md]:
+  for each variant in [solid, outline, dim, ghost, destructive-solid, destructive-outline]:
+    for each state in [default, hover, pressed, disabled]:
+      name = "size={size}, variant={variant}, state={state}, type=default"
+      col = componentIndex % 6
+      row = floor(componentIndex / 6)
+      x = col * (MASTER_COL_WIDTH + MASTER_GAP)
+      y = row * (MASTER_ROW_HEIGHT + MASTER_GAP)
+
+      node = bridge_create_node(FRAME, name=name, parent=masterContainer.id, {
+        x, y,
+        width: SIZE_DIMENSIONS[size].minWidth,
+        height: SIZE_DIMENSIONS[size].height,
+        fills: TOKEN_FILLS[variant][state],
+        cornerRadius: 6, layoutMode: "HORIZONTAL",
+        paddingLeft: 12, paddingRight: 12,
+        counterAxisAlignItems: "CENTER"
+      })
+
+      bridge_create_node(TEXT, parent=node.id, {
+        characters: "{ComponentName}",
+        fontSize: SIZE_FONT[size],
+        fills: TEXT_COLOR_FOR[variant][state]
+      })
+
+      result = bridge_create_component(node.id)
+      allComponents.push({ figmaNodeId: result.id, figmaComponentName: name, ... })
+      componentIndex++
+```
+
+**Bridge calls per component:** 3 (create frame + create text + promote)
+**Total for 48 components:** ~144 bridge calls (24 per size tier)
+
+### Section 2 — Variants table builder (Prompt 2)
+
+Built after master components exist. Uses `DISPLAY_SIZE = "md"` for all instances.
+
+```
+# Read existing masters → build lookup map
+masters = bridge_list_components()
+masterLookup = { "size=md, variant=solid, state=default, type=default": nodeId, ... }
+
+# Build rows: one per variant, columns = states
+for each variant in variants:
+  rowFrame = bridge_create_node(FRAME, ...)
+  bridge_create_node(TEXT, { characters: "{Variant Display Name}" })
+  for each state in states:
+    masterKey = "size={DISPLAY_SIZE}, variant={variant}, state={state}, type=default"
+    bridge_create_instance(componentId=masterLookup[masterKey], parent=rowFrame.id)
+```
+
+After building, reorder page children:
+```
+bridge_reorder_children(pageId, [header, divider1, variantsSection, divider2, masterSection])
+```
+
+#### Variant display name mapping
+
+| Internal | Display |
+|----------|---------|
+| `solid` | Solid |
+| `outline` | Outline |
+| `dim` | Dim |
+| `ghost` | Ghost |
+| `destructive-solid` | Destructive Solid |
+| `destructive-outline` | Destructive Outline |
+
+---
+
+## Token-to-fill mapping
+
+Map variant + state to design token fills for master component creation:
+
+| Variant | State | Fill token | Text token | Border token |
+|---------|-------|-----------|------------|-------------|
+| solid | default | `color/primary/500` | `color/white` | — |
+| solid | hover | `color/primary/600` | `color/white` | — |
+| solid | pressed | `color/primary/700` | `color/white` | — |
+| solid | disabled | `color/neutral/200` | `color/neutral/400` | — |
+| outline | default | transparent | `color/primary/500` | `color/primary/500` |
+| outline | hover | `color/primary/100` | `color/primary/600` | `color/primary/600` |
+| outline | pressed | `color/primary/100` | `color/primary/700` | `color/primary/700` |
+| outline | disabled | transparent | `color/neutral/400` | `color/neutral/200` |
+| dim | default | `color/primary/100` | `color/primary/500` | — |
+| dim | hover | `color/primary/100` | `color/primary/600` | — |
+| dim | pressed | `color/primary/100` | `color/primary/700` | — |
+| dim | disabled | `color/neutral/200` | `color/neutral/400` | — |
+| ghost | default | transparent | `color/primary/500` | — |
+| ghost | hover | `color/primary/100` | `color/primary/600` | — |
+| ghost | pressed | `color/primary/100` | `color/primary/700` | — |
+| ghost | disabled | transparent | `color/neutral/400` | — |
+| destructive-solid | default | `color/destructive/500` | `color/white` | — |
+| destructive-solid | hover | `color/destructive/600` | `color/white` | — |
+| destructive-solid | pressed | `color/destructive/600` | `color/white` | — |
+| destructive-solid | disabled | `color/neutral/200` | `color/neutral/400` | — |
+| destructive-outline | default | transparent | `color/destructive/500` | `color/destructive/500` |
+| destructive-outline | hover | `color/destructive/500` | `color/white` | `color/destructive/500` |
+| destructive-outline | pressed | `color/destructive/600` | `color/white` | `color/destructive/600` |
+| destructive-outline | disabled | transparent | `color/neutral/400` | `color/neutral/200` |
