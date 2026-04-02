@@ -1,6 +1,6 @@
 {
   "name": "gene2-figma-mcp",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Copilot-driven bidirectional sync between code and Figma — reusable onboarding toolkit.",
   "type": "module",
   "bin": {

@@ -132,6 +132,7 @@ Always consult in this order before making changes:
 13. **Capture URL:** Use `?component=Name` query param, NOT hash routing.
 14. **Always use bridge MCP tools for Figma data.** Never parse tree JSON with scripts (Python, Node, etc.). Use `bridge_read_tree`, `bridge_read_node`, `bridge_list_layers`, `bridge_list_components` to inspect Figma data. Use `bridge_create_component`, `bridge_promote_and_combine` to modify. External scripts add fragility, terminal corruption, and bypass the bridge protocol.
 15. **Capture-first for DS pages.** Always use the capture workflow (showcase → capture → post-process) for creating DS component pages. Direct bridge creation is a last resort — only when capture is explicitly unavailable or user requests it.
+16. **Local images only in showcase.** Never use external image URLs in `figma/showcase/` — they break during Figma capture. Download images to `figma/showcase/public/` and reference as `/filename.png`, or use inline SVG data URIs for placeholders.
 
 ---
 

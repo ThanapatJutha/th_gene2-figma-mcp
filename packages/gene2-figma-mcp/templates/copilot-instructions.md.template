@@ -206,6 +206,7 @@ Key rules for `.figma.tsx` files:
 6. **Prefer design tokens** (variables) over hardcoded values.
 7. **Figma file key:** Read from `figma/config/figma.config.json` first. Never fabricate a key.
 8. **Capture-first for DS pages.** Always use the capture workflow (showcase → capture → post-process) for creating DS component pages. Direct bridge creation is a last resort — only when capture is explicitly unavailable or user requests it.
+9. **Local images only in showcase.** Never use external image URLs in `figma/showcase/` — they break during Figma capture. Download to `figma/showcase/public/` or use inline SVG data URIs.
 
 ---
 

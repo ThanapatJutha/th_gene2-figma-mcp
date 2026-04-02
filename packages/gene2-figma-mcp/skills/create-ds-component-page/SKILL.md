@@ -19,13 +19,13 @@ When a user prompt mentions any of these:
 - A component name + library reference
 
 → This is the Create DS Component Page usecase.
-→ **Route: Use the CAPTURE workflow (Steps 0–7).** Do NOT skip to the direct bridge fallback.
+→ **Route: Use the CAPTURE workflow (Steps 0–8).** Do NOT skip to the direct bridge fallback.
 
 ---
 
 ## ⚠️ MANDATORY: Capture-first decision gate
 
-**ALWAYS use the capture workflow (Steps 0–7)** unless ALL of these are true:
+**ALWAYS use the capture workflow (Steps 0–8)** unless ALL of these are true:
 - [ ] User **explicitly said** "use direct bridge" or "don't use capture"
 - [ ] OR: The `generate_figma_design` tool is **confirmed unavailable** (not just slow)
 - [ ] OR: A localhost dev server **cannot be started** (no Node.js, no network)
@@ -54,7 +54,7 @@ If none of the above apply → **use the capture workflow. Period.**
 
 ---
 
-## Workflow: Parse → Explore → Suggest → Confirm → Build → Capture → Post-process → Save
+## Workflow: Parse → Explore → Suggest → Confirm → Build → Page-resolve → Capture → Post-process → Save
 
 ### Step 0: Ensure design tokens (prerequisite)
 Before building any component, check that design tokens are synced:
@@ -113,13 +113,50 @@ Example:
 ]}
 ```
 
-### Step 5: Capture to Figma
+### Step 4b: Image handling (REQUIRED)
+
+**External image URLs break during Figma capture.** The `generate_figma_design`
+tool cannot reliably fetch remote images — they appear as broken placeholders.
+
+**Rule: All images in the showcase MUST be local.**
+
+1. If the component uses images (avatars, thumbnails, icons, etc.):
+   - Download each external image to `figma/showcase/public/` (e.g., `avatar-1.png`)
+   - Reference as `/avatar-1.png` in the showcase page (Vite serves `/public` at root)
+2. For placeholder images, create simple colored SVG rectangles instead of fetching from external services (no picsum.photos, no placeholder.com, no ui-avatars.com)
+3. After capture, verify image fills in Figma with `bridge_read_node` — if any show as empty rectangles, the image was external and needs fixing
+
+**Quick SVG placeholder generator:**
+```tsx
+function placeholder(w: number, h: number, color = '#CBD5E1') {
+  return `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect fill="${color}" width="${w}" height="${h}"/></svg>`
+  )}`;
+}
+```
+
+### Step 5: Resolve target Figma page
+
+**Before capturing, check if the page already exists to avoid duplicates.**
+
+1. Call `bridge_list_layers` (returns all pages)
+2. Search for a page named `{ComponentName}` (exact match, case-sensitive)
+3. **If page exists:**
+   - Call `bridge_set_current_page(pageId)`
+   - Read its children — if non-empty, ask user: "Page {ComponentName} already exists with content. Overwrite or create new?"
+   - If overwrite: delete existing children, reuse the page
+   - If new: append suffix (e.g., `{ComponentName} v2`)
+4. **If page does NOT exist:**
+   - Page will be created in Step 6 after capture
+5. Store the resolved page decision for Step 6
+
+### Step 6: Capture to Figma
 Use `generate_figma_design` with `?component={Name}` URL.
 
-### Step 6: Post-process (CRITICAL)
-Create Figma page, move captured frame, then:
+### Step 7: Post-process (CRITICAL)
+Create Figma page (or reuse from Step 5), move captured frame, then:
 
-#### 6a: Read the captured tree and locate sections
+#### 7a: Read the captured tree and locate sections
 
 ⚠️ **NEVER parse tree JSON with Python/Node scripts.** Always use bridge MCP tools directly.
 
@@ -154,9 +191,9 @@ after the "✏️ Master Components" section header. Its direct children are bar
 component frames in **cross-product order** (matching `crossProduct(properties)`
 from DSPageTemplate).
 
-Also note each **property section's items row** — you'll need these for step 6d.
+Also note each **property section's items row** — you'll need these for step 7c.
 
-#### 6b: Promote, name, and combine in one shot
+#### 7b: Promote, name, and combine in one shot
 
 Pre-compute the cross-product to build variant names:
 ```
@@ -203,7 +240,7 @@ Response contains:
 The COMPONENT_SET is placed inside `parentId` (the master container).
 No further moving is needed.
 
-#### 6c: Swap property section items with instances (REQUIRED)
+#### 7c: Swap property section items with instances (REQUIRED)
 
 Each property section shows one-property-at-a-time variations. Each item was
 rendered with **all other properties set to their first-option default**
@@ -227,7 +264,7 @@ for each propertySection:
   for each cell in itemsRow.children:
     componentFrame = cell.children[0]   // first FRAME child
     variantName = buildVariantName(prop, value, defaults)
-    masterId = componentLookup[variantName]   // from step 6b result
+    masterId = componentLookup[variantName]   // from step 7b result
     swaps.push({ nodeId: componentFrame.id, componentId: masterId })
 
 bridge_swap_batch(swaps=swaps)
@@ -243,7 +280,7 @@ bridge_swap_batch(swaps=swaps)
 After swapping, property display items are real component instances that update
 when the master component changes.
 
-### Step 7: Save artifacts
+### Step 8: Save artifacts
 - `bridge_save_component_spec` → `.figma.tsx` in `figma/components/`
   - **MUST be a wrapper that imports the component from the library** — never paste raw source code
   - Include JSDoc with library, variants, sizes, Figma page node, component set ID, source path
@@ -540,6 +577,8 @@ After initial creation, user can expand:
 10. **First option = default** — the first option of each property array is the default for property section rendering and instance swap matching. Put the most representative value first.
 11. **Property section swap is REQUIRED** — after creating the COMPONENT_SET, always swap property section items with real instances. This ensures they update when the master changes.
 12. **`bridge_promote_and_combine` is a one-shot call** — it takes `{ nodes: [{nodeId, variantName}], setName, parentId }` and handles promoting, naming, and combining. No separate rename step needed.
+13. **Local images only in showcase** — never use external image URLs (they break during Figma capture). Download to `figma/showcase/public/` or use inline SVG/data URIs.
+14. **No duplicate Figma pages** — always call `bridge_list_layers` before creating a page. If `{ComponentName}` page exists, reuse it (with user confirmation to overwrite) instead of creating a duplicate.
 ---
 
 ## ⛔ Direct bridge workflow (LAST RESORT — read decision gate above first)
