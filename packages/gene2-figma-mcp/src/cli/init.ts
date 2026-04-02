@@ -88,6 +88,11 @@ const SEED_FILES: SeedFile[] = [
   { relPath: 'figma/plugin/manifest.json', template: null, copyFrom: 'figma-plugin/manifest.json' },
   { relPath: 'figma/plugin/code.js', template: null, copyFrom: 'figma-plugin/code.js' },
   { relPath: 'figma/plugin/ui.html', template: null, copyFrom: 'figma-plugin/ui.html' },
+  { relPath: '.github/skills/component-spec-layer/SKILL.md', template: null, copyFrom: 'skills/component-spec-layer/SKILL.md' },
+  { relPath: '.github/skills/create-ds-component-page/SKILL.md', template: null, copyFrom: 'skills/create-ds-component-page/SKILL.md' },
+  { relPath: '.github/skills/design-tokens/SKILL.md', template: null, copyFrom: 'skills/design-tokens/SKILL.md' },
+  { relPath: '.github/skills/discover-and-convert/SKILL.md', template: null, copyFrom: 'skills/discover-and-convert/SKILL.md' },
+  { relPath: '.github/skills/figma-node-manipulation/SKILL.md', template: null, copyFrom: 'skills/figma-node-manipulation/SKILL.md' },
 ];
 
 // ── Main ───────────────────────────────────────────────────────────

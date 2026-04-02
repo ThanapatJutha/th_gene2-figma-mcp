@@ -75,6 +75,7 @@ This creates the following files in your project:
 | `figma/app/.figma-sync/connections.json` | Code ↔ Figma component mappings |
 | `figma/components/` | Directory for `.figma.tsx` component specs |
 | `figma/plugin/` | Figma plugin files (manifest, code, UI) |
+| `.github/skills/` | Copilot agent skills for Figma workflows |
 
 :::info Already initialized?
 Use `npx gene2-figma-mcp init --force` to re-generate files (overwrites existing).
@@ -240,6 +241,7 @@ After running `npx gene2-figma-mcp init`, your project will have:
 your-project/
   .github/
     copilot-instructions.md   ← Copilot behavioral rules (auto-read)
+    skills/                   ← Copilot agent skills (auto-loaded)
   .vscode/
     mcp.json                  ← MCP server config for Copilot
   figma/

@@ -206,4 +206,19 @@ Key rules for `.figma.tsx` files:
 6. **Prefer design tokens** (variables) over hardcoded values.
 7. **Figma file key:** Read from `figma/config/figma.config.json` first. Never fabricate a key.
 
+---
+
+## 10 · Skills (auto-loaded when relevant)
+
+Specialized multi-step workflows are defined as agent skills in `.github/skills/`.
+Copilot loads them automatically based on the user's prompt — no manual reading needed.
+
+| Skill | Triggers on |
+|-------|------------|
+| `create-ds-component-page` | "create DS page", "design system page", component + library name |
+| `discover-and-convert` | "discover components", "convert layers", scanning existing Figma files |
+| `figma-node-manipulation` | Node CRUD operations, reading/updating Figma nodes |
+| `design-tokens` | Token creation, variables, design token management |
+| `component-spec-layer` | `.figma.tsx` file creation, `connections.json` management |
+
 <!-- USER CUSTOM RULES — add your project-specific rules below this line -->
