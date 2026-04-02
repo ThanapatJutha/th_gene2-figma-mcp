@@ -16,18 +16,33 @@ slug: /getting-started
 
 ## Step 1: Install
 
-Install the package from the latest [GitHub Release](https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases):
+Install the package from the latest [GitHub Release](https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases) using the [GitHub CLI](https://cli.github.com):
 
 ```bash
-npm install --save-dev https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases/download/v0.3.1/gene2-figma-mcp-0.3.1.tgz
+# 1. Authenticate with GitHub (one-time setup)
+gh auth login
+
+# 2. Download the tarball
+gh release download v0.3.1 --repo ThanapatJutha/th_gene2-figma-mcp --pattern "*.tgz"
+
+# 3. Install from the local tarball
+npm install --save-dev ./gene2-figma-mcp-0.3.1.tgz
 ```
 
 This adds `gene2-figma-mcp` to your project's devDependencies. It includes the CLI, bridge server, MCP server, templates, and dashboard UI.
 
-:::tip Upgrading
-To upgrade, replace the version in the URL with the new release tag:
+:::tip Public repo shortcut
+If the repository is public, you can install directly without `gh`:
 ```bash
 npm install --save-dev https://github.com/ThanapatJutha/th_gene2-figma-mcp/releases/download/v0.3.1/gene2-figma-mcp-0.3.1.tgz
+```
+:::
+
+:::tip Upgrading
+To upgrade, replace the version number (`v0.3.1`) with the new release tag:
+```bash
+gh release download v0.4.0 --repo ThanapatJutha/th_gene2-figma-mcp --pattern "*.tgz"
+npm install --save-dev ./gene2-figma-mcp-0.4.0.tgz
 ```
 :::
 
@@ -198,6 +213,7 @@ Now that everything is connected, try these prompts in Copilot Agent Mode:
 
 | Symptom | Fix |
 |---|---|
+| `npm install` returns **404** | Repo may be private — use `gh auth login` then `gh release download` (see Step 1) |
 | Copilot says "tool not found" | Restart VS Code or click "Start" on `figma-bridge` in MCP panel |
 | `bridge_ping` returns error | Bridge server not running — run `npx gene2-figma-mcp bridge` |
 | Bridge says "plugin not connected" | Open the plugin in Figma: Plugins → Development → Figma Sync Bridge |
