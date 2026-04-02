@@ -54,6 +54,19 @@ If none of the above apply → **use the capture workflow. Period.**
 
 ---
 
+## Version upgrade workflow
+
+When upgrading `gene2-figma-mcp` to a new version:
+1. Delete `node_modules` and `package-lock.json` in both project root and `figma/showcase/`
+2. `npm install`
+3. Verify version: `npx gene2-figma-mcp --version`
+4. `npx gene2-figma-mcp init --force` (regenerates all seeded files)
+5. Validate: confirm `figma/showcase/src/components/DSPageTemplate.tsx` exists and contains the `crossProduct` helper
+6. `cd figma/showcase && npm install`
+7. If files look stale, run `npx gene2-figma-mcp init --only showcase --force` to regenerate just the showcase
+
+---
+
 ## Workflow: Parse → Explore → Suggest → Confirm → Build → Page-resolve → Capture → Post-process → Save
 
 ### Step 0: Ensure design tokens (prerequisite)
@@ -113,7 +126,21 @@ Example:
 ]}
 ```
 
-### Step 4b: Image handling (REQUIRED)
+### Step 4b: Token mapping (REQUIRED)
+
+**Before writing component styles, map every visual value to design tokens.**
+
+1. Read `figma/tokens/tokens.json` — build a lookup of available CSS custom properties
+2. For every color, font-size, spacing, and border-radius in the component:
+   - Find the closest matching token (e.g., `var(--color-primary-500)` instead of `#6366F1`)
+   - If no matching token exists, add a `/* TODO: no token for #hexvalue */` comment
+3. **Never use raw hex/rgb values when a matching token exists**
+4. Import `tokens.css` in the showcase page or `main.tsx`
+
+**Checkpoint:** After writing the showcase file, grep for hardcoded hex (`#[0-9a-fA-F]{3,8}`).
+If any are found and a matching token exists in `tokens.json`, fix them before proceeding.
+
+### Step 4c: Image handling (REQUIRED)
 
 **External image URLs break during Figma capture.** The `generate_figma_design`
 tool cannot reliably fetch remote images — they appear as broken placeholders.
@@ -280,6 +307,28 @@ bridge_swap_batch(swaps=swaps)
 After swapping, property display items are real component instances that update
 when the master component changes.
 
+#### 7d: Bind design tokens to components (REQUIRED)
+
+Promoted components have raw RGB fills — they are NOT bound to Figma variables.
+Without this step, components won't update when design tokens change.
+
+1. Read the variable list (already pulled in Step 0): `bridge_read_variables`
+2. Build a color→variableId lookup map from the variables
+3. For each promoted component in the COMPONENT_SET:
+   a. `bridge_read_node(componentId)` → read fills, strokes, text color
+   b. Match each color value to the closest Figma variable by comparing RGB values (tolerance ±0.01)
+   c. Call `bridge_update_node(componentId, { boundVariables: { fills: [{ variableId }], ... } })` to bind
+4. For text children, also bind `fills` (text color) to the matching variable
+
+**When unsure — ask the user:**
+- If multiple candidate variables match the same color (distance < 0.01 for 2+ variables), present the options and ask which to bind
+- If no variable matches within tolerance, ask: "No matching token found for {color}. Skip binding or provide the correct variable name?"
+- Do NOT guess when ambiguous — wrong bindings are worse than no bindings
+
+**Skip condition:** If Step 0 found no design tokens and user chose to continue with hardcoded values, skip this step.
+
+**Verification:** After binding, `bridge_read_node` should show `boundVariables` on fills/strokes. If empty, the binding failed — retry with corrected variable IDs.
+
 ### Step 8: Save artifacts
 - `bridge_save_component_spec` → `.figma.tsx` in `figma/components/`
   - **MUST be a wrapper that imports the component from the library** — never paste raw source code
@@ -292,6 +341,7 @@ when the master component changes.
 - [ ] Figma page created (one page per component)
 - [ ] Master components with property-based naming
 - [ ] Design tokens created as Figma variables
+- [ ] Design tokens bound to component fills/strokes (`boundVariables`, not raw RGB)
 - [ ] Templates discovered and instanced (or fallbacks used)
 - [ ] `.figma.tsx` file saved
 - [ ] `connections.json` saved
@@ -579,6 +629,8 @@ After initial creation, user can expand:
 12. **`bridge_promote_and_combine` is a one-shot call** — it takes `{ nodes: [{nodeId, variantName}], setName, parentId }` and handles promoting, naming, and combining. No separate rename step needed.
 13. **Local images only in showcase** — never use external image URLs (they break during Figma capture). Download to `figma/showcase/public/` or use inline SVG/data URIs.
 14. **No duplicate Figma pages** — always call `bridge_list_layers` before creating a page. If `{ComponentName}` page exists, reuse it (with user confirmation to overwrite) instead of creating a duplicate.
+15. **Token mapping before writing styles** — always read `tokens.json` and map colors/spacing to CSS custom properties before writing showcase component styles. Grep for hardcoded hex after writing — fix any that have matching tokens.
+16. **Bind variables after promoting** — after `bridge_promote_and_combine`, bind every fill/stroke/text color to the matching Figma variable via `boundVariables`. If unsure which variable matches, ask the user. Raw RGB fills without token binding defeat the purpose of a design system.
 ---
 
 ## ⛔ Direct bridge workflow (LAST RESORT — read decision gate above first)

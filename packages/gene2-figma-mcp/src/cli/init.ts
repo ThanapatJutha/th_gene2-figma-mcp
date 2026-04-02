@@ -107,10 +107,47 @@ const VALID_GROUPS = ['config', 'showcase', 'skills', 'plugin', 'tokens', 'compo
 
 // ── Main ───────────────────────────────────────────────────────────
 
+function printInitHelp(version: string): void {
+  console.log(`
+  gene2-figma-mcp init v${version}
+
+  Seeds project files for Figma ↔ Code sync.
+  Safe to re-run — will prompt before overwriting existing files.
+
+  Usage:
+    npx gene2-figma-mcp init [options]
+
+  Options:
+    --force              Overwrite all existing files without prompting
+    --only <groups>      Seed only specific groups (comma-separated)
+    --help, -h           Show this help message
+
+  Groups:
+    config               figma.config.json, connections.json, mcp.json, copilot-instructions
+    showcase             Vite + React showcase app (DSPageTemplate, App router)
+    skills               Copilot skill files (.github/skills/)
+    plugin               Figma plugin files (manifest, code, ui)
+    tokens               Token sync scaffolding (tokens.json, generated/)
+    components           Component spec directory (figma/components/)
+
+  Examples:
+    npx gene2-figma-mcp init                        # Full init, prompts on conflict
+    npx gene2-figma-mcp init --force                 # Overwrite everything
+    npx gene2-figma-mcp init --only showcase         # Seed only showcase files
+    npx gene2-figma-mcp init --only showcase,skills  # Seed showcase + skills
+    npx gene2-figma-mcp init --only skills --force   # Force-update skills only
+`);
+}
+
 export async function runInit(args: string[]): Promise<void> {
   const projectRoot = process.cwd();
   const force = args.includes('--force');
   const version = getVersion();
+
+  if (args.includes('--help') || args.includes('-h')) {
+    printInitHelp(version);
+    return;
+  }
 
   // Parse --only flag (e.g., --only showcase,skills)
   const onlyIdx = args.indexOf('--only');
