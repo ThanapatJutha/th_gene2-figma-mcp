@@ -1,141 +1,194 @@
 ---
 name: design-tokens
 description: >
-  Create, read, and manage Figma design tokens (variables) for component styling.
-  Use when creating design tokens, managing color variables, or applying tokenized
-  styling to Figma components. Covers naming conventions, minimum token sets, and
-  the creation workflow.
+  Sync design tokens between Figma variables and the local project.
+  Use when user mentions "design tokens", "CI tokens", "sync tokens",
+  "pull variables", "generate theme", "token sync", or needs to ensure
+  design tokens exist before creating components. Covers the full
+  pull → generate → push workflow and token prerequisite checks.
 ---
 
-# Design Tokens
+# Design Token Sync
 
-Use Figma variables for tokenized styling. Always prefer variables over
-hardcoded hex values.
-
----
-
-## Operations
-
-| Tool | When |
-|------|------|
-| `bridge_read_variables` | Check existing tokens before creating (avoid duplicates) |
-| `bridge_create_variable` | Create new tokens |
-| `bridge_update_variable` | Update token values |
+Bidirectional sync between Figma variables (CI) and local theme files.
+Tokens flow: **Figma → tokens.json → CSS custom properties + TypeScript**.
 
 ---
 
-## Token naming convention
+## Prerequisite check (run before other skills)
 
-Format: `{category}/{role}/{scale}`
+Before running `create-ds-component-page` or building components:
+
+1. Check if `figma/tokens/tokens.json` exists and has collections
+2. If empty or missing → call `bridge_read_variables` to check Figma CI
+3. If Figma has variables → run `tokens pull` + `tokens generate`
+4. If Figma has NO variables → **ask user**: "No design tokens found in Figma. Continue with hardcoded values or create tokens first?"
 
 ```
-color/primary/500      = #22C55E   (main primary)
-color/primary/600      = #16A34A   (hover)
-color/primary/700      = #15803D   (pressed)
-color/primary/100      = #DCFCE7   (light bg)
-
-color/destructive/500  = #EF4444
-color/destructive/600  = #DC2626
-
-color/neutral/50       = #FAFAFA   (background)
-color/neutral/200      = #E5E5E5   (border)
-color/neutral/400      = #A3A3A3   (disabled text)
-color/neutral/500      = #737373   (secondary text)
-color/neutral/900      = #171717   (primary text)
-
-color/white            = #FFFFFF
-color/black            = #000000
+# Check tokens exist
+if figma/tokens/tokens.json is empty or has no collections:
+  → bridge_read_variables
+  → if variables found: run `npx gene2-figma-mcp tokens sync`
+  → if no variables: prompt user
 ```
 
 ---
 
-## Minimum token set per component
+## CLI commands
 
-| Token | Purpose | Example |
-|-------|---------|---------|
-| `color/primary/500` | Default fill for primary variant | `#22C55E` |
-| `color/primary/600` | Hover fill | `#16A34A` |
-| `color/primary/700` | Pressed fill | `#15803D` |
-| `color/destructive/500` | Destructive variant fill | `#EF4444` |
-| `color/destructive/600` | Destructive hover fill | `#DC2626` |
-| `color/neutral/200` | Border / outline variant stroke | `#E5E5E5` |
-| `color/neutral/400` | Disabled text/fill | `#A3A3A3` |
-| `color/neutral/900` | Default text color | `#171717` |
-| `color/white` | Button text on filled variants | `#FFFFFF` |
+| Command | Purpose |
+|---------|---------|
+| `npx gene2-figma-mcp tokens pull` | Read Figma variables → `figma/tokens/tokens.json` |
+| `npx gene2-figma-mcp tokens generate` | Convert `tokens.json` → CSS + TypeScript |
+| `npx gene2-figma-mcp tokens push` | Write `tokens.json` → Figma variables |
+| `npx gene2-figma-mcp tokens sync` | Pull + generate in one step |
 
 ---
 
-## Creation workflow
+## File structure
 
-1. **Read existing tokens:** `bridge_read_variables` — avoid duplicates
-2. **Present token plan** to user:
-   ```
-   I'll create these design tokens:
-   - color/primary/500 = #22C55E
-   - color/primary/600 = #16A34A
-   - ...
-   Proceed?
-   ```
-3. **Create tokens:** `bridge_create_variable` for each
-4. **Apply to components:** Reference variable IDs in master component fills/strokes
+| File | Purpose |
+|------|---------|
+| `figma/tokens/tokens.json` | Source-of-truth sync file (Figma ↔ code) |
+| `figma/tokens/generated/tokens.css` | CSS custom properties (auto-generated) |
+| `figma/tokens/generated/tokens.ts` | TypeScript token constants (auto-generated) |
 
 ---
 
-## User input mapping
+## tokens.json format
 
-| User says | Token created |
-|-----------|--------------|
-| "green-500 as primary" | `color/primary/500 = #22C55E` |
-| "blue as primary color" | `color/primary/500 = #3B82F6` (infer standard blue-500) |
-| "use red for destructive" | `color/destructive/500 = #EF4444` |
-| "#8B5CF6 as primary" | `color/primary/500 = #8B5CF6` (exact hex) |
-
-When the user gives a color name without a specific shade, use the 500 shade
-as default and derive hover (600) and pressed (700) by darkening ~10% and ~15%.
+```json
+{
+  "version": 1,
+  "figmaFileKey": "VV3UngGp4iFEQgqdqrnoOu",
+  "lastSyncedAt": "2026-04-02T...",
+  "collections": {
+    "01 Color - Primitive Token": {
+      "modes": ["default"],
+      "variables": {
+        "neutral/000": { "type": "COLOR", "values": { "default": "#ffffff" } },
+        "primary/blue/main": { "type": "COLOR", "values": { "default": "#1e56a0" } }
+      }
+    },
+    "02 Color - Semantic Token": {
+      "modes": ["default"],
+      "variables": {
+        "surface/primary/default": { "type": "COLOR", "values": { "default": "#ffffff" } },
+        "text/primary": { "type": "COLOR", "values": { "default": "#18181b" } }
+      }
+    },
+    "04 Typo - Semantic Token": {
+      "modes": ["mode-1", "mode-2"],
+      "variables": {
+        "Size/16": { "type": "FLOAT", "values": { "mode-1": 16, "mode-2": 16 } },
+        "Family/Font": { "type": "STRING", "values": { "mode-1": "Kanit", "mode-2": "CS ChatThai" } }
+      }
+    }
+  }
+}
+```
 
 ---
 
-## Token-to-fill application
+## Generated CSS format
 
-### Priority order
+```css
+:root {
+  /* 01 Color - Primitive Token */
+  --color-primitive-token-neutral-000: #ffffff;
+  --color-primitive-token-primary-blue-main: #1e56a0;
 
-1. Use `bridge_create_variable` result IDs to set fills by variable binding
-2. If variable binding is not supported, use hex value from the token
-3. Never hardcode hex values — always reference the token name
+  /* 02 Color - Semantic Token */
+  --color-semantic-token-surface-primary-default: #ffffff;
+  --color-semantic-token-text-primary: #18181b;
 
-### For disabled state
+  /* 04 Typo - Semantic Token (default mode) */
+  --typo-semantic-token-size-16: 16;
+  --typo-semantic-token-family-font: Kanit;
+}
 
-Set text opacity to 0.5 or use `color/neutral/400`.
+/* Mode overrides */
+.theme-mode-2 {
+  --typo-semantic-token-family-font: CS ChatThai;
+}
+```
 
 ---
 
-## Token-to-fill mapping (full reference)
+## Using tokens in components
 
-Map variant + state to design token fills when creating master components:
+### In `.figma.tsx` files (showcase/capture)
 
-| Variant | State | Fill token | Text token | Border token |
-|---------|-------|-----------|------------|-------------|
-| solid | default | `color/primary/500` | `color/white` | — |
-| solid | hover | `color/primary/600` | `color/white` | — |
-| solid | pressed | `color/primary/700` | `color/white` | — |
-| solid | disabled | `color/neutral/200` | `color/neutral/400` | — |
-| outline | default | transparent | `color/primary/500` | `color/primary/500` |
-| outline | hover | `color/primary/100` | `color/primary/600` | `color/primary/600` |
-| outline | pressed | `color/primary/100` | `color/primary/700` | `color/primary/700` |
-| outline | disabled | transparent | `color/neutral/400` | `color/neutral/200` |
-| dim | default | `color/primary/100` | `color/primary/500` | — |
-| dim | hover | `color/primary/100` | `color/primary/600` | — |
-| dim | pressed | `color/primary/100` | `color/primary/700` | — |
-| dim | disabled | `color/neutral/200` | `color/neutral/400` | — |
-| ghost | default | transparent | `color/primary/500` | — |
-| ghost | hover | `color/primary/100` | `color/primary/600` | — |
-| ghost | pressed | `color/primary/100` | `color/primary/700` | — |
-| ghost | disabled | transparent | `color/neutral/400` | — |
-| destructive-solid | default | `color/destructive/500` | `color/white` | — |
-| destructive-solid | hover | `color/destructive/600` | `color/white` | — |
-| destructive-solid | pressed | `color/destructive/600` | `color/white` | — |
-| destructive-solid | disabled | `color/neutral/200` | `color/neutral/400` | — |
-| destructive-outline | default | transparent | `color/destructive/500` | `color/destructive/500` |
-| destructive-outline | hover | `color/destructive/500` | `color/white` | `color/destructive/500` |
-| destructive-outline | pressed | `color/destructive/600` | `color/white` | `color/destructive/600` |
-| destructive-outline | disabled | transparent | `color/neutral/400` | `color/neutral/200` |
+```tsx
+import '../../figma/tokens/generated/tokens.css';
+
+export default function ButtonPreview() {
+  return (
+    <div style={{ background: 'var(--color-semantic-token-surface-primary-default)' }}>
+      <Button>Click me</Button>
+    </div>
+  );
+}
+```
+
+### In real React components
+
+```tsx
+// Import the generated CSS in your app entry point
+import '../figma/tokens/generated/tokens.css';
+
+// Use CSS variables in component styles
+<div className="bg-[var(--color-semantic-token-surface-primary-default)]">
+```
+
+### Rule: Never hardcode colors
+
+- ❌ `color: #18181b;`
+- ❌ `fills: [{ type: "SOLID", color: { r: 0.09, g: 0.09, b: 0.09 } }]`
+- ✅ `color: var(--color-semantic-token-text-primary);`
+- ✅ Look up the hex value from `tokens.json` when setting Figma fills via bridge
+
+---
+
+## Workflow: First-time setup
+
+1. User opens a Figma file with existing variables (CI)
+2. Run `npx gene2-figma-mcp tokens sync` (or Copilot runs it)
+3. `tokens.json` created with all collections
+4. CSS + TS files generated in `figma/tokens/generated/`
+5. Import `tokens.css` in the app entry point
+6. Components reference CSS variables instead of hardcoded values
+
+---
+
+## Workflow: Ongoing sync
+
+| Direction | Command | When |
+|-----------|---------|------|
+| Figma → Code | `tokens pull` + `tokens generate` | Designer updates tokens in Figma |
+| Code → Figma | Edit `tokens.json` + `tokens push` | Developer adds/changes tokens |
+
+---
+
+## Token naming convention (MFA standard)
+
+Collections follow the pattern: `{number} {Category} - {Level} Token`
+
+### Primitive tokens (raw values)
+- `color/neutral/{scale}` — 000 to 1000
+- `color/primary/blue/{scale}` — 100-900 + main
+- `color/secondary/{color}/{scale}` — green, red, yellow
+- `color/tertiary/{color}/{scale}` — cerulean, lavender blue, purple, sky
+- `overlay/{opacity}` — 10 to 90
+
+### Semantic tokens (purpose-based)
+- `surface/{role}/{state}` — primary, secondary, accent, disabled, status
+- `text/{role}` — primary, secondary, tertiary, disabled, inverse, link, status
+- `icon/{role}` — primary, secondary, disabled, inverse, link, status
+- `border/{role}` — primary, secondary, disabled, inverse, selected, status
+
+### Typography tokens
+- `Size/{px}` — 10, 12, 14, 16, 20, 24, 28, 32, 36, 40, 48
+- `Line Height/size {px}` — matching line heights
+- `Weight/{name}` — Regular, Medium, Bold
+- `Family/Font` — multi-mode (Kanit / CS ChatThai)

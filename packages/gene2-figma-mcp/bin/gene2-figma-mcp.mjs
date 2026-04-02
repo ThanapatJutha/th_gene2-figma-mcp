@@ -97,6 +97,7 @@ function printUsage() {
     init       Seed project files for Figma ↔ Code sync
     bridge     Start the WebSocket bridge server (port 9001)
     mcp        Start the MCP server (stdio transport, for VS Code)
+    tokens     Sync design tokens (pull / generate / push / sync)
     doctor     Diagnose setup issues
 
   Options:
@@ -107,6 +108,7 @@ function printUsage() {
     npx gene2-figma-mcp init
     npx gene2-figma-mcp init --force
     npx gene2-figma-mcp bridge
+    npx gene2-figma-mcp tokens sync
     npx gene2-figma-mcp doctor
 `);
 }
@@ -146,6 +148,11 @@ async function main() {
     case 'doctor': {
       const { runDoctor } = await import('../src/cli/doctor.ts');
       await runDoctor(subArgs);
+      break;
+    }
+    case 'tokens': {
+      const { runTokens } = await import('../src/cli/tokens.ts');
+      await runTokens(subArgs);
       break;
     }
     default:

@@ -36,6 +36,17 @@ When a user prompt mentions any of these:
 
 ## Workflow: Parse → Explore → Suggest → Confirm → Build → Capture → Post-process → Save
 
+### Step 0: Ensure design tokens (prerequisite)
+Before building any component, check that design tokens are synced:
+1. Read `figma/tokens/tokens.json` — if empty or missing collections:
+2. Call `bridge_read_variables` to check Figma CI
+3. If variables found → run `npx gene2-figma-mcp tokens sync` to pull + generate
+4. If NO variables → ask user: "No design tokens found in Figma. Continue with hardcoded values or create tokens first?"
+5. Ensure `figma/tokens/generated/tokens.css` exists before building showcase
+
+The showcase page and `.figma.tsx` files MUST import `tokens.css` and use
+CSS custom properties (`var(--color-semantic-token-...)`) instead of hardcoded hex values.
+
 ### Step 1: Parse
 Extract component name(s), library, Figma file key from user prompt.
 
@@ -215,6 +226,7 @@ when the master component changes.
 - `bridge_save_connections` → all component mappings
 
 ✅ **Done only when the completion gate is satisfied:**
+- [ ] Design tokens synced (`figma/tokens/tokens.json` populated)
 - [ ] Figma page created (one page per component)
 - [ ] Master components with property-based naming
 - [ ] Design tokens created as Figma variables

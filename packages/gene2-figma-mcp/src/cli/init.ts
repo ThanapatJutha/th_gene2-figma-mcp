@@ -85,6 +85,8 @@ const SEED_FILES: SeedFile[] = [
   { relPath: '.vscode/mcp.json', template: 'mcp.json.template' },
   { relPath: '.github/copilot-instructions.md', template: 'copilot-instructions.md.template' },
   { relPath: 'figma/components/.gitkeep', template: null, content: '' },
+  { relPath: 'figma/tokens/tokens.json', template: null, content: '{\n  "version": 1,\n  "figmaFileKey": "",\n  "lastSyncedAt": "",\n  "collections": {}\n}\n' },
+  { relPath: 'figma/tokens/generated/.gitkeep', template: null, content: '' },
   { relPath: 'figma/plugin/manifest.json', template: null, copyFrom: 'figma-plugin/manifest.json' },
   { relPath: 'figma/plugin/code.js', template: null, copyFrom: 'figma-plugin/code.js' },
   { relPath: 'figma/plugin/ui.html', template: null, copyFrom: 'figma-plugin/ui.html' },

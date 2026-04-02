@@ -42,6 +42,10 @@ project's UI library. They contain visual/style code only — never business log
   `import` the component from its library path (e.g., `@/components/ui/button`)
   and render it with all visual variants — not copy-paste the component's
   implementation. The `.figma.tsx` is a **visual wrapper** only.
+- **Use design tokens for styling.** Import `figma/tokens/generated/tokens.css`
+  and use CSS custom properties (`var(--color-semantic-token-...)`) instead of
+  hardcoded hex colors. Look up token values from `figma/tokens/tokens.json`
+  when needed.
 
 ---
 
