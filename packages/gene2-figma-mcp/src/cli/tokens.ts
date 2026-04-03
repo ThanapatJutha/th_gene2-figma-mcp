@@ -47,7 +47,7 @@ interface FigmaVariable {
 // ── Paths ──────────────────────────────────────────────────────────────
 
 const TOKENS_PATH = resolve(process.cwd(), 'figma/tokens/tokens.json');
-const CSS_OUTPUT_DIR = resolve(process.cwd(), 'figma/tokens/generated');
+const CSS_OUTPUT_DIR = resolve(process.cwd(), 'src/tokens');
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -380,11 +380,11 @@ async function generateTokens(): Promise<void> {
   await writeFile(tsPath, tsLines.join('\n') + '\n', 'utf8');
 
   console.log(`  ✅ Generated:`);
-  console.log(`     figma/tokens/generated/tokens.css`);
-  console.log(`     figma/tokens/generated/tokens.ts`);
+  console.log(`     src/tokens/tokens.css`);
+  console.log(`     src/tokens/tokens.ts`);
   console.log('');
   console.log(`  💡 Import in your app:`);
-  console.log(`     import '../figma/tokens/generated/tokens.css';`);
+  console.log(`     import './tokens/tokens.css';`);
   console.log('');
 }
 

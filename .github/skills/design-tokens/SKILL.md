@@ -50,8 +50,8 @@ if figma/tokens/tokens.json is empty or has no collections:
 | File | Purpose |
 |------|---------|
 | `figma/tokens/tokens.json` | Source-of-truth sync file (Figma ↔ code) |
-| `figma/tokens/generated/tokens.css` | CSS custom properties (auto-generated) |
-| `figma/tokens/generated/tokens.ts` | TypeScript token constants (auto-generated) |
+| `src/tokens/tokens.css` | CSS custom properties (auto-generated) |
+| `src/tokens/tokens.ts` | TypeScript token constants (auto-generated) |
 
 ---
 
@@ -120,7 +120,7 @@ if figma/tokens/tokens.json is empty or has no collections:
 ### In `.figma.tsx` files (showcase/capture)
 
 ```tsx
-import '../../figma/tokens/generated/tokens.css';
+import '../../src/tokens/tokens.css';
 
 export default function ButtonPreview() {
   return (
@@ -135,7 +135,7 @@ export default function ButtonPreview() {
 
 ```tsx
 // Import the generated CSS in your app entry point
-import '../figma/tokens/generated/tokens.css';
+import './tokens/tokens.css';
 
 // Use CSS variables in component styles
 <div className="bg-[var(--color-semantic-token-surface-primary-default)]">
@@ -155,7 +155,7 @@ import '../figma/tokens/generated/tokens.css';
 1. User opens a Figma file with existing variables (CI)
 2. Run `npx gene2-figma-mcp tokens sync` (or Copilot runs it)
 3. `tokens.json` created with all collections
-4. CSS + TS files generated in `figma/tokens/generated/`
+4. CSS + TS files generated in `src/tokens/`
 5. Import `tokens.css` in the app entry point
 6. Components reference CSS variables instead of hardcoded values
 

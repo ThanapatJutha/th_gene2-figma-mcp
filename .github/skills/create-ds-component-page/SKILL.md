@@ -75,7 +75,7 @@ Before building any component, check that design tokens are synced:
 2. Call `bridge_read_variables` to check Figma CI
 3. If variables found → run `npx gene2-figma-mcp tokens sync` to pull + generate
 4. If NO variables → ask user: "No design tokens found in Figma. Continue with hardcoded values or create tokens first?"
-5. Ensure `figma/tokens/generated/tokens.css` exists before building showcase
+5. Ensure `src/tokens/tokens.css` exists before building showcase
 
 The showcase page and `.figma.tsx` files MUST import `tokens.css` and use
 CSS custom properties (`var(--color-semantic-token-...)`) instead of hardcoded hex values.

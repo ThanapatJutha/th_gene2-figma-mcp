@@ -78,7 +78,7 @@ const SEED_FILES: SeedFile[] = [
   { relPath: 'src/components/.gitkeep', template: null, content: '', group: 'components' },
   // ── Tokens ─────────────────────────────────────────────────────────
   { relPath: 'figma/tokens/tokens.json', template: null, content: '{\n  "version": 1,\n  "figmaFileKey": "",\n  "lastSyncedAt": "",\n  "collections": {}\n}\n', group: 'tokens' },
-  { relPath: 'figma/tokens/generated/.gitkeep', template: null, content: '', group: 'tokens' },
+  { relPath: 'src/tokens/.gitkeep', template: null, content: '', group: 'tokens' },
   // ── Plugin ─────────────────────────────────────────────────────────
   { relPath: 'figma/plugin/manifest.json', template: null, copyFrom: 'figma-plugin/manifest.json', group: 'plugin' },
   { relPath: 'figma/plugin/code.js', template: null, copyFrom: 'figma-plugin/code.js', group: 'plugin' },

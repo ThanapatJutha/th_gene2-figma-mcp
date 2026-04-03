@@ -45,6 +45,7 @@ Many operations need the target Figma file key. To find it:
 |------|---------|
 | `src/` | Runtime / product code (business logic lives here) |
 | `src/components/` | **Real UI components** — developer-owned, used by the application |
+| `src/tokens/` | **Generated design tokens** — `tokens.css` + `tokens.ts` (auto-generated, DO NOT EDIT) |
 | `figma/components/*.figma.tsx` | **Figma component specs** — visual shell that imports from `src/components/`, NO business logic |
 | `figma/config/figma.config.json` | Project config (file key, component spec dir, etc.) — **persistent, never deleted** |
 | `figma/app/.figma-sync/connections.json` | Code ↔ Figma mappings (written by bridge) |

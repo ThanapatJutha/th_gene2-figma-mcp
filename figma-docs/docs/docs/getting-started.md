@@ -74,11 +74,17 @@ This creates the following files in your project:
 | `.github/copilot-instructions.md` | Copilot behavioral rules for Figma workflows |
 | `figma/app/.figma-sync/connections.json` | Code ↔ Figma component mappings |
 | `figma/components/` | Directory for `.figma.tsx` component specs |
+| `figma/tokens/tokens.json` | Raw token sync file (Figma ↔ code) |
 | `figma/plugin/` | Figma plugin files (manifest, code, UI) |
+| `figma/showcase/` | Vite + React capture helper (DS page rendering) |
+| `src/components/` | Real UI components (developer-owned) |
+| `src/tokens/` | Generated design tokens (`tokens.css`, `tokens.ts`) |
 | `.github/skills/` | Copilot agent skills for Figma workflows |
 
 :::info Already initialized?
 Use `npx gene2-figma-mcp init --force` to re-generate files (overwrites existing).
+Use `npx gene2-figma-mcp init --only config,skills` to regenerate specific groups only.
+Use `npx gene2-figma-mcp init --help` to see all options.
 :::
 
 ## Step 3: Configure MCP Servers
@@ -240,35 +246,62 @@ After running `npx gene2-figma-mcp init`, your project will have:
 ```
 your-project/
   .github/
-    copilot-instructions.md   ← Copilot behavioral rules (auto-read)
-    skills/                   ← Copilot agent skills (auto-loaded)
+    copilot-instructions.md       ← Copilot behavioral rules (auto-read)
+    skills/                       ← Copilot agent skills (auto-loaded)
+      component-spec-layer/       ←   .figma.tsx creation & connections.json
+      create-ds-component-page/   ←   DS page workflow (showcase → capture → post-process)
+      design-tokens/              ←   Token pull/generate/push workflow
+      discover-and-convert/       ←   Scan & convert existing Figma layers
+      figma-node-manipulation/    ←   Node CRUD patterns
   .vscode/
-    mcp.json                  ← MCP server config for Copilot
+    mcp.json                      ← MCP server config for Copilot
   figma/
     config/
-      figma.config.json       ← Project config (file key, patterns)
-    components/               ← .figma.tsx component specs
-    plugin/                   ← Figma plugin (manifest, code, UI)
+      figma.config.json           ← Project config (file key, componentDir, etc.)
+    components/                   ← .figma.tsx component specs (visual wrappers)
+      Button.figma.tsx            ←   Example: wraps src/components Button
+      Badge.figma.tsx             ←   Example: wraps src/components Badge
+    tokens/
+      tokens.json                 ← Raw token sync data (Figma ↔ code)
+    plugin/                       ← Figma plugin (manifest, code, UI)
+      manifest.json
+      code.js
+      ui.html
+    showcase/                     ← Vite + React capture helper (DS pages)
+      package.json                ←   Isolated deps (react, vite, etc.)
+      vite.config.ts              ←   @ alias → ../../src/ (imports real components)
+      index.html
+      src/
+        App.tsx                   ←   Route-based page selector (?component=Name)
+        main.tsx
+        components/
+          DSPageTemplate.tsx      ←   Reusable DS page layout template
+        pages/                    ←   One page per component (Button.tsx, Badge.tsx, …)
     app/
       .figma-sync/
-        connections.json      ← Code ↔ Figma component mappings
-  src/                        ← Your app source code
+        connections.json          ← Code ↔ Figma component mappings
+        layer-map.json            ← Layer mapping state
+  src/
+    components/                   ← Real UI components (developer-owned)
+    tokens/                       ← Generated design tokens (DO NOT EDIT)
+      tokens.css                  ←   CSS custom properties (var(--color-…))
+      tokens.ts                   ←   TypeScript token constants
   node_modules/
-    gene2-figma-mcp/          ← CLI, bridge, MCP server, dashboard
+    gene2-figma-mcp/              ← CLI, bridge, MCP server, dashboard
 ```
 
 ## CLI Commands
 
 ```bash
-npx gene2-figma-mcp init          # Seed project files
-npx gene2-figma-mcp init --force  # Re-seed (overwrite existing)
-npx gene2-figma-mcp bridge        # Start WebSocket bridge + dashboard
-npx gene2-figma-mcp mcp           # Start MCP server (used by VS Code)
-npx gene2-figma-mcp doctor        # Diagnose setup issues
-npx gene2-figma-mcp --version     # Print version
-```
-    components/             ← React UI component files (.figma.tsx)
-  .vscode/mcp.json          ← MCP server configuration
+npx gene2-figma-mcp init                    # Seed project files
+npx gene2-figma-mcp init --force             # Re-seed (overwrite existing)
+npx gene2-figma-mcp init --only config,skills # Re-seed specific groups only
+npx gene2-figma-mcp init --help              # Show all init options
+npx gene2-figma-mcp bridge                   # Start WebSocket bridge + dashboard
+npx gene2-figma-mcp mcp                      # Start MCP server (used by VS Code)
+npx gene2-figma-mcp tokens sync              # Pull Figma variables → generate CSS/TS tokens
+npx gene2-figma-mcp doctor                   # Diagnose setup issues
+npx gene2-figma-mcp --version                # Print version
 ```
 
 ## Next Steps
