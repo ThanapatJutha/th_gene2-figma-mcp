@@ -6,6 +6,16 @@
 
 ---
 
+## 0 · Version check
+
+The generated `copilot-instructions.md` in consumer projects embeds the tool version
+(e.g., `<!-- gene2-figma-mcp v0.3.8 -->`). On first prompt of every session:
+1. Call `bridge_read_config` — read `_gene2Version`
+2. If config version > instructions version → run `npx gene2-figma-mcp init --only config,skills --force`
+3. This keeps instructions and skills in sync with the installed tool.
+
+---
+
 ## 1 · Architecture
 
 `gene2-figma-mcp` bridges VS Code ↔ Figma via two MCP servers:

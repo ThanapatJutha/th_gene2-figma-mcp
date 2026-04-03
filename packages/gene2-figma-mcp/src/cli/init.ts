@@ -177,6 +177,17 @@ export async function runInit(args: string[]): Promise<void> {
   const configPath = resolve(projectRoot, 'figma/config/figma.config.json');
   const isFirstInit = !existsSync(configPath);
 
+  // Preserve existing config values on re-init
+  if (!isFirstInit) {
+    try {
+      const existingConfig = JSON.parse(readFileSync(configPath, 'utf8'));
+      figmaFileKey = existingConfig.figmaFileKey || '';
+      rootDir = existingConfig.rootDir || '.';
+    } catch {
+      // ignore parse errors, use defaults
+    }
+  }
+
   if (isInteractive && isFirstInit && (!onlyGroups || onlyGroups.has('config'))) {
     figmaFileKey = await prompt('Figma file key (optional, can set later)', '');
     rootDir = await prompt('Project root directory', '.');

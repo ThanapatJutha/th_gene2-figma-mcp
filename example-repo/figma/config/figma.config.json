@@ -1,7 +1,8 @@
 {
-  "_gene2Version": "0.2.0",
+  "_gene2Version": "0.3.7",
   "figmaFileKey": "VV3UngGp4iFEQgqdqrnoOu",
   "rootDir": ".",
+  "componentDir": "src/components",
   "componentSpecDir": "figma/components",
   "codeConnect": {
     "parser": "react",
