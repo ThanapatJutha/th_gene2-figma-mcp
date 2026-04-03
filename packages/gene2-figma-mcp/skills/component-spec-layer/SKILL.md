@@ -18,6 +18,7 @@ project's UI library. They contain visual/style code only — never business log
 | Path | Contains |
 |------|----------|
 | `figma/components/*.figma.tsx` | Figma React UI components (visual shell) |
+| `src/components/` | Real UI components (developer-owned) |
 | `src/` | Runtime / business logic code |
 
 ---

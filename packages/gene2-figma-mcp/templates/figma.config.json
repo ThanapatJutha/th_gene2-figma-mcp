@@ -2,6 +2,7 @@
   "_gene2Version": "{{version}}",
   "figmaFileKey": "{{figmaFileKey}}",
   "rootDir": "{{rootDir}}",
+  "componentDir": "src/components",
   "componentSpecDir": "figma/components",
   "codeConnect": {
     "parser": "react",

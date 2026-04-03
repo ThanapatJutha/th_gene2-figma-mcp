@@ -34,7 +34,8 @@ Many operations need the target Figma file key. To find it:
 | Path | Purpose |
 |------|---------|
 | `src/` | Runtime / product code (business logic lives here) |
-| `figma/components/*.figma.tsx` | **React UI components** — visual shell only (style + layout, NO business logic) |
+| `src/components/` | **Real UI components** — developer-owned, used by the application |
+| `figma/components/*.figma.tsx` | **Figma component specs** — visual shell that imports from `src/components/`, NO business logic |
 | `figma/config/figma.config.json` | Project config (file key, component spec dir, etc.) — **persistent, never deleted** |
 | `figma/app/.figma-sync/connections.json` | Code ↔ Figma mappings (written by bridge) |
 | `figma/showcase/` | **Capture helper** — Vite + React app for rendering components before Figma capture |
@@ -133,6 +134,7 @@ Always consult in this order before making changes:
 14. **Always use bridge MCP tools for Figma data.** Never parse tree JSON with scripts (Python, Node, etc.). Use `bridge_read_tree`, `bridge_read_node`, `bridge_list_layers`, `bridge_list_components` to inspect Figma data. Use `bridge_create_component`, `bridge_promote_and_combine` to modify. External scripts add fragility, terminal corruption, and bypass the bridge protocol.
 15. **Capture-first for DS pages.** Always use the capture workflow (showcase → capture → post-process) for creating DS component pages. Direct bridge creation is a last resort — only when capture is explicitly unavailable or user requests it.
 16. **Local images only in showcase.** Never use external image URLs in `figma/showcase/` — they break during Figma capture. Download images to `figma/showcase/public/` and reference as `/filename.png`, or use inline SVG data URIs for placeholders.
+17. **Real components in `src/components/`, specs in `figma/components/`.** Never put business logic or developer-owned components inside `figma/`. The `figma/` directory is for Figma tooling only. Showcase pages import real components from `src/` via the `@` alias.
 
 ---
 

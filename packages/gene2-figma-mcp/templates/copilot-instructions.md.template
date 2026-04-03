@@ -34,7 +34,8 @@ Many operations need the target Figma file key. To find it:
 | Path | Purpose |
 |------|---------|
 | `src/` | Runtime / product code (business logic lives here) |
-| `figma/components/*.figma.tsx` | **React UI components** — visual shell only (style + layout, NO business logic) |
+| `src/components/` | **Real UI components** — developer-owned, used by the application |
+| `figma/components/*.figma.tsx` | **Figma component specs** — visual shell that imports from `src/components/`, NO business logic |
 | `figma/config/figma.config.json` | Project config (file key, component spec dir, etc.) — **persistent, never deleted** |
 | `figma/app/.figma-sync/connections.json` | Code ↔ Figma mappings (written by bridge) |
 | `figma/pages/showcase/` | **Temporary** capture helper — NOT a deliverable |
@@ -207,6 +208,7 @@ Key rules for `.figma.tsx` files:
 7. **Figma file key:** Read from `figma/config/figma.config.json` first. Never fabricate a key.
 8. **Capture-first for DS pages.** Always use the capture workflow (showcase → capture → post-process) for creating DS component pages. Direct bridge creation is a last resort — only when capture is explicitly unavailable or user requests it.
 9. **Local images only in showcase.** Never use external image URLs in `figma/showcase/` — they break during Figma capture. Download to `figma/showcase/public/` or use inline SVG data URIs.
+10. **Real components in `src/components/`, specs in `figma/components/`.** Never put business logic or developer-owned components inside `figma/`. Showcase pages import real components from `src/` via the `@` alias.
 
 ---
 

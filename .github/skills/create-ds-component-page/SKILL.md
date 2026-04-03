@@ -62,7 +62,7 @@ When upgrading `gene2-figma-mcp` to a new version:
 3. Verify version: `npx gene2-figma-mcp --version`
 4. `npx gene2-figma-mcp init --force` (regenerates all seeded files)
 5. Validate: confirm `figma/showcase/src/components/DSPageTemplate.tsx` exists and contains the `crossProduct` helper
-6. `cd figma/showcase && npm install`
+6. `cd figma/showcase && npm install` (showcase has its own package.json)
 7. If files look stale, run `npx gene2-figma-mcp init --only showcase --force` to regenerate just the showcase
 
 ---
@@ -102,6 +102,7 @@ Present properties table to user for confirmation:
 ### Step 4: Build showcase page
 Create/update page at `figma/showcase/src/pages/{Name}.tsx`:
 - Uses `DSPageTemplate` component for consistent layout
+- **Import real components from `src/`** via the `@` alias (e.g., `import { Button } from "@/components/Button"`)
 - Start dev server: `cd figma/showcase && ./node_modules/.bin/vite --port 5173`
 - **NEVER** use `npx vite` — it may use globally cached Vite 6 which is incompatible
 - Use `?component=Name` query param, NOT hash routing — Figma capture uses the hash

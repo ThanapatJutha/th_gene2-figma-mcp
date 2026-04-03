@@ -75,6 +75,7 @@ const SEED_FILES: SeedFile[] = [
   { relPath: '.github/copilot-instructions.md', template: 'copilot-instructions.md.template', group: 'config' },
   // ── Components ─────────────────────────────────────────────────────
   { relPath: 'figma/components/.gitkeep', template: null, content: '', group: 'components' },
+  { relPath: 'src/components/.gitkeep', template: null, content: '', group: 'components' },
   // ── Tokens ─────────────────────────────────────────────────────────
   { relPath: 'figma/tokens/tokens.json', template: null, content: '{\n  "version": 1,\n  "figmaFileKey": "",\n  "lastSyncedAt": "",\n  "collections": {}\n}\n', group: 'tokens' },
   { relPath: 'figma/tokens/generated/.gitkeep', template: null, content: '', group: 'tokens' },
