@@ -363,6 +363,11 @@ async function pullTokens(): Promise<void> {
         textCase: s.textCase,
       };
     }
+  } else if (!textStylesRes.success) {
+    console.log(`  ⚠️  Could not read text styles: ${textStylesRes.error ?? 'unknown error'}`);
+    console.log('     Make sure the Figma plugin is updated to v0.3.11+');
+  } else {
+    console.log('  ℹ️  No text styles found in the Figma file.');
   }
 
   await writeTokensFile(tokensFile);
