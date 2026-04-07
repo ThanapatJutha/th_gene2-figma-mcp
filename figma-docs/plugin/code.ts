@@ -157,6 +157,10 @@ figma.ui.onmessage = async (msg: {
         );
         break;
 
+      case 'read-text-styles':
+        data = await handleReadTextStyles();
+        break;
+
       default:
         throw new Error(`Unknown command: ${command}`);
     }
@@ -801,6 +805,36 @@ async function handleUpdateVariable(p: {
   variable.setValueForMode(modeId, p.value as VariableValue);
 
   return { variableId: p.variableId, updated: true };
+}
+
+// ── Text Styles ─────────────────────────────────────────────────────────
+
+async function handleReadTextStyles() {
+  const styles = await figma.getLocalTextStylesAsync();
+  return styles.map((s) => {
+    const lineHeight = s.lineHeight as { value?: number; unit: string };
+    const letterSpacing = s.letterSpacing as { value: number; unit: string };
+    return {
+      id: s.id,
+      name: s.name,
+      fontFamily: s.fontName.family,
+      fontStyle: s.fontName.style,
+      fontSize: s.fontSize,
+      fontWeight: s.fontName.style, // raw style string; consumer maps to numeric weight
+      lineHeight:
+        lineHeight.unit === 'AUTO'
+          ? 'auto'
+          : lineHeight.unit === 'PERCENT'
+            ? `${lineHeight.value}%`
+            : lineHeight.value,
+      letterSpacing:
+        letterSpacing.unit === 'PERCENT'
+          ? `${letterSpacing.value}%`
+          : letterSpacing.value,
+      textDecoration: s.textDecoration,
+      textCase: s.textCase,
+    };
+  });
 }
 
 // ── Layer & Component discovery ─────────────────────────────────────────

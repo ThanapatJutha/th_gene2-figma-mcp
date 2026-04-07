@@ -210,3 +210,59 @@ Collections follow the pattern: `{number} {Category} - {Level} Token`
 - `Line Height/size {px}` — matching line heights
 - `Weight/{name}` — Regular, Medium, Bold
 - `Family/Font` — multi-mode (Kanit / CS ChatThai)
+
+---
+
+## Text Styles (composed typography)
+
+Text styles are **composed** type definitions (Heading, Subheading, Body, etc.) built from typography variables. They are pulled alongside variables into `tokens.json` under the `textStyles` key.
+
+### Key differences from variables
+
+| | Variables | Text Styles |
+|---|---|---|
+| Type | Individual values (size, weight, family) | Composed (fontFamily + fontSize + fontWeight + lineHeight + letterSpacing) |
+| CSS generation | Auto-generated into `tokens.css` | **No CSS generation** — library-agnostic |
+| Usage | Reference via CSS custom properties | Copilot reads `tokens.json` and adapts per UI library |
+
+### tokens.json textStyles format
+
+```json
+{
+  "textStyles": {
+    "Heading/H1": {
+      "fontFamily": "Kanit",
+      "fontStyle": "Bold",
+      "fontSize": 48,
+      "fontWeight": "Bold",
+      "lineHeight": 56,
+      "letterSpacing": 0,
+      "textDecoration": "NONE",
+      "textCase": "ORIGINAL"
+    },
+    "Body/Regular": {
+      "fontFamily": "Kanit",
+      "fontStyle": "Regular",
+      "fontSize": 16,
+      "fontWeight": "Regular",
+      "lineHeight": 24,
+      "letterSpacing": 0,
+      "textDecoration": "NONE",
+      "textCase": "ORIGINAL"
+    }
+  }
+}
+```
+
+### How Copilot should use text styles
+
+Text styles are **raw reference data** — no CSS classes are generated because each UI library has its own typography theming mechanism. When building components:
+
+1. Read `figma/tokens/tokens.json` → `textStyles`
+2. Map to the project's UI library:
+   - **Tailwind CSS**: Map to `tailwind.config.ts` `theme.fontSize` or utility classes
+   - **shadcn/ui**: Use prose components or custom typography variants
+   - **Chakra UI**: Map to `theme.textStyles` in the Chakra theme config
+   - **MUI**: Map to `theme.typography` variants in `createTheme()`
+   - **Bootstrap**: Map to heading/body utility classes
+3. Apply the closest matching style for each text element

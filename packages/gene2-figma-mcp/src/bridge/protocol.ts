@@ -48,6 +48,7 @@ export type BridgeCommand =
   | 'swap-with-instance'
   | 'promote-and-combine'
   | 'swap-batch'
+  | 'read-text-styles'
   // ── Server-side commands (no plugin round-trip) ──
   | 'read-config'
   | 'save-config'

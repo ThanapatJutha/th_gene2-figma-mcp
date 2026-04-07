@@ -169,6 +169,16 @@ server.registerTool(
     callPlugin('update-variable', { variableId, value, modeId }),
 );
 
+// -- read-text-styles --
+server.registerTool(
+  'bridge_read_text_styles',
+  {
+    description: 'Read all local Figma text styles (composed typography definitions like Heading, Body, etc.). Returns fontFamily, fontSize, fontWeight, lineHeight, letterSpacing for each style.',
+    inputSchema: {},
+  },
+  async () => callPlugin('read-text-styles', {}),
+);
+
 // -- list-layers --
 server.registerTool(
   'bridge_list_layers',

@@ -28,11 +28,23 @@ interface TokenCollection {
   variables: Record<string, TokenValue>;
 }
 
+interface TextStyle {
+  fontFamily: string;
+  fontStyle: string;
+  fontSize: number;
+  fontWeight: string;
+  lineHeight: number | string;
+  letterSpacing: number | string;
+  textDecoration: string;
+  textCase: string;
+}
+
 interface TokensFile {
   version: number;
   figmaFileKey: string;
   lastSyncedAt: string;
   collections: Record<string, TokenCollection>;
+  textStyles?: Record<string, TextStyle>;
 }
 
 interface FigmaVariable {
@@ -324,6 +336,35 @@ async function pullTokens(): Promise<void> {
     }
   }
 
+  // ── Pull text styles ──────────────────────────────────────────────
+  const textStylesRes = await makeRequest('read-text-styles');
+  if (textStylesRes.success && Array.isArray(textStylesRes.data) && textStylesRes.data.length > 0) {
+    const styles = textStylesRes.data as Array<{
+      name: string;
+      fontFamily: string;
+      fontStyle: string;
+      fontSize: number;
+      fontWeight: string;
+      lineHeight: number | string;
+      letterSpacing: number | string;
+      textDecoration: string;
+      textCase: string;
+    }>;
+    tokensFile.textStyles = {};
+    for (const s of styles) {
+      tokensFile.textStyles[s.name] = {
+        fontFamily: s.fontFamily,
+        fontStyle: s.fontStyle,
+        fontSize: s.fontSize,
+        fontWeight: s.fontWeight,
+        lineHeight: s.lineHeight,
+        letterSpacing: s.letterSpacing,
+        textDecoration: s.textDecoration,
+        textCase: s.textCase,
+      };
+    }
+  }
+
   await writeTokensFile(tokensFile);
 
   // Summary
@@ -338,6 +379,9 @@ async function pullTokens(): Promise<void> {
   }
   for (const [name, col] of Object.entries(tokensFile.collections)) {
     console.log(`     ${name}: ${Object.keys(col.variables).length} vars (${col.modes.join(', ')})`);
+  }
+  if (tokensFile.textStyles && Object.keys(tokensFile.textStyles).length > 0) {
+    console.log(`  🔤 Pulled ${Object.keys(tokensFile.textStyles).length} text styles`);
   }
   console.log('');
   console.log(`  📄 Saved to figma/tokens/tokens.json`);

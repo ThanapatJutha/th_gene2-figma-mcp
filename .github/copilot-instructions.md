@@ -109,6 +109,7 @@ Always consult in this order before making changes:
 | `bridge_read_variables` | Read design tokens |
 | `bridge_create_variable` | Create design token |
 | `bridge_update_variable` | Update design token |
+| `bridge_read_text_styles` | Read composed text styles (Heading, Body, etc.) |
 
 ### Local commands (no plugin needed)
 

@@ -45,6 +45,7 @@ These are forwarded over WebSocket to the Figma Plugin running inside the Figma 
 | `list-layers` | List all layers on the current page as a flat list |
 | `list-components` | List all COMPONENT / COMPONENT_SET nodes and their instances |
 | `read-variables` | Read all local variables (design tokens) — works on any plan |
+| `read-text-styles` | Read all local text styles (composed typography — Heading, Body, etc.) |
 
 ### Write Commands
 
@@ -87,6 +88,7 @@ The `figma-bridge` custom MCP server exposes **24 MCP tools** that Copilot can c
 | `bridge_read_variables` | `read-variables` | Read all local variables (design tokens) |
 | `bridge_create_variable` | `create-variable` | Create a new design token |
 | `bridge_update_variable` | `update-variable` | Update an existing token value |
+| `bridge_read_text_styles` | `read-text-styles` | Read all local text styles (composed typography) |
 
 ### Local Tools (no Figma desktop needed)
 
