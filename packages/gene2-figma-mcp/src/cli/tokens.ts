@@ -83,6 +83,69 @@ function tokenNameToTsKey(collectionName: string, tokenName: string): string {
   return raw;
 }
 
+// ── Typography helpers ─────────────────────────────────────────────────
+
+/** Detect if a collection is typography-related */
+function isTypographyCollection(collectionName: string): boolean {
+  return /typo/i.test(collectionName);
+}
+
+/** Detect token category from its variable name */
+function getTypoCategory(varName: string): 'size' | 'line-height' | 'weight' | 'family' | null {
+  const lower = varName.toLowerCase();
+  if (lower.startsWith('size/')) return 'size';
+  if (lower.startsWith('line height/') || lower.startsWith('line-height/')) return 'line-height';
+  if (lower.startsWith('weight/')) return 'weight';
+  if (lower.startsWith('family/')) return 'family';
+  return null;
+}
+
+/** Detect token category for typography primitive tokens (no prefix, just a font name string) */
+function getTypoPrimitiveCategory(resolvedType: string): 'family' | null {
+  // Primitive typo collections typically contain bare font-family strings
+  return resolvedType === 'STRING' ? 'family' : null;
+}
+
+/** Map font-weight string to numeric CSS value */
+const WEIGHT_MAP: Record<string, number> = {
+  thin: 100,
+  hairline: 100,
+  extralight: 200,
+  ultralight: 200,
+  light: 300,
+  regular: 400,
+  normal: 400,
+  medium: 500,
+  semibold: 600,
+  demibold: 600,
+  bold: 700,
+  extrabold: 800,
+  ultrabold: 800,
+  black: 900,
+  heavy: 900,
+};
+
+function fontWeightToNumber(weight: string): number {
+  const key = weight.toLowerCase().replace(/[\s-_]/g, '');
+  return WEIGHT_MAP[key] ?? 400;
+}
+
+/** Format a typography token value for CSS */
+function formatTypoCssValue(
+  category: 'size' | 'line-height' | 'weight' | 'family',
+  value: string | number,
+): string {
+  switch (category) {
+    case 'size':
+    case 'line-height':
+      return `${value}px`;
+    case 'weight':
+      return String(fontWeightToNumber(String(value)));
+    case 'family':
+      return `"${value}"`;
+  }
+}
+
 async function makeRequest(
   command: BridgeRequest['command'],
   payload: Record<string, unknown> = {},
@@ -330,7 +393,22 @@ async function generateTokens(): Promise<void> {
         continue;
       }
 
-      if (token.type === 'COLOR') {
+      // Detect typography tokens and format appropriately
+      const isTypo = isTypographyCollection(colName);
+      const typoCategory = isTypo
+        ? (getTypoCategory(varName) ?? getTypoPrimitiveCategory(token.type))
+        : null;
+
+      if (typoCategory) {
+        const formatted = formatTypoCssValue(typoCategory, value);
+        cssLines.push(`  ${cssVar}: ${formatted};`);
+        tsLines.push(`export const ${tsKey} = 'var(${cssVar})';`);
+        if (typoCategory === 'size' || typoCategory === 'line-height') {
+          tsLines.push(`export const ${tsKey}Value = ${value};`);
+        } else if (typoCategory === 'weight') {
+          tsLines.push(`export const ${tsKey}Value = ${fontWeightToNumber(String(value))};`);
+        }
+      } else if (token.type === 'COLOR') {
         cssLines.push(`  ${cssVar}: ${value};`);
         tsLines.push(`export const ${tsKey} = 'var(${cssVar})';`);
       } else if (token.type === 'FLOAT') {
@@ -364,7 +442,16 @@ async function generateTokens(): Promise<void> {
         const value = token.values[modeName];
         if (typeof value === 'string' && value.startsWith('alias:')) continue;
         if (value !== undefined && value !== token.values[col.modes[0]]) {
-          cssLines.push(`  ${cssVar}: ${value};`);
+          // Apply typography formatting if applicable
+          const isTypo = isTypographyCollection(colName);
+          const typoCategory = isTypo
+            ? (getTypoCategory(varName) ?? getTypoPrimitiveCategory(token.type))
+            : null;
+          if (typoCategory) {
+            cssLines.push(`  ${cssVar}: ${formatTypoCssValue(typoCategory, value)};`);
+          } else {
+            cssLines.push(`  ${cssVar}: ${value};`);
+          }
         }
       }
 

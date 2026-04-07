@@ -103,13 +103,17 @@ if figma/tokens/tokens.json is empty or has no collections:
   --color-semantic-token-text-primary: #18181b;
 
   /* 04 Typo - Semantic Token (default mode) */
-  --typo-semantic-token-size-16: 16;
-  --typo-semantic-token-family-font: Kanit;
+  --typo-semantic-token-size-16: 16px;
+  --typo-semantic-token-line-height-size-16: 24px;
+  --typo-semantic-token-weight-regular: 400;
+  --typo-semantic-token-family-font: "Kanit";
 }
 
 /* Mode overrides */
 .theme-mode-2 {
-  --typo-semantic-token-family-font: CS ChatThai;
+  --typo-semantic-token-line-height-size-16: 20px;
+  --typo-semantic-token-weight-bold: 700;
+  --typo-semantic-token-family-font: "CS ChatThai";
 }
 ```
 
@@ -147,6 +151,20 @@ import './tokens/tokens.css';
 - ❌ `fills: [{ type: "SOLID", color: { r: 0.09, g: 0.09, b: 0.09 } }]`
 - ✅ `color: var(--color-semantic-token-text-primary);`
 - ✅ Look up the hex value from `tokens.json` when setting Figma fills via bridge
+
+### Rule: Typography tokens have proper CSS units
+
+Collections matching "Typo" are auto-formatted:
+
+| Variable prefix | CSS format | Example |
+|---|---|---|
+| `Size/*` | `{value}px` | `--size-16: 16px;` |
+| `Line Height/*` | `{value}px` | `--line-height-size-16: 24px;` |
+| `Weight/*` | Numeric weight | `--weight-regular: 400;` |
+| `Family/*` | Quoted string | `--family-font: "Kanit";` |
+| Primitive font names | Quoted string | `--kanit: "Kanit";` |
+
+Weight string → number mapping: Thin=100, Light=300, Regular=400, Medium=500, SemiBold=600, Bold=700, ExtraBold=800, Black=900.
 
 ---
 
