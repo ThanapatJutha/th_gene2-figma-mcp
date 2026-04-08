@@ -10,54 +10,20 @@ Make the **code repo the single source of truth** for UI. Designers and develope
 
 ## System Overview
 
-```mermaid
-graph LR
-  subgraph LEFT[" "]
-    direction TB
-    subgraph COPILOT["Copilot · Agent Mode"]
-      direction TB
-      MCP["MCP Server<br/><i>mcp-server.ts · 21 tools</i>"]
-      BC["Bridge Client<br/><i>bridge-client.ts</i>"]
-      MCP -->|"in-process"| BC
-    end
-    Dashboard["Dashboard / Settings<br/><i>Docusaurus</i>"]
-  end
+![Architecture Overview](/img/architecture-overview.png)
 
-  subgraph CENTER[" "]
-    direction TB
-    subgraph BRIDGE["Bridge Server · ws://localhost:9001"]
-      direction TB
-      Router{"Route"}
-      Local["LOCAL commands<br/>config · connections<br/>layer-map · scan<br/>component source"]
-      Router -->|"local"| Local
-    end
-    subgraph CODE["CODE REPO — source of truth"]
-      direction LR
-      Components["React components"]
-      Config["figma.config.json"]
-      Connections[".figma-sync/connections.json"]
-      LayerMap[".figma-sync/layer-map.json"]
-    end
-    Local -->|"read/write"| CODE
-  end
+Everything runs on your **local computer**. The Copilot Agent calls the MCP Server, which forwards plugin commands to the Figma Desktop app via WebSocket. Figma Desktop syncs data to the Figma Cloud automatically — no direct API calls to the cloud are needed for write operations.
 
-  Plugin["Figma Plugin<br/><i>code.ts · 14 handlers</i>"]
+| Component | Role |
+|---|---|
+| **Copilot Agent** | VS Code agent mode — orchestrates tasks, calls MCP tools |
+| **MCP Server** | Custom bridge server (24 tools) — routes commands locally or to the Figma plugin |
+| **Figma Desktop** | Runs the plugin that executes `figma.*` API calls — the only way to write to design files |
+| **Figma Cloud** | Figma's cloud storage — synced automatically by Figma Desktop |
 
-  BC -->|"WS :9001<br/>plugin commands"| Router
-  BC -.->|"in-process<br/>local commands"| Local
-  Dashboard -->|"WS :9001"| Router
-  Router -->|"WS"| Plugin
+This architecture **bypasses REST API rate limits and plan restrictions** entirely. The plugin API has no rate limits, works on any plan, and supports full read/write access including variables.
 
-  style LEFT fill:none,stroke:none
-  style CENTER fill:none,stroke:none
-  style COPILOT fill:#fff,stroke:#999,color:#333
-  style Dashboard fill:#fff,stroke:#999,color:#333
-  style Plugin fill:#fff,stroke:#999,color:#333
-  style BRIDGE fill:#fff,stroke:#999,color:#333
-  style CODE fill:#fff,stroke:#999,color:#333
-```
-
-The bridge sits at the center — see the [Bridge section](/docs/bridge/overview) for details on how it works, all available [commands](/docs/bridge/commands), and the [message protocol](/docs/bridge/protocol).
+For details on how the bridge works, see [Bridge Overview](/docs/bridge/overview), [Commands](/docs/bridge/commands), and [Protocol](/docs/bridge/protocol).
 
 ## Data Flow
 

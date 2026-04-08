@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
         'setup/instruction-guide',
       ],
     },
+    'approach/why-this-approach',
     'architecture',
     {
       type: 'category',
